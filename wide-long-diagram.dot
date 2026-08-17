@@ -1,0 +1,108 @@
+digraph G {
+    // General Graph Settings
+    rankdir=LR;
+    nodesep=0.5;
+    splines=true;
+    node [shape=plaintext, fontname="Helvetica,Arial,sans-serif"];
+    edge [fontname="Helvetica,Arial,sans-serif", fontsize=10, color="#7f8c8d"];
+
+    // --- WIDE DATA (BEFORE) ---
+    subgraph cluster_wide {
+        label = "Wide format membership table (Input)";
+        fontname = "Helvetica-Bold";
+        fontsize = 14;
+        color = "#bdc3c7";
+        style = "filled,dashed";
+        fillcolor = "#f8f9fa";
+        
+        wide_table [label=<
+            <table border="0" cellborder="1" cellspacing="0" cellpadding="6">
+                <tr bgcolor="#2c3e50">
+                    <td><font color="black"><b>id</b></font></td>
+                    <td><font color="black"><b>1st Group</b></font></td>
+                    <td><font color="black"><b>1st Memb</b></font></td>
+                    <td><font color="black"><b>2nd Group</b></font></td>
+                    <td><font color="black"><b>2nd Memb</b></font></td>
+                </tr>
+                <tr>
+                    <td>Type 1</td>
+                    <td port="w2" bgcolor="#2980b9"><font color="white">A</font></td>
+                    <td bgcolor="#e67e22"><font color="black">80</font></td>
+                    <td port="w2" bgcolor="#2980b9"><font color="white">B</font></td>
+                    <td bgcolor="#e67e22"><font color="black">20</font></td>
+                </tr>
+                <tr>
+                    <td>Type 2</td>
+                    <td port="w2" bgcolor="#2980b9"><font color="white">A</font></td>
+                    <td bgcolor="#e67e22"><font color="black">25</font></td>
+                    <td port="w2" bgcolor="#2980b9"><font color="white">C</font></td>
+                    <td bgcolor="#e67e22"><font color="black">75</font></td>
+                </tr>
+            </table>
+        >];
+    }
+
+    // --- OPERATION NODE ---
+    pivot_action [
+        shape=box, 
+        fixedsize=true,
+        width=2.7,
+        height=1.2,
+        style="filled,rounded", 
+        fillcolor="#27ae60", 
+        fontcolor="white",
+        fontsize="10pt",
+        fontname="Helvetica-Bold",
+        label="pivot_wide_membership_table(\n  ...\n)"
+    ];
+
+    // --- LONG DATA (AFTER) ---
+    subgraph cluster_long {
+        label = "Long Format (Output)";
+        fontname = "Helvetica-Bold";
+        fontsize = 14;
+        color = "#bdc3c7";
+        style = "filled,dashed";
+        fillcolor = "#f8f9fa";
+
+        long_table [label=<
+            <table border="0" cellborder="1" cellspacing="0" cellpadding="6">
+                <tr bgcolor="#2c3e50">
+                    <td><font color="black"><b>id</b></font></td>
+                    <td><font color="black"><b>Group</b></font></td>
+                    <td ><font color="black"><b>Membership</b></font></td>
+                </tr>
+                <tr>
+                    <td>Type 1</td>
+                    <td bgcolor="#2980b9"><font color="white">A</font></td>
+                    <td port="l1" bgcolor="#e67e22"><font color="white">80</font></td>
+                </tr>
+                <tr>
+                    <td>Type 1</td>
+                    <td bgcolor="#2980b9"><font color="white">B</font></td>
+                    <td port="l2" bgcolor="#e67e22"><font color="white">20</font></td>
+                </tr>
+                <tr>
+                    <td>Type 2</td>
+                    <td bgcolor="#2980b9"><font color="white">A</font></td>
+                    <td port="l3" bgcolor="#e67e22"><font color="white">25</font></td>
+                </tr>
+                <tr>
+                    <td>Type 2</td>
+                    <td bgcolor="#2980b9"><font color="white">C</font></td>
+                    <td port="l4" bgcolor="#e67e22"><font color="white">75</font></td>
+                </tr>
+            </table>
+        >];
+    }
+
+    // --- PIPELINE CONNECTIONS ---
+    wide_table -> pivot_action [weight=2];
+    pivot_action -> long_table [weight=2];
+
+    // --- VALUE TRACING LINKS (Optional Visual Guides) ---
+    // --- wide_table:w1 -> long_table:l1 [style=dotted, color="#2980b9", constraint=false];
+    // --- wide_table:w2 -> long_table:l2 [style=dotted, color="#e67e22", constraint=false];
+    // --- wide_table:w3 -> long_table:l3 [style=dotted, color="#2980b9", constraint=false];
+    // --- wide_table:w4 -> long_table:l4 [style=dotted, color="#e67e22", constraint=false];
+}
