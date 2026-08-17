@@ -1,0 +1,53 @@
+# Overview of this document {.unnumbered}
+
+This online document is a joint output of the ARDC "Ecosystem Indicators Workflows" (EIW) project and the ARC Industry Laureate Fellowship Project "Foundations for leading the nature positive ecosystem conservation agenda".
+
+## Document structure
+
+This resource includes the following components :
+
+- Read and harmonise cross-referencing data
+- ...
+
+Use the links on the left to navigate through the different sections of this resource.
+
+::: {.callout-note}
+## Target ecosystem types
+- All terrestrial ecosystems of Tasmania. 
+- Selected palustrine wetland and other transitional ecosystems of Tasmania.
+:::
+
+
+
+## Contributors
+
+MT and DAK led the cross-referencing tables.
+AL, AK, JB contributed the agency cross-referencing tables.
+
+JRFP led the technical documentation of all sections.
+Other members of the EIW team contributed to some sections of this resource.
+
+## Revision history {.unnumbered}
+
+Version control for this document is maintained in the original [GitHub repository](https://github.com/Ecosystem-Indicators-Workflows/).
+
+|Version | Date | Editor | Summary of Changes |
+|------|------|-----------------|----------------------|
+| 0.1 | 13 Aug 2026 | JRFP | Initial draft and project structure |
+
+
+
+## Reproducibility statement
+
+This resource uses Bash, R and Python for most steps of data download, preparation and analysis. All steps are documented using Jupyter notebooks and quarto. This resource is designed to be reproducible, with instructions for data download and code execution provided in the relevant sections. The data used in this resource is publicly available, and the code is open source. Instructions for setting up the environment and running the code and notes on the implementation of FAIR principles are provided in the relevant sections at the end of this document.
+
+## Acknowledgements
+
+This work was partly supported by:
+
+- the ARC Industry Laureate Fellowship Project "Foundations for leading the nature positive ecosystem conservation agenda" ([IL240100030](https://www.arc.gov.au/2024-industry-laureate-profile-professor-david-keith)) led by Professor David Keith at UNSW Sydney, in partnership with Department of Climate Change, Energy, the Environment and Water, International Union for Conservation of Nature, Department of Energy, Environment and Water, Department of Biodiversity Conservation and Attractions, Department of Planning and Environment NSW, Department of Natural Resources and Environment Tasmania. 
+- The [Ecosystem Indicators Workflows](https://ardc.edu.au/project/) project received investment from the Australian Research Data Commons (ARDC). The ARDC is funded by the National Collaborative Research Infrastructure Strategy (NCRIS).
+
+![](/assets/ARDC_logo_RGB.png){width="250px" style="padding: 25px;"}
+![](/assets/NCRIS-PROVIDER.png){width="200px" style="padding: 25px;"}
+
