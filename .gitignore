@@ -1,2 +1,14 @@
 input-XREFs/
 gisdata/
+.venv
+.ipynb_checkpoints
+__pycache__/
+*.pyc
+.DS_Store
+.env
+.vscode/
+gisdata/
+.virtual_documents/
+/.quarto/
+_book
+**/*.quarto_ipynb

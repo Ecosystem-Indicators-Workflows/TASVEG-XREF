@@ -1,0 +1,39 @@
+project:
+  type: book
+
+book:
+  title: "Cross-referencing Tasmanian Terrestrial Ecosystems"
+  author: 
+    - M Tozer
+    - DA Keith
+    - J Balmer
+    - A Kitchener
+    - A Latinovic
+    - JR Ferrer-Paris
+  chapters:
+    - index.qmd
+    - intro.qmd
+    - file: "read-input-xref-data.ipynb"
+      text: "Input data"
+    - file: "visualise-agreement.ipynb"
+      text: "Viz agreement"
+    - references.qmd
+  margin-header: |
+    <center>
+    ![](/assets/logo_CES.png){height=66px}
+    </center>
+  page-footer:
+    left: "This site prepared by: [EIW project team](https://github.com/Ecosystem-Indicators-Workflows)"
+    center: "![](/assets/unsw_new_logo.png){height=20px} We acknowledge the Bedegal and Gadigal peoples who are the Traditional Owners of the lands where UNSW Sydney is located. We pay our respects to Elders past and present."
+
+bibliography: references.bib
+
+format:
+  html:
+    theme: minty
+    css: styles.css
+    highlight-style: solarized
+    toc: true
+    sidebar-width: 300px # Default is 250px
+  pdf:
+    documentclass: scrreprt
