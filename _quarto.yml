@@ -12,7 +12,9 @@ book:
     - JR Ferrer-Paris
   chapters:
     - index.qmd
-    - intro.qmd
+    - file: stepwise.qmd
+      text: "Crossreferencing steps"
+    - membership-tables.qmd
     - file: "read-input-xref-data.ipynb"
       text: "Input data"
     - file: "visualise-agreement.ipynb"
