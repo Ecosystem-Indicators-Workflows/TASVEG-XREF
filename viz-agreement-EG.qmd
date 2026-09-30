@@ -6,7 +6,7 @@ date: today
 description: "This notebook is a companion to the `visualise-agreement.ipynb` notebook, which contains the code used to generate the data for these visualisations."
 ---
 
-## Problem Framing
+# Problem Framing
 
 Our goal is to provide visualisations of disagreement among experts in the XREF process which can highlight areas of uncertainty or inconsistency in the elicited probabilities. The visualisations should help guide discussion to:
 
@@ -23,9 +23,9 @@ For a given Source-to-Target vegetation type cross-reference, we can visualise t
 To get at 'why' experts disagree, we can also visualise the following aspects of expert disagreement:
 
 - Context - how does the context of the disagreement affect the experts' views? How might the experts' other assignments for a given EFG influence their views on the membership of a given vegetation type to that EFG?
-- Reasoning - what are the underlying reasons for the disagreement? We don't have access to this information currently. But our visualisations can help facilitate discussion to draw out differences in mental models and assumptions.
+- Reasoning - what are the underlying reasons for the disagreement? We don't have access to this information for this dataset, since the reasoning was not captured during elicitation. But our visualisations can at least help facilitate discussion to draw out differences in mental models and assumptions.
 
-
+# Visualisation Mockups
 
 ```{r}
 #| label: load-libraries-data
@@ -35,13 +35,43 @@ library(dplyr)
 library(tidyr)
 library(stringr)
 library(ggplot2)
+library(purrr)
+library(tibble)
 load(here::here("processed_xrefs/visualise-agreement-ipynb.RData")) #run visualise-agreement.ipynb to generate this file
 ```
 
-Let's start with a simple case, filtering for the AAP `VEGCODE` where there is mostly agreement between experts.
+## One Source Vegetation Type
+
+Let's start with a simple case, filtering for the `"AAP"` `VEGCODE` where there is mostly agreement between experts. We can deal with more complex cases later, e.g. where there are low levels of agreement between experts and many EFGs under consideration for a given vegetation type.
 
 ```{r}
 xref_source_AAP <- xref_table_experts %>%
   filter(VEGCODE == "AAP") 
+```
+
+### Contextualising the Disagreement - (other vegetation types considered for target EFGs)
+
+Which EFGs are considered for the `"AAP"` vegetation type?
+
+```{r}
+#| echo: true
+AAP_efg <- xref_source_AAP |> pluck("efg", unique)
+```
+
+What other vegetation types are considered for the EFGs that are considered for the `"AAP"` vegetation type?
+
+For `AAP_efg`, we can filter the `xref_table_experts` table to find all unique `VEGCODE` values that are associated with those EFGs. This will give us a sense of the other vegetation types that are being considered for the same EFGs as `"AAP"`. It may help contextualise the disagreement among experts for the `"AAP"` vegetation type. 
+
+```{r}
+AAP_efg_VEGCODE_experts <- xref_table_experts |> filter(efg %in% AAP_efg)
+```
+
+Given there the EFGs are a higher level hierarchical conceptualisation of vegetation types, there are many vegetation types that are considered for the same EFGs as `"AAP"`. A fully sankey diagram for all these relationships would be quite complex. There are `r AAP_efg_VEGCODE_experts |> distinct(VEGCODE, efg) |> nrow()`
+Let's rule a full sankey diagram out then. But it may be helpful to provide this information in a table format, so that the user can see which vegetation types are being considered for the same EFGs as `"AAP"`. Experts may want to click on an efg and see a list of other vegetation types under consideration.
+
+```{r}
+AAP_efg_VEGCODE <- AAP_efg_VEGCODE_experts |> distinct(VEGCODE, efg) |> group_by(efg) |> summarise(VEGCODEs = list(VEGCODE)) 
+# Get vector of VEGCODEs for a specific EFG under consideration for AAP, e.g. "TF1.7"
+AAP_efg_VEGCODE |> pull(VEGCODEs, name = "efg") |> pluck("TF1.7")
 ```
 
