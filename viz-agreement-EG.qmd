@@ -1,0 +1,47 @@
+---
+title: "Visualising Agreement"
+format: html
+author: Elliot Gould
+date: today
+description: "This notebook is a companion to the `visualise-agreement.ipynb` notebook, which contains the code used to generate the data for these visualisations."
+---
+
+## Problem Framing
+
+Our goal is to provide visualisations of disagreement among experts in the XREF process which can highlight areas of uncertainty or inconsistency in the elicited probabilities. The visualisations should help guide discussion to:
+
+- resolve any differences caused by sources of reducible uncertainty, e.g. by linguistic uncertainty in the definitions of vegetation types may lead to different interpretations of the definitions of vegetation types.
+- highlight conceptual disagreement, e.g. where experts fundamentally disagree on the definition of a vegetation type and/or its relationship to other types.
+- We can help facilitate discussion to draw out differences in mental models and assumptions.
+
+For a given Source-to-Target vegetation type cross-reference, we can visualise the following aspects of expert disagreement:
+
+- Experts - WHO disagrees?
+- Target vegetation types (EFG) - which EFGs are considered for that vegetation type?
+- Membership probabilities - how much do experts agree on the membership of that vegetation type to a given EFG?
+
+To get at 'why' experts disagree, we can also visualise the following aspects of expert disagreement:
+
+- Context - how does the context of the disagreement affect the experts' views? How might the experts' other assignments for a given EFG influence their views on the membership of a given vegetation type to that EFG?
+- Reasoning - what are the underlying reasons for the disagreement? We don't have access to this information currently. But our visualisations can help facilitate discussion to draw out differences in mental models and assumptions.
+
+
+
+```{r}
+#| label: load-libraries-data
+library(readr)
+library(readxl)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(ggplot2)
+load(here::here("processed_xrefs/visualise-agreement-ipynb.RData")) #run visualise-agreement.ipynb to generate this file
+```
+
+Let's start with a simple case, filtering for the AAP `VEGCODE` where there is mostly agreement between experts.
+
+```{r}
+xref_source_AAP <- xref_table_experts %>%
+  filter(VEGCODE == "AAP") 
+```
+
