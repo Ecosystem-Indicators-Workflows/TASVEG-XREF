@@ -37,6 +37,7 @@ library(stringr)
 library(ggplot2)
 library(purrr)
 library(tibble)
+library(RColorBrewer)
 load(here::here("processed_xrefs/visualise-agreement-ipynb.RData")) #run visualise-agreement.ipynb to generate this file
 ```
 
@@ -46,7 +47,88 @@ Let's start with a simple case, filtering for the `"AAP"` `VEGCODE` where there 
 
 ```{r}
 xref_source_AAP <- xref_table_experts %>%
-  filter(VEGCODE == "AAP") 
+  filter(VEGCODE == "AAP") |> 
+  complete( #make explicit by filling in missing combinations
+    VEGCODE, 
+    efg, 
+    expert, 
+    explicit = TRUE, 
+    #fill = list(memb = 0)
+  ) 
+```
+
+Raw data for the `"AAP"` vegetation type, showing the EFGs under consideration and the membership probabilities assigned by each expert:
+
+### Tile Map
+
+```{r}
+
+tile_plot <- function(data) {
+  textcol <- "grey40"
+  label_VEGCODE <- data  |> pluck("VEGCODE", unique)
+  data |> 
+  ggplot(aes(y=expert, x = efg, fill = memb, fill_alpha = 0.4)) + 
+geom_tile(colour="white", lwd = 1.5, show.legend = T, linetype = 1) +
+# scale_fill_binned(
+#   #direction = -1, 
+#   na.value = "white", 
+#   limits = c(0,1), 
+#   breaks = seq(0,1,by=0.2), 
+#   labels = scales::percent_format(accuracy=1)) +
+scale_colour_continuous(
+  name = waiver(),
+  guide = "colourbar",
+  aesthetics = "fill",
+  na.value = "grey50",
+) +
+#remove axis labels, add title
+labs(x="EFG",y="Expert",title="Round 1 Xref", subtitle = glue::glue("Vegetation Type: {label_VEGCODE}")) +
+  geom_label(aes(label = memb), color = "black", size = 4, fill = "white") +
+  # geom_text(aes(label = memb), color = "white", size = 4) +
+#remove extra space
+#equal aspect ratio x and y axis
+coord_fixed()+
+#set base size for all font elements
+theme_grey(base_size=10)+
+#theme options
+theme(
+  palette.colour.continuous = "BuPu",
+#remove legend title
+legend.title=element_blank(),
+#remove legend margin
+legend.spacing = grid::unit(0,"cm"),
+#change legend text properties
+legend.text=element_text(colour=textcol,size=7,face="bold"),
+#change legend key height
+legend.key.height=grid::unit(0.8,"cm"),
+#set a slim legend
+legend.key.width=grid::unit(0.2,"cm"),
+#set x axis text size and colour
+axis.text.x=element_text(size=10,colour=textcol),
+#set y axis text colour and adjust vertical justification
+axis.text.y=element_text(vjust = 0.2,colour=textcol),
+#change axis ticks thickness
+axis.ticks=element_line(size=0.4),
+#change title font, size, colour and justification
+plot.title=element_text(colour=textcol,hjust=0,size=14,face="bold"),
+#remove plot background
+plot.background=element_blank(),
+panel.grid = element_blank(),
+panel.background = element_blank(),
+#remove plot border
+panel.border=element_blank())
+}
+
+xref_source_AAP |> tile_plot()
+```
+
+May want to compress plot to remove duplication among experts, e.g. if there are 10 experts and they all have the same membership probability for a given EFG, then we can just show one row for that membership probability.
+
+```{r}
+xref_source_AAP  |> 
+  summarise(expert = paste(expert, collapse = ", "), 
+    .by=c(efg, memb)) |> 
+  tile_plot()
 ```
 
 ### Contextualising the Disagreement - (other vegetation types considered for target EFGs)
