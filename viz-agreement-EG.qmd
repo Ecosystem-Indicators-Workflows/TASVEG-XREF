@@ -148,8 +148,9 @@ For `AAP_efg`, we can filter the `xref_table_experts` table to find all unique `
 AAP_efg_VEGCODE_experts <- xref_table_experts |> filter(efg %in% AAP_efg)
 ```
 
-Given there the EFGs are a higher level hierarchical conceptualisation of vegetation types, there are many vegetation types that are considered for the same EFGs as `"AAP"`. A fully sankey diagram for all these relationships would be quite complex. There are `r AAP_efg_VEGCODE_experts |> distinct(VEGCODE, efg) |> nrow()`
-Let's rule a full sankey diagram out then. But it may be helpful to provide this information in a table format, so that the user can see which vegetation types are being considered for the same EFGs as `"AAP"`. Experts may want to click on an efg and see a list of other vegetation types under consideration.
+Given there the EFGs are a higher level hierarchical conceptualisation of vegetation types, there are many vegetation types that are considered for the same EFGs as `"AAP"`. A fully sankey diagram for all these relationships would be quite complex. There are `r AAP_efg_VEGCODE_experts |> distinct(VEGCODE, efg) |> nrow()` instances where the EFGs under consideration for "AAP" are also considered for other vegetation types in the cross-reference.
+
+Let's rule a full sankey diagram out for a single source, then. But it may be helpful to provide this information in a table format, so that the user can see which vegetation types are being considered for the same EFGs as `"AAP"`. Experts may want to click on an efg and see a list of other vegetation types under consideration.
 
 ```{r}
 AAP_efg_VEGCODE <- AAP_efg_VEGCODE_experts |> distinct(VEGCODE, efg) |> group_by(efg) |> summarise(VEGCODEs = list(VEGCODE)) 
