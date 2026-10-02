@@ -131,6 +131,22 @@ xref_source_AAP  |>
   tile_plot()
 ```
 
+### Sankey Diagram
+
+What values to use for the Sankey diagram? We can use the membership probabilities as the values for the Sankey diagram, but we need to summarise the data first. Let's calculate the mean and geometric mean of the membership probabilities for each EFG. Other summary stats could be used, like counts of experts agreeing on cross-reference, but these two capture the membership values themselves. Fuzzy transformations of the membership values could also be used, but let's keep it simple for now.
+
+Add geometric mean function and summarise data.
+
+```{r}
+geom_mean <- function(x) {
+  exp(mean(log(x), na.rm = TRUE))
+} # but can load EnvStats for NA/error handling later if needed
+
+AAP_summarised <- xref_source_AAP |> drop_na() |> 
+  summarise(memb_mean = mean(memb), memb_geom_mean = geom_mean(memb), N = n(), .by=c(VEGCODE, efg, memb)) |> 
+  mutate(expert = "expert")
+```
+
 ### Contextualising the Disagreement - (other vegetation types considered for target EFGs)
 
 Which EFGs are considered for the `"AAP"` vegetation type?
