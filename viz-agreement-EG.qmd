@@ -38,6 +38,7 @@ library(ggplot2)
 library(purrr)
 library(tibble)
 library(RColorBrewer)
+library(ggsankeyfier)
 load(here::here("processed_xrefs/visualise-agreement-ipynb.RData")) #run visualise-agreement.ipynb to generate this file
 ```
 
@@ -146,6 +147,28 @@ AAP_summarised <- xref_source_AAP |> drop_na() |>
   summarise(memb_mean = mean(memb), memb_geom_mean = geom_mean(memb), N = n(), .by=c(VEGCODE, efg, memb)) |> 
   mutate(expert = "expert")
 ```
+
+
+Prepare data for plotting (translating example data req's to our data):
+
+- [x] x = stage = xref_type = "source"/"target" (will need to create)
+- [ ] y = RCSES = memb_mean
+- [x] connector = connector = variable containing "source"/"target" or "from" "to"(will need to create)
+- [x] group = node = efg/vegcode = values (names of the nodes, e.g. "AAP", "TF1.7", etc.)
+- [x] edge_id = edge_id = unique identifier for each edge (will need to create)
+
+```{r}
+sankey_geom_mean <- AAP_summarised  |> mutate(edge_id = row_number())  |> rowwise()  |> pivot_longer(cols = c("VEGCODE", "efg"), names_to = "connector", values_to = "node")  |> mutate(stage = case_when(connector == "VEGCODE" ~ "source", TRUE ~ "target" ), connector = case_when(connector == "VEGCODE" ~ "from", TRUE ~ "to" ))  |> ungroup()
+```
+
+```{r}
+ggplot(sankey_geom_mean,
+       aes(x = stage, y = memb_geom_mean, group = node,
+           connector = connector, edge_id = edge_id)) +
+  geom_sankeyedge(v_space = "auto") +
+  geom_sankeynode(v_space = "auto")
+```
+
 
 ### Contextualising the Disagreement - (other vegetation types considered for target EFGs)
 
