@@ -48,14 +48,15 @@ Let's start with a simple case, filtering for the `"AAP"` `VEGCODE` where there 
 
 ```{r}
 xref_source_AAP <- xref_table_experts %>%
-  filter(VEGCODE == "AAP") |> 
-  complete( #make explicit by filling in missing combinations
-    VEGCODE, 
-    efg, 
-    expert, 
-    explicit = TRUE, 
+  filter(VEGCODE == "AAP") |>
+  complete(
+    #make explicit by filling in missing combinations
+    VEGCODE,
+    efg,
+    expert,
+    explicit = TRUE,
     #fill = list(memb = 0)
-  ) 
+  )
 ```
 
 Raw data for the `"AAP"` vegetation type, showing the EFGs under consideration and the membership probabilities assigned by each expert:
@@ -66,58 +67,69 @@ Raw data for the `"AAP"` vegetation type, showing the EFGs under consideration a
 
 tile_plot <- function(data) {
   textcol <- "grey40"
-  label_VEGCODE <- data  |> pluck("VEGCODE", unique)
-  data |> 
-  ggplot(aes(y=expert, x = efg, fill = memb, fill_alpha = 0.4)) + 
-geom_tile(colour="white", lwd = 1.5, show.legend = T, linetype = 1) +
-# scale_fill_binned(
-#   #direction = -1, 
-#   na.value = "white", 
-#   limits = c(0,1), 
-#   breaks = seq(0,1,by=0.2), 
-#   labels = scales::percent_format(accuracy=1)) +
-scale_colour_continuous(
-  name = waiver(),
-  guide = "colourbar",
-  aesthetics = "fill",
-  na.value = "grey50",
-) +
-#remove axis labels, add title
-labs(x="EFG",y="Expert",title="Round 1 Xref", subtitle = glue::glue("Vegetation Type: {label_VEGCODE}")) +
-  geom_label(aes(label = memb), color = "black", size = 4, fill = "white") +
-  # geom_text(aes(label = memb), color = "white", size = 4) +
-#remove extra space
-#equal aspect ratio x and y axis
-coord_fixed()+
-#set base size for all font elements
-theme_grey(base_size=10)+
-#theme options
-theme(
-  palette.colour.continuous = "BuPu",
-#remove legend title
-legend.title=element_blank(),
-#remove legend margin
-legend.spacing = grid::unit(0,"cm"),
-#change legend text properties
-legend.text=element_text(colour=textcol,size=7,face="bold"),
-#change legend key height
-legend.key.height=grid::unit(0.8,"cm"),
-#set a slim legend
-legend.key.width=grid::unit(0.2,"cm"),
-#set x axis text size and colour
-axis.text.x=element_text(size=10,colour=textcol),
-#set y axis text colour and adjust vertical justification
-axis.text.y=element_text(vjust = 0.2,colour=textcol),
-#change axis ticks thickness
-axis.ticks=element_line(size=0.4),
-#change title font, size, colour and justification
-plot.title=element_text(colour=textcol,hjust=0,size=14,face="bold"),
-#remove plot background
-plot.background=element_blank(),
-panel.grid = element_blank(),
-panel.background = element_blank(),
-#remove plot border
-panel.border=element_blank())
+  label_VEGCODE <- data |> pluck("VEGCODE", unique)
+  data |>
+    ggplot(aes(y = expert, x = efg, fill = memb, fill_alpha = 0.4)) +
+    geom_tile(colour = "white", lwd = 1.5, show.legend = T, linetype = 1) +
+    # scale_fill_binned(
+    #   #direction = -1,
+    #   na.value = "white",
+    #   limits = c(0,1),
+    #   breaks = seq(0,1,by=0.2),
+    #   labels = scales::percent_format(accuracy=1)) +
+    scale_colour_continuous(
+      name = waiver(),
+      guide = "colourbar",
+      aesthetics = "fill",
+      na.value = "grey50",
+    ) +
+    #remove axis labels, add title
+    labs(
+      x = "EFG",
+      y = "Expert",
+      title = "Round 1 Xref",
+      subtitle = glue::glue("Vegetation Type: {label_VEGCODE}")
+    ) +
+    geom_label(aes(label = memb), color = "black", size = 4, fill = "white") +
+    # geom_text(aes(label = memb), color = "white", size = 4) +
+    #remove extra space
+    #equal aspect ratio x and y axis
+    coord_fixed() +
+    #set base size for all font elements
+    theme_grey(base_size = 10) +
+    #theme options
+    theme(
+      palette.colour.continuous = "BuPu",
+      #remove legend title
+      legend.title = element_blank(),
+      #remove legend margin
+      legend.spacing = grid::unit(0, "cm"),
+      #change legend text properties
+      legend.text = element_text(colour = textcol, size = 7, face = "bold"),
+      #change legend key height
+      legend.key.height = grid::unit(0.8, "cm"),
+      #set a slim legend
+      legend.key.width = grid::unit(0.2, "cm"),
+      #set x axis text size and colour
+      axis.text.x = element_text(size = 10, colour = textcol),
+      #set y axis text colour and adjust vertical justification
+      axis.text.y = element_text(vjust = 0.2, colour = textcol),
+      #change axis ticks thickness
+      axis.ticks = element_line(size = 0.4),
+      #change title font, size, colour and justification
+      plot.title = element_text(
+        colour = textcol,
+        hjust = 0,
+        size = 14,
+        face = "bold"
+      ),
+      #remove plot background
+      plot.background = element_blank(),
+      panel.grid = element_blank(),
+      panel.background = element_blank(),
+      #remove plot border
+      panel.border = element_blank()
+    )
 }
 
 xref_source_AAP |> tile_plot()
@@ -126,9 +138,8 @@ xref_source_AAP |> tile_plot()
 May want to compress plot to remove duplication among experts, e.g. if there are 10 experts and they all have the same membership probability for a given EFG, then we can just show one row for that membership probability.
 
 ```{r}
-xref_source_AAP  |> 
-  summarise(expert = paste(expert, collapse = ", "), 
-    .by=c(efg, memb)) |> 
+xref_source_AAP |>
+  summarise(expert = paste(expert, collapse = ", "), .by = c(efg, memb)) |>
   tile_plot()
 ```
 
@@ -143,8 +154,14 @@ geom_mean <- function(x) {
   exp(mean(log(x), na.rm = TRUE))
 } # but can load EnvStats for NA/error handling later if needed
 
-AAP_summarised <- xref_source_AAP |> drop_na() |> 
-  summarise(memb_mean = mean(memb), memb_geom_mean = geom_mean(memb), N = n(), .by=c(VEGCODE, efg, memb)) |> 
+AAP_summarised <- xref_source_AAP |>
+  drop_na() |>
+  summarise(
+    memb_mean = mean(memb),
+    memb_geom_mean = geom_mean(memb),
+    N = n(),
+    .by = c(VEGCODE, efg, memb)
+  ) |>
   mutate(expert = "expert")
 ```
 
@@ -152,19 +169,38 @@ AAP_summarised <- xref_source_AAP |> drop_na() |>
 Prepare data for plotting (translating example data req's to our data):
 
 - [x] x = stage = xref_type = "source"/"target" (will need to create)
-- [ ] y = RCSES = memb_mean
+- [x] y = RCSES = memb_mean
 - [x] connector = connector = variable containing "source"/"target" or "from" "to"(will need to create)
 - [x] group = node = efg/vegcode = values (names of the nodes, e.g. "AAP", "TF1.7", etc.)
 - [x] edge_id = edge_id = unique identifier for each edge (will need to create)
 
 ```{r}
-sankey_geom_mean <- AAP_summarised  |> mutate(edge_id = row_number())  |> rowwise()  |> pivot_longer(cols = c("VEGCODE", "efg"), names_to = "connector", values_to = "node")  |> mutate(stage = case_when(connector == "VEGCODE" ~ "source", TRUE ~ "target" ), connector = case_when(connector == "VEGCODE" ~ "from", TRUE ~ "to" ))  |> ungroup()
+sankey_geom_mean <- AAP_summarised |>
+  mutate(edge_id = row_number()) |>
+  rowwise() |>
+  pivot_longer(
+    cols = c("VEGCODE", "efg"),
+    names_to = "connector",
+    values_to = "node"
+  ) |>
+  mutate(
+    stage = case_when(connector == "VEGCODE" ~ "source", TRUE ~ "target"),
+    connector = case_when(connector == "VEGCODE" ~ "from", TRUE ~ "to")
+  ) |>
+  ungroup()
 ```
 
 ```{r}
-ggplot(sankey_geom_mean,
-       aes(x = stage, y = memb_geom_mean, group = node,
-           connector = connector, edge_id = edge_id)) +
+ggplot(
+  sankey_geom_mean,
+  aes(
+    x = stage,
+    y = memb_geom_mean,
+    group = node,
+    connector = connector,
+    edge_id = edge_id
+  )
+) +
   geom_sankeyedge(v_space = "auto") +
   geom_sankeynode(v_space = "auto")
 ```
@@ -192,7 +228,10 @@ Given there the EFGs are a higher level hierarchical conceptualisation of vegeta
 Let's rule a full sankey diagram out for a single source, then. But it may be helpful to provide this information in a table format, so that the user can see which vegetation types are being considered for the same EFGs as `"AAP"`. Experts may want to click on an efg and see a list of other vegetation types under consideration.
 
 ```{r}
-AAP_efg_VEGCODE <- AAP_efg_VEGCODE_experts |> distinct(VEGCODE, efg) |> group_by(efg) |> summarise(VEGCODEs = list(VEGCODE)) 
+AAP_efg_VEGCODE <- AAP_efg_VEGCODE_experts |>
+  distinct(VEGCODE, efg) |>
+  group_by(efg) |>
+  summarise(VEGCODEs = list(VEGCODE))
 # Get vector of VEGCODEs for a specific EFG under consideration for AAP, e.g. "TF1.7"
 AAP_efg_VEGCODE |> pull(VEGCODEs, name = "efg") |> pluck("TF1.7")
 ```
