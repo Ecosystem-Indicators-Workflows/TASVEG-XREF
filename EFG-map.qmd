@@ -1,5 +1,7 @@
+# Spatial outputs
 
 ```{r}
+#| eval: false
 library(ecoSynthesis)
 library(sf)
 library(terra)
@@ -62,6 +64,7 @@ Unit: milliseconds
 
 
  ```{r}
+ #| eval: false
 out_dir <- here::here("gisout")
 if (!dir.exists(out_dir))
     dir.create(out_dir)
@@ -102,6 +105,9 @@ for (tid in IUCN_GET_LUT$efg_id) {
  ```
 
  ```{r}
+library(terra)
+here::i_am("EFG-map.qmd")
+out_dir <- here::here("gisout")
 tas_all <- rast(dir(out_dir, pattern = "res90", full.names = TRUE))
 
 tas_which <- app(tas_all, fun="which.max")
