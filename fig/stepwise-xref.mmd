@@ -1,0 +1,29 @@
+flowchart TB
+    subgraph ROUNDS ["Expert elicitation"]
+        AGREE["Agreement / disagreement"]
+        MEMB ==> AGREE
+        subgraph MEMB ["Membership tables"]
+         STEP3[["3: Eliminate implausible candidates"]]:::MainSteps
+         STEP4[["4: Estimate (non-zero) memberships"]]:::MainSteps
+         ZERO["Zero membership value"]:::OutSteps
+         STEP3 --> ZERO
+         STEP3 ==> STEP4 
+        end
+    end
+    INTERP["Multiple interpreters"]
+    INTERP --> MEMB
+    AGREE --> INTERP
+    STEP1[["1: Assess alignment between classifications"]]:::MainSteps
+    STEP2[["2: Assemble information on properties of units"]]:::MainSteps
+    STEP5[["5: Synthesis: compile, document methods and uncertainty"]]:::MainSteps
+    
+    STEP1 -->|No alignment| NO["Units not eligible for cross-referencing "]:::OutSteps
+    STEP2 -->|Insufficient info?| RE["Gather more information"]:::OutSteps -->STEP2
+    STEP1 ==> STEP2 ==> INTERP
+    ROUNDS ==> STEP5
+    
+    ROUNDS:::Grp
+    MEMB:::Grp
+    classDef MainSteps fill:#f8f9fa,stroke:#1A1A1A,color:#1A1A1A, stroke-width:2px
+    classDef OutSteps fill:#eee,stroke:#6C757D,color:#6C757D, stroke-width:2px
+    classDef Grp fill:#fff,stroke:#040,color:#040, stroke-width:2px

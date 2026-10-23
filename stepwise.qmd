@@ -20,38 +20,17 @@ Membership estimates from multiple interpreters can be combined to produce more 
 
 A stepwise diagnostic process ensures that the cross-referencing exercise aligns with four key principles: alignment of classifications, membership based on entity properties, using weight of evidence, and transparent representation of uncertainty [@IUCN_2025].
 
-```{mermaid}
-flowchart TB
-    subgraph CLASS1 ["Multiple interpreters"]
-        STEP3[["3: Eliminate implausible candidates"]]:::MainSteps
-        STEP4[["4: Estimate (non-zero) memberships"]]:::MainSteps
-    end
-    
-    STEP1[["1: Assess alignment between classifications"]]:::MainSteps
-    STEP2[["2: Assemble information on properties of units"]]:::MainSteps
-    STEP5[["5: Synthesis: compile, document methods and uncertainty"]]:::MainSteps
-    
-    STEP1 ==> STEP2 ==> STEP3 ==> STEP4 ==> STEP5
-    STEP1 -->|No alignment| NO["Units not eligible for cross-referencing "]:::OutSteps
-    STEP2 -->|Insufficient info?| RE["Gather more information"]:::OutSteps -->STEP2
-    STEP3 --> ZERO["Zero membership value"]:::OutSteps
-    CLASS1:::Grp
-    classDef MainSteps fill:#f8f9fa,stroke:#1A1A1A,color:#1A1A1A, stroke-width:2px
-    classDef OutSteps fill:#eee,stroke:#6C757D,color:#6C757D, stroke-width:2px
-    classDef Grp fill:#fff,stroke:#040,color:#040, stroke-width:2px
-```
+![Structure of the stepwise cross-referencing process.](fig/stepwise-xref-2026-10-23-161812.png)
 
-Multiple interpreters might be involved in steps 3 and 4. And additional round of expert elicitation is recommended to try to reduce disagreement.
+Multiple interpreters might be involved in steps 3 and 4. An additional round of expert elicitation is recommended to try to reduce disagreement. 
+
+The process of expert elicitation usually involves:
+
+- gathering individual experts contributions,
+- analysis of discrepancy and agreement: discussion,
+- and revised individuals contributions. 
 
 In step 5 we are interested in compiling membership matrix from multiple interpreters after the elicitation process, linking back to spatial data for visualisation, and documenting and analysing sources of uncertainties.
-
-## Expert elicitation
-
-- Step 1: individual experts contributions
-- Step 2: analysis of discrepancy and agreement: discussion
-- Step 3: revised individuals contributions 
-- Step 4: synthesis of all contributions
-
 
 ## Proposed functionality
 
