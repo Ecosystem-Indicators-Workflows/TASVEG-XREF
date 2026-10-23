@@ -1,6 +1,8 @@
 input-XREFs/
 processed_xrefs/
+output-XREFs/
 gisdata/
+gisout/
 .venv
 .ipynb_checkpoints
 __pycache__/
@@ -8,7 +10,6 @@ __pycache__/
 .DS_Store
 .env
 .vscode/
-gisdata/
 .virtual_documents/
 /.quarto/
 _book

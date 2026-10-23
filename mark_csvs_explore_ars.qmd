@@ -1,0 +1,775 @@
+---
+title: "Exploring expert cross-references: NSW PCTs"
+jupyter: ir
+execute:
+  warning: false
+---
+
+This notebook explores how experts cross-reference NSW BioNet plant community types (`PCTID`, PCT master list C3.0) to IUCN Global Ecosystem Typology functional groups (`efg`). By default it reads the second-round expert template files in `../../mark_csv/input/` (experts DAK, DC, DT, MGT; one CSV each, `GET1`–`GET3` with shares `GET1_p`–`GET3_p`). A single expert file, an Excel file or a long-format data frame can be swapped in at section 2.
+
+It follows the same structure as `viz_explore_ars.ipynb` (TASVEG). Unlike that data, experts here did **not** all assess the same units, so coverage is checked explicitly and every comparison uses only the units both experts assessed.
+
+| Section | What it does |
+|------------------------------------|------------------------------------|
+| 1\. Set up | Load packages and the shared plot style |
+| 2\. Get data | **One variable** (`DATA_INPUT`) chooses the data; it is then read, validated and checked for coverage |
+| 3\. Matrix table | Reshape to a complete unit × expert × target membership matrix and compute pairwise distances |
+| 4\. Overall exploration | Similarity and dissimilarity heatmaps across experts, the most contested units, and the spread of agreement per pair |
+| 5\. Other exploration | Expert distributions, target usage, contested units, single-unit and single-expert views, interactive browser |
+| 6\. Notes | The process step by step, and a summary computed from the current data |
+
+**Kernel:** R (IRkernel). Render or run top to bottom from `TASVEG-XREF/`; the data are read from `../../mark_csv/input/`.
+
+## 1. Set up
+
+Load packages (installing any that are missing) and define the shared theme and colours.
+
+```{r}
+packages_needed <- c("readr", "readxl", "dplyr", "tidyr", "ggplot2", "tibble", "plotly", "scales")
+packages_missing <- packages_needed[!vapply(packages_needed, requireNamespace, logical(1), quietly = TRUE)]
+if (length(packages_missing) > 0) {
+  install.packages(packages_missing, repos = "https://cloud.r-project.org")
+}
+suppressPackageStartupMessages(invisible(lapply(packages_needed, library, character.only = TRUE)))
+
+options(repr.plot.width = 10, repr.plot.height = 6, repr.plot.res = 110)
+
+# Shared chart styling.
+theme_wp3 <- function() {
+  ggplot2::theme_minimal(base_size = 12) +
+    ggplot2::theme(
+      plot.title = ggplot2::element_text(color = "#17313B", face = "bold", size = 15),
+      plot.subtitle = ggplot2::element_text(color = "#52666F", margin = ggplot2::margin(b = 10)),
+      axis.title = ggplot2::element_text(color = "#334B55", face = "bold"),
+      axis.text = ggplot2::element_text(color = "#52666F"),
+      panel.grid.minor = ggplot2::element_blank(),
+      panel.grid.major = ggplot2::element_line(color = "#E6ECEF", linewidth = 0.35),
+      strip.background = ggplot2::element_rect(fill = "#EDF2F4", color = NA),
+      strip.text = ggplot2::element_text(color = "#17313B", face = "bold"),
+      legend.position = "bottom",
+      legend.title = ggplot2::element_text(color = "#334B55", face = "bold"),
+      plot.background = ggplot2::element_rect(fill = "white", color = NA)
+    )
+}
+
+# A restrained, color-blind-aware palette for a small number of experts.
+expert_palette <- c("#355C7D", "#B36A4C", "#5B8063", "#84659A", "#A7833F", "#477C82")
+teal_low <- "#F1F7F6"; teal_high <- "#176B6E"
+rust_low <- "#FFF4E9"; rust_high <- "#C75B45"
+# White labels on dark tiles, slate labels on light tiles.
+label_colour_scale <- ggplot2::scale_colour_manual(values = c(`TRUE` = "white", `FALSE` = "#17313B"), guide = "none")
+
+R.version.string
+```
+
+## 2. Get data
+
+`DATA_INPUT` is the **only** thing to change to explore different data. It can be:
+
+- a **folder** of expert template CSVs (default: `../../mark_csv/input/`). Each file has a metadata header (`Name`, `Date`, `Comments`, …) followed by a `PCTID, GET1, GET1_p, GET2, GET2_p, GET3, GET3_p` table. The expert code is the filename prefix before `__` (e.g. `MGT__V2_NSW_PCT_250926.csv` → `MGT`);
+- one template CSV, or a vector of them;
+- a long-format `.csv` or `.xlsx` (first sheet), or a data frame already in the R session, with the columns `PCTID`, `efg`, `memb` and `expert` (one row per expert/unit/target).
+
+Membership must be on a 0–1 scale.
+
+```{r}
+DATA_INPUT <- file.path("..", "..", "mark_csv", "input")
+# DATA_INPUT <- file.path("..", "..", "mark_csv", "input", "MGT__V2_NSW_PCT_250926.csv")                   # one expert file
+# DATA_INPUT <- file.path("..", "..", "mark_csv", "input", c("DT__V2_NSW_PCT_240926.csv",
+#                                    "MGT__V2_NSW_PCT_250926.csv"))                # chosen expert files
+# DATA_INPUT <- "my-long-table.xlsx"                                               # long table: PCTID, efg, memb, expert
+# DATA_INPUT <- xref_long                                                          # a data frame in memory
+```
+
+### 2.1 Read
+
+`read_membership_input()` picks the right reader for whatever `DATA_INPUT` is. Expert template files go through `read_expert_template()`, which reads the metadata header, pivots the `GET` slots to long format and keeps a `source_row` so problems can be traced to a line in the file.
+
+If a template row has a **number where the first target code should be** (the `GET1` column missing and the values shifted one column left), the row is re-aligned so the shares line up with the right slots, and the missing code is left blank. It is then reported in 2.2.
+
+```{r}
+is_number_text <- function(x) grepl("^\\s*-?[0-9]*\\.?[0-9]+\\s*$", x)
+blank_to_na <- function(x) { x <- trimws(as.character(x)); x[x %in% c("", "NA")] <- NA; x }
+
+read_expert_template <- function(path) {
+  lines <- sub("^﻿", "", readr::read_lines(path))
+  header_at <- grep("^PCTID,", lines)[1]
+  if (is.na(header_at)) stop("No 'PCTID,' header row found in ", basename(path))
+
+  meta <- utils::read.csv(text = paste(lines[seq_len(header_at - 1)], collapse = "\n"), header = FALSE,
+                          colClasses = "character", blank.lines.skip = TRUE)
+  meta_value <- function(field) { v <- meta[[2]][trimws(meta[[1]]) == field]; if (length(v)) trimws(v[[1]]) else NA_character_ }
+
+  body <- utils::read.csv(text = paste(lines[header_at:length(lines)], collapse = "\n"),
+                          colClasses = "character", na.strings = character(0), check.names = FALSE)
+  body$source_row <- header_at + seq_len(nrow(body))
+  body <- body[trimws(body$PCTID) != "", , drop = FALSE]
+
+  slots <- grep("^GET[0-9]+$", names(body), value = TRUE)
+  value_cols <- as.vector(rbind(slots, paste0(slots, "_p")))
+  shifted <- is_number_text(body[[slots[1]]])
+  if (any(shifted)) {
+    body[shifted, value_cols] <- cbind(NA_character_, body[shifted, value_cols[-length(value_cols)]])
+  }
+
+  expert <- sub("__.*$", "", tools::file_path_sans_ext(basename(path)))
+  long <- dplyr::bind_rows(lapply(slots, function(s) tibble::tibble(
+    expert = expert, PCTID = trimws(body$PCTID), source_row = body$source_row, slot = s,
+    efg = blank_to_na(body[[s]]), memb_text = blank_to_na(body[[paste0(s, "_p")]])
+  ))) |>
+    dplyr::filter(!(is.na(efg) & is.na(memb_text))) |>             # unused slot
+    dplyr::mutate(memb = suppressWarnings(as.numeric(memb_text)))
+
+  list(
+    data = long,
+    meta = tibble::tibble(expert = expert, file = basename(path), name = meta_value("Name"),
+                          date = meta_value("Date"), units = dplyr::n_distinct(body$PCTID),
+                          rows_shifted = sum(shifted), comments = meta_value("Comments"))
+  )
+}
+
+read_long_table <- function(df, label) {
+  df <- tibble::as_tibble(df)
+  if (!"source_row" %in% names(df)) df$source_row <- 1L   # long tables: one record per expert/unit
+  list(data = df, meta = tibble::tibble(file = label))
+}
+
+read_membership_input <- function(input) {
+  if (is.data.frame(input)) return(read_long_table(input, "data frame supplied in session"))
+  if (!is.character(input) || length(input) < 1) stop("DATA_INPUT must be a folder, file path(s) or a data frame.")
+  if (length(input) == 1 && dir.exists(input)) {
+    input <- list.files(input, pattern = "\\.csv$", full.names = TRUE)
+    if (length(input) == 0) stop("No .csv files found in folder.")
+  }
+  missing_files <- input[!file.exists(input)]
+  if (length(missing_files) > 0) stop("File(s) not found: ", paste(missing_files, collapse = ", "))
+
+  parts <- lapply(input, function(path) {
+    ext <- tolower(tools::file_ext(path))
+    if (ext == "csv" && any(grepl("^(﻿)?PCTID,GET", readr::read_lines(path)))) return(read_expert_template(path))
+    df <- switch(ext,
+                 csv = readr::read_csv(path, show_col_types = FALSE, col_types = readr::cols(.default = "c")),
+                 xlsx = , xls = readxl::read_excel(path, col_types = "text"),
+                 stop("Unsupported file type '.", ext, "'; use .csv, .xlsx, or pass a data frame."))
+    read_long_table(df, basename(path))
+  })
+  list(data = dplyr::bind_rows(lapply(parts, `[[`, "data")),
+       meta = dplyr::bind_rows(lapply(parts, `[[`, "meta")))
+}
+
+input <- read_membership_input(DATA_INPUT)
+raw <- input$data
+data_label <- if (is.data.frame(DATA_INPUT)) "data frame supplied in session" else paste(input$meta$file, collapse = ", ")
+message("Read ", nrow(raw), " membership records from ", nrow(input$meta), " source(s)")
+input$meta
+dplyr::glimpse(raw)
+```
+
+### 2.2 Harmonise and validate
+
+Structural problems (missing columns, blank unit or expert codes, fewer than two experts left) **stop** the notebook.
+
+Content problems are **reported, not fixed**, so they can be taken back to the experts. A unit/expert **profile** (all of one expert's targets for one unit) is left out of the comparison when it has:
+
+- a missing target code (e.g. a shifted row);
+- a missing or non-numeric membership share;
+- a share outside 0–1;
+- the same unit listed on more than one row by that expert.
+
+These are kept but listed:
+
+- target codes that don't match the usual `XX0.0` pattern (possible typos, or intentional sub-groups);
+- a target repeated within one row (the shares are added together);
+- profiles whose shares don't sum to 1.
+
+```{r}
+required_fields <- c("PCTID", "efg", "memb", "expert")
+missing_fields <- setdiff(required_fields, names(raw))
+if (length(missing_fields) > 0) stop("Missing required fields: ", paste(missing_fields, collapse = ", "))
+
+xref_all <- raw |>
+  dplyr::mutate(
+    PCTID = trimws(as.character(PCTID)),
+    efg = blank_to_na(efg),
+    expert = trimws(as.character(expert)),
+    memb = suppressWarnings(as.numeric(memb))
+  )
+if (any(is.na(xref_all$PCTID) | xref_all$PCTID == "")) stop("PCTID has missing/blank values.")
+if (any(is.na(xref_all$expert) | xref_all$expert == "")) stop("expert has missing/blank values.")
+
+# Profiles left out of the comparison, with the reason.
+duplicate_units <- xref_all |>
+  dplyr::group_by(expert, PCTID) |>
+  dplyr::filter(dplyr::n_distinct(source_row) > 1) |>
+  dplyr::ungroup()
+check_excluded <- dplyr::bind_rows(
+  xref_all |> dplyr::filter(is.na(efg)) |> dplyr::mutate(reason = "missing target code"),
+  xref_all |> dplyr::filter(is.na(memb)) |> dplyr::mutate(reason = "missing membership share"),
+  xref_all |> dplyr::filter(memb < 0 | memb > 1) |> dplyr::mutate(reason = "share outside 0–1"),
+  duplicate_units |> dplyr::mutate(reason = "unit listed on more than one row")
+) |>
+  dplyr::group_by(expert, PCTID) |>
+  dplyr::summarise(reason = paste(sort(unique(reason)), collapse = "; "),
+                   source_rows = paste(sort(unique(source_row)), collapse = ", "), .groups = "drop")
+
+xref_kept <- xref_all |> dplyr::anti_join(check_excluded, by = c("expert", "PCTID"))
+
+check_repeated_targets <- xref_kept |>
+  dplyr::count(expert, PCTID, efg, name = "times_listed") |>
+  dplyr::filter(times_listed > 1)
+
+xref <- xref_kept |>
+  dplyr::group_by(expert, PCTID, efg) |>
+  dplyr::summarise(memb = sum(memb), .groups = "drop")
+
+check_efg_codes <- xref |>
+  dplyr::filter(!grepl("^[A-Z]+[0-9]+\\.[0-9]+$", efg)) |>
+  dplyr::count(expert, efg, name = "n_units")
+check_totals <- xref |>
+  dplyr::group_by(PCTID, expert) |>
+  dplyr::summarise(total_membership = sum(memb), n_targets = dplyr::n(), .groups = "drop") |>
+  dplyr::filter(abs(total_membership - 1) > 0.001)
+
+experts_read <- sort(unique(xref_all$expert))
+experts <- sort(unique(xref$expert))
+units <- sort(unique(xref$PCTID))
+if (length(experts) < 2) stop("At least two experts with usable profiles are needed to compare memberships.")
+expert_colors <- stats::setNames(rep(expert_palette, length.out = length(experts_read)), experts_read)
+
+excluded_by_expert <- xref_all |>
+  dplyr::distinct(expert, PCTID) |>
+  dplyr::count(expert, name = "units_read") |>
+  dplyr::left_join(dplyr::count(check_excluded, expert, name = "units_excluded"), by = "expert") |>
+  dplyr::mutate(units_excluded = dplyr::coalesce(units_excluded, 0L), units_kept = units_read - units_excluded,
+                share_kept = units_kept / units_read)
+
+message(nrow(xref), " records | ", length(units), " units | ", dplyr::n_distinct(xref$efg),
+        " target groups | experts kept: ", paste(experts, collapse = ", "))
+if (length(setdiff(experts_read, experts)) > 0)
+  message("Experts with no usable profiles: ", paste(setdiff(experts_read, experts), collapse = ", "))
+message(nrow(check_excluded), " unit/expert profile(s) left out; ",
+        nrow(check_efg_codes), " non-standard target code(s); ",
+        nrow(check_repeated_targets), " repeated target(s) summed; ",
+        nrow(check_totals), " profile total(s) not equal to 1.")
+excluded_by_expert
+```
+
+```{r}
+# Why profiles were left out, by expert.
+check_excluded |> dplyr::count(expert, reason, name = "units")
+head(check_excluded, 10)
+check_efg_codes
+check_repeated_targets
+check_totals |> dplyr::count(expert, name = "totals_not_1")
+```
+
+### 2.3 Coverage
+
+Which experts assessed which units (after 2.2). A unit can only be compared between experts who both assessed it, so pairs of experts are compared on different numbers of units.
+
+```{r}
+coverage <- xref |>
+  dplyr::distinct(PCTID, expert) |>
+  dplyr::group_by(PCTID) |>
+  dplyr::summarise(n_experts = dplyr::n(), experts = paste(sort(expert), collapse = " + "), .groups = "drop")
+coverage_sets <- coverage |> dplyr::count(experts, n_experts, name = "units") |> dplyr::arrange(dplyr::desc(units))
+
+options(repr.plot.width = 10, repr.plot.height = max(3, 0.35 * nrow(coverage_sets) + 1.8))
+ggplot2::ggplot(coverage_sets, ggplot2::aes(x = units, y = stats::reorder(experts, units))) +
+  ggplot2::geom_col(fill = teal_high, width = 0.7) +
+  ggplot2::geom_text(ggplot2::aes(label = units), hjust = -0.2, size = 3.3, colour = "#17313B") +
+  ggplot2::scale_x_continuous(expand = ggplot2::expansion(mult = c(0, 0.08))) +
+  ggplot2::labs(title = "Which experts assessed each unit",
+                subtitle = "Number of units for each combination of experts (usable profiles only)",
+                x = "Units", y = NULL) +
+  theme_wp3() + ggplot2::theme(panel.grid.major.y = ggplot2::element_blank())
+
+coverage_sets
+```
+
+## 3. Matrix table
+
+The long table is reshaped into a **complete membership matrix**: one row per unit and expert, one column per target group. For each unit, the matrix covers every target that *any* expert assigned to it. A target an expert didn't list is set to **0** (not assigned); units an expert didn't assess (or whose profile was left out in 2.2) are left out rather than filled.
+
+Two derived tables are built from it and used in sections 4 and 5:
+
+- `pairwise`: for every unit and every pair of experts who both assessed it, the **dissimilarity** between their profiles — half the sum of absolute differences, i.e. the share of membership that would have to move to make them identical (0 = identical, 1 = no overlap). **Similarity** = `1 − dissimilarity`.
+- `unit_disagreement`: per unit assessed by at least two experts, the mean, minimum and maximum dissimilarity across expert pairs.
+
+These are descriptive comparisons, not formal inter-rater reliability statistics. Profiles that don't sum to 1 can push dissimilarity slightly past 1; colour scales are clipped to 0–1.
+
+```{r}
+# Long, complete profiles: one row per unit × expert × target, absent targets = 0.
+profiles <- xref |>
+  dplyr::group_by(PCTID) |>
+  tidyr::complete(expert, efg, fill = list(memb = 0)) |>
+  dplyr::ungroup()
+
+# Wide matrix table: rows = unit × expert, columns = target groups.
+efg_order <- sort(unique(xref$efg))
+membership_matrix <- profiles |>
+  tidyr::pivot_wider(names_from = efg, values_from = memb) |>
+  dplyr::select(PCTID, expert, dplyr::any_of(efg_order)) |>
+  dplyr::arrange(PCTID, expert)
+
+message(nrow(membership_matrix), " rows (unit × expert) × ", length(efg_order), " target columns. ",
+        "NA = target not used by any expert for that unit; 0 = used by another expert but not this one.")
+head(membership_matrix, 12)
+```
+
+```{r}
+# Pairwise expert distances for each unit both experts assessed.
+pairwise <- profiles |>
+  dplyr::inner_join(profiles, by = c("PCTID", "efg"), suffix = c("_a", "_b"),
+                    relationship = "many-to-many") |>
+  dplyr::filter(expert_a < expert_b) |>
+  dplyr::group_by(PCTID, expert_a, expert_b) |>
+  dplyr::summarise(dissimilarity = 0.5 * sum(abs(memb_a - memb_b)), .groups = "drop") |>
+  dplyr::mutate(similarity = 1 - dissimilarity, pair = paste(expert_a, expert_b, sep = " – "))
+
+unit_disagreement <- pairwise |>
+  dplyr::group_by(PCTID) |>
+  dplyr::summarise(
+    mean_dissimilarity = mean(dissimilarity),
+    min_dissimilarity = min(dissimilarity),
+    max_dissimilarity = max(dissimilarity),
+    n_pairs = dplyr::n(),
+    .groups = "drop"
+  ) |>
+  dplyr::arrange(dplyr::desc(mean_dissimilarity), PCTID)
+
+message(nrow(unit_disagreement), " of ", length(units), " units were assessed by at least two experts; ",
+        sum(unit_disagreement$max_dissimilarity < 0.001), " of those have identical profiles from every expert.")
+head(unit_disagreement, 10)
+```
+
+## 4. Overall exploration: similarity and dissimilarity
+
+### 4.1 Expert × expert heatmaps
+
+Complete expert-by-expert matrices, averaged over every unit both experts assessed. The diagonal is each expert compared with themselves (similarity 1, dissimilarity 0). Labels give the mean, the share of units where the two profiles are identical, and the number of shared units.
+
+```{r}
+pair_summary <- pairwise |>
+  dplyr::group_by(expert_a, expert_b) |>
+  dplyr::summarise(
+    n_units = dplyr::n(),
+    mean_similarity = mean(similarity),
+    mean_dissimilarity = mean(dissimilarity),
+    median_similarity = stats::median(similarity),
+    share_identical = mean(dissimilarity < 0.001),
+    .groups = "drop"
+  )
+units_per_expert <- xref |> dplyr::distinct(expert, PCTID) |> dplyr::count(expert, name = "n_units")
+
+# Mirror the pairs and add the diagonal so the matrix is complete.
+pair_matrix <- dplyr::bind_rows(
+  pair_summary |> dplyr::rename(expert_x = expert_a, expert_y = expert_b),
+  pair_summary |> dplyr::rename(expert_x = expert_b, expert_y = expert_a),
+  units_per_expert |> dplyr::transmute(expert_x = expert, expert_y = expert, n_units,
+                                       mean_similarity = 1, mean_dissimilarity = 0, share_identical = 1)
+) |>
+  dplyr::mutate(
+    expert_x = factor(expert_x, levels = experts), expert_y = factor(expert_y, levels = experts),
+    sim_label = sprintf("%.2f\n(%.0f%% identical)\nn = %d", mean_similarity, 100 * share_identical, n_units),
+    dis_label = sprintf("%.2f\nn = %d", mean_dissimilarity, n_units)
+  )
+
+expert_matrix_plot <- function(fill_col, label_col, low, high, title, subtitle, fill_name) {
+  ggplot2::ggplot(pair_matrix, ggplot2::aes(x = expert_x, y = expert_y, fill = .data[[fill_col]])) +
+    ggplot2::geom_tile(color = "white", linewidth = 0.8) +
+    ggplot2::geom_text(ggplot2::aes(label = .data[[label_col]], colour = .data[[fill_col]] > 0.6), size = 3.1) +
+    label_colour_scale +
+    ggplot2::scale_fill_gradient(low = low, high = high, limits = c(0, 1), oob = scales::squish) +
+    ggplot2::coord_equal() +
+    ggplot2::labs(title = title, subtitle = subtitle, x = NULL, y = NULL, fill = fill_name) +
+    theme_wp3() + ggplot2::theme(panel.grid.major = ggplot2::element_blank())
+}
+
+options(repr.plot.width = 7, repr.plot.height = 6.5)
+expert_matrix_plot("mean_similarity", "sim_label", teal_low, teal_high,
+                   "Expert similarity across shared units", "1 = identical profiles; n = units both assessed", "Mean similarity")
+expert_matrix_plot("mean_dissimilarity", "dis_label", rust_low, rust_high,
+                   "Expert dissimilarity across shared units", "0 = identical, 1 = no shared membership", "Mean dissimilarity")
+
+pair_summary
+```
+
+### 4.2 Unit × expert-pair dissimilarity heatmap
+
+With well over a thousand units, the full heatmap is too tall to read, so this shows the `n_heatmap` most contested units (rows) against every pair of experts (columns). Rows are ordered from most to least contested; the right-hand column is the unit's mean. White = the pair agree exactly; grey = the pair didn't both assess the unit. 4.3 summarises all units.
+
+```{r}
+n_heatmap <- 60
+
+heatmap_units <- head(unit_disagreement$PCTID, n_heatmap)
+pair_levels <- c(sort(unique(pairwise$pair)), "Mean")
+complete_dissimilarity <- dplyr::bind_rows(
+  pairwise |> dplyr::filter(PCTID %in% heatmap_units) |> dplyr::select(PCTID, pair, dissimilarity),
+  unit_disagreement |> dplyr::filter(PCTID %in% heatmap_units) |>
+    dplyr::transmute(PCTID, pair = "Mean", dissimilarity = mean_dissimilarity)
+) |>
+  tidyr::complete(PCTID, pair = pair_levels) |>
+  dplyr::mutate(PCTID = factor(PCTID, levels = rev(heatmap_units)), pair = factor(pair, levels = pair_levels))
+
+options(repr.plot.width = 9, repr.plot.height = max(6, 0.14 * length(heatmap_units) + 2.5))
+ggplot2::ggplot(complete_dissimilarity, ggplot2::aes(x = pair, y = PCTID, fill = dissimilarity)) +
+  ggplot2::geom_tile(color = "white", linewidth = 0.25) +
+  ggplot2::geom_vline(xintercept = length(pair_levels) - 0.5, colour = "#17313B", linewidth = 0.6) +
+  ggplot2::scale_fill_gradient(low = "white", high = rust_high, limits = c(0, 1), oob = scales::squish,
+                               na.value = "#E5EAED") +
+  ggplot2::scale_x_discrete(position = "top") +
+  ggplot2::labs(title = paste("Dissimilarity for the", length(heatmap_units), "most contested units"),
+                subtitle = "Rows ordered from most (top) to least contested; grey = not assessed by both",
+                x = NULL, y = "Unit (PCTID)", fill = "Dissimilarity") +
+  theme_wp3() +
+  ggplot2::theme(panel.grid.major = ggplot2::element_blank(), axis.text.y = ggplot2::element_text(size = 6.5),
+                 axis.text.x = ggplot2::element_text(size = 9, colour = "#17313B", face = "bold"),
+                 plot.subtitle = ggplot2::element_text(color = "#52666F", margin = ggplot2::margin(b = 14)))
+```
+
+### 4.3 Spread of agreement for every expert pair
+
+For each pair, the share of their shared units falling in each dissimilarity band. A pair can have a decent mean similarity but still disagree completely on a sizeable minority of units; this view shows that.
+
+```{r}
+band_breaks <- c(-Inf, 0.001, 0.2, 0.4, 0.6, 0.8, Inf)
+band_labels <- c("Identical", "≤ 0.2", "0.2–0.4", "0.4–0.6", "0.6–0.8", "> 0.8")
+pair_bands <- pairwise |>
+  dplyr::mutate(band = cut(dissimilarity, band_breaks, labels = band_labels, right = TRUE)) |>
+  dplyr::count(pair, band) |>
+  dplyr::group_by(pair) |>
+  dplyr::mutate(share = n / sum(n), n_units = sum(n)) |>
+  dplyr::ungroup() |>
+  dplyr::mutate(pair_label = sprintf("%s\n(n = %d)", pair, n_units))
+band_colours <- stats::setNames(grDevices::colorRampPalette(c(rust_low, rust_high))(length(band_labels)), band_labels)
+band_colours[["Identical"]] <- "#DCEBE8"
+
+options(repr.plot.width = 10, repr.plot.height = max(4, 0.55 * dplyr::n_distinct(pair_bands$pair) + 2))
+ggplot2::ggplot(pair_bands, ggplot2::aes(x = share, y = pair_label, fill = band)) +
+  ggplot2::geom_col(width = 0.7, colour = "white", linewidth = 0.3) +
+  ggplot2::scale_fill_manual(values = band_colours, drop = FALSE) +
+  ggplot2::scale_x_continuous(labels = scales::percent, expand = ggplot2::expansion(mult = c(0, 0.03))) +
+  ggplot2::labs(title = "How often each pair of experts agrees",
+                subtitle = "Share of shared units in each dissimilarity band",
+                x = "Share of shared units", y = NULL, fill = "Dissimilarity") +
+  theme_wp3() + ggplot2::theme(panel.grid.major.y = ggplot2::element_blank()) +
+  ggplot2::guides(fill = ggplot2::guide_legend(nrow = 1))
+```
+
+## 5. Other exploration
+
+### Select the comparison values
+
+`selected_unit` defaults to the most contested unit; replace it with any `PCTID` (e.g. `"3136"`). `selected_expert` drives 5.5. `n_contested` sets how many units appear in 5.3 and 5.6.
+
+```{r}
+selected_unit <- unit_disagreement$PCTID[[1]]
+selected_expert <- experts[[1]]
+n_contested <- 25
+
+stopifnot(selected_unit %in% units, selected_expert %in% experts)
+c(selected_unit = selected_unit, selected_expert = selected_expert)
+```
+
+### 5.1 Membership values by expert
+
+Every recorded membership value, with the number of targets each expert assigns per unit on average. An expert who splits units across more targets will have lower values overall.
+
+```{r}
+expert_summary <- xref |>
+  dplyr::group_by(expert) |>
+  dplyr::summarise(
+    units = dplyr::n_distinct(PCTID),
+    records = dplyr::n(),
+    targets_used = dplyr::n_distinct(efg),
+    mean_targets_per_unit = records / units,
+    single_target_units = sum(table(PCTID) == 1),
+    mean_membership = mean(memb),
+    .groups = "drop"
+  )
+expert_axis_labels <- stats::setNames(
+  sprintf("%s\n%.1f targets/unit", expert_summary$expert, expert_summary$mean_targets_per_unit),
+  expert_summary$expert)
+
+options(repr.plot.width = 10, repr.plot.height = 6)
+ggplot2::ggplot(xref, ggplot2::aes(x = expert, y = memb, colour = expert)) +
+  ggplot2::geom_jitter(width = 0.18, height = 0.01, alpha = 0.25, size = 1.3) +
+  ggplot2::geom_boxplot(fill = NA, colour = "#334B55", outlier.shape = NA, width = 0.45) +
+  ggplot2::geom_point(data = expert_summary, ggplot2::aes(y = mean_membership), shape = 23, size = 3.5,
+                      fill = "white", stroke = 1.2) +
+  ggplot2::scale_colour_manual(values = expert_colors, guide = "none") +
+  ggplot2::scale_x_discrete(labels = expert_axis_labels) +
+  ggplot2::scale_y_continuous(limits = c(0, 1.02), breaks = seq(0, 1, 0.2)) +
+  ggplot2::labs(title = "Recorded membership values by expert",
+                subtitle = "Each dot is one record; box = quartiles; diamond = mean",
+                x = NULL, y = "Membership (0–1)") +
+  theme_wp3()
+
+expert_summary
+```
+
+### 5.2 Target usage by expert
+
+Each cell sums an expert's membership for one target group across all units; the label is the number of units where they used it. Grey = never used. A group used by only one expert is worth checking. Because coverage differs (2.3), compare the pattern rather than the raw totals.
+
+```{r}
+target_usage <- xref |>
+  dplyr::group_by(expert, efg) |>
+  dplyr::summarise(total_membership = sum(memb), n_units = dplyr::n(), .groups = "drop") |>
+  tidyr::complete(expert = experts, efg)
+usage_dark <- 0.6 * max(target_usage$total_membership, na.rm = TRUE)
+
+options(repr.plot.width = 15, repr.plot.height = 4.5)
+ggplot2::ggplot(target_usage, ggplot2::aes(x = factor(efg, levels = efg_order), y = expert, fill = total_membership)) +
+  ggplot2::geom_tile(color = "white", linewidth = 0.5) +
+  ggplot2::geom_text(ggplot2::aes(label = ifelse(is.na(n_units), "", n_units),
+                                  colour = !is.na(total_membership) & total_membership > usage_dark), size = 2.6) +
+  label_colour_scale +
+  ggplot2::scale_fill_gradient(low = teal_low, high = teal_high, na.value = "#E5EAED") +
+  ggplot2::labs(title = "Target group usage by expert",
+                subtitle = "Fill = summed membership across units; label = number of units",
+                x = "Target group (efg)", y = "Expert", fill = "Summed membership") +
+  theme_wp3() +
+  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 50, hjust = 1), panel.grid.major = ggplot2::element_blank())
+```
+
+### 5.3 Most contested units
+
+Units ranked by mean pairwise dissimilarity. The bar spans the least to most different expert pair; the dot is the mean. The label on the right is the number of expert pairs compared.
+
+```{r}
+contested <- unit_disagreement |>
+  dplyr::slice_head(n = n_contested) |>
+  dplyr::mutate(PCTID = factor(PCTID, levels = rev(PCTID)))
+x_max <- max(1, contested$max_dissimilarity)
+
+options(repr.plot.width = 10, repr.plot.height = max(4, 0.25 * nrow(contested) + 1.5))
+ggplot2::ggplot(contested, ggplot2::aes(y = PCTID)) +
+  ggplot2::geom_segment(ggplot2::aes(x = min_dissimilarity, xend = max_dissimilarity, yend = PCTID),
+                        colour = "#E2B8A9", linewidth = 2.2, lineend = "round") +
+  ggplot2::geom_point(ggplot2::aes(x = mean_dissimilarity), colour = rust_high, size = 2.8) +
+  ggplot2::geom_text(ggplot2::aes(x = x_max + 0.04, label = paste(n_pairs, "pairs")), hjust = 0, size = 2.8,
+                     colour = "#52666F") +
+  ggplot2::scale_x_continuous(limits = c(0, x_max + 0.15), breaks = seq(0, 1, 0.2)) +
+  ggplot2::labs(title = paste("The", nrow(contested), "most contested units"),
+                subtitle = "Dot = mean pairwise dissimilarity; bar = least to most different expert pair",
+                x = "Dissimilarity (0 = identical, 1 = no overlap)", y = "Unit (PCTID)") +
+  theme_wp3()
+```
+
+### 5.4 One unit in detail
+
+Three views of `selected_unit`: each expert's memberships by target, the same profile as a heatmap (blank = not assigned), and the similarity of every pair of experts who assessed this unit.
+
+```{r}
+unit_profile <- profiles |> dplyr::filter(PCTID == selected_unit)
+unit_targets <- sort(unique(unit_profile$efg))
+
+options(repr.plot.width = 10, repr.plot.height = 5.5)
+ggplot2::ggplot(dplyr::filter(unit_profile, memb > 0),
+                ggplot2::aes(x = factor(efg, levels = unit_targets), y = memb, colour = expert)) +
+  ggplot2::geom_point(position = ggplot2::position_dodge(width = 0.55), size = 3.2) +
+  ggplot2::scale_colour_manual(values = expert_colors) +
+  ggplot2::scale_x_discrete(drop = FALSE) +
+  ggplot2::scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.2), expand = ggplot2::expansion(mult = c(0, 0.04))) +
+  ggplot2::labs(title = paste("Target membership by expert — PCT", selected_unit),
+                subtitle = "Each point is one recorded membership; targets an expert did not assign are not plotted",
+                x = "Target group (efg)", y = "Membership (0–1)", colour = "Expert") +
+  theme_wp3()
+```
+
+```{r}
+options(repr.plot.width = 9, repr.plot.height = 4)
+ggplot2::ggplot(unit_profile, ggplot2::aes(x = factor(efg, levels = unit_targets), y = expert, fill = memb)) +
+  ggplot2::geom_tile(color = "white", linewidth = 0.8) +
+  ggplot2::geom_text(ggplot2::aes(label = ifelse(memb > 0, sprintf("%.2f", memb), ""), colour = memb > 0.6), size = 3.4) +
+  label_colour_scale +
+  ggplot2::scale_fill_gradient(low = teal_low, high = teal_high, limits = c(0, 1)) +
+  ggplot2::labs(title = paste("Membership profiles — PCT", selected_unit),
+                x = "Target group (efg)", y = "Expert", fill = "Membership") +
+  theme_wp3() + ggplot2::theme(panel.grid.major = ggplot2::element_blank())
+```
+
+```{r}
+unit_pairs <- pairwise |> dplyr::filter(PCTID == selected_unit)
+unit_experts <- sort(unique(unit_profile$expert))
+unit_similarity <- dplyr::bind_rows(
+  unit_pairs |> dplyr::select(expert_x = expert_a, expert_y = expert_b, similarity),
+  unit_pairs |> dplyr::select(expert_x = expert_b, expert_y = expert_a, similarity),
+  tibble::tibble(expert_x = unit_experts, expert_y = unit_experts, similarity = 1)
+)
+
+options(repr.plot.width = 6.5, repr.plot.height = 5.5)
+ggplot2::ggplot(unit_similarity, ggplot2::aes(x = expert_x, y = expert_y, fill = similarity)) +
+  ggplot2::geom_tile(color = "white", linewidth = 0.8) +
+  ggplot2::geom_text(ggplot2::aes(label = sprintf("%.2f", similarity), colour = similarity > 0.6), size = 3.6) +
+  label_colour_scale +
+  ggplot2::scale_fill_gradient(low = teal_low, high = teal_high, limits = c(0, 1), oob = scales::squish) +
+  ggplot2::coord_equal() +
+  ggplot2::labs(title = paste("Expert similarity — PCT", selected_unit),
+                subtitle = "1 = identical profiles, 0 = no shared membership",
+                x = NULL, y = NULL, fill = "Similarity") +
+  theme_wp3() + ggplot2::theme(panel.grid.major = ggplot2::element_blank())
+```
+
+### 5.5 One expert against the others
+
+Every unit/target pair the two experts both assessed, with the selected expert's membership on the x-axis and another expert's on the y-axis (0 = not assigned). Points on the diagonal agree; point size counts overlapping records. Points on an axis are targets only one of the two experts used.
+
+```{r}
+expert_vs_others <- profiles |>
+  dplyr::filter(expert == selected_expert) |>
+  dplyr::select(PCTID, efg, memb_selected = memb) |>
+  dplyr::inner_join(profiles |> dplyr::filter(expert != selected_expert), by = c("PCTID", "efg")) |>
+  dplyr::filter(memb_selected > 0 | memb > 0)
+
+options(repr.plot.width = 12, repr.plot.height = 5)
+ggplot2::ggplot(expert_vs_others, ggplot2::aes(x = memb_selected, y = memb, colour = expert)) +
+  ggplot2::geom_abline(slope = 1, intercept = 0, colour = "#B9C6CC", linetype = "dashed") +
+  ggplot2::geom_count(alpha = 0.75) +
+  ggplot2::facet_wrap(~ expert, nrow = 1, labeller = ggplot2::labeller(expert = function(x) paste("vs", x))) +
+  ggplot2::scale_colour_manual(values = expert_colors, guide = "none") +
+  ggplot2::scale_size_area(max_size = 8) +
+  ggplot2::scale_x_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.25)) +
+  ggplot2::scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.25)) +
+  ggplot2::coord_equal() +
+  ggplot2::labs(title = paste("Memberships recorded by", selected_expert, "compared with each other expert"),
+                x = paste(selected_expert, "membership"), y = "Other expert's membership", size = "Records") +
+  theme_wp3()
+```
+
+### 5.6 Interactive unit browser
+
+Use the dropdown in the output to step through the `n_contested` most contested units (ordered as in 5.3). Each view is the expert × target membership heatmap for that unit; hover for values. Experts who didn't assess a unit show as "not assessed".
+
+```{r}
+browser_units <- as.character(dplyr::slice_head(unit_disagreement, n = n_contested)$PCTID)
+unit_browser <- plotly::plot_ly()
+unit_axes <- list()
+
+for (k in seq_along(browser_units)) {
+  u <- browser_units[[k]]
+  d <- profiles |> dplyr::filter(PCTID == u)
+  targets <- sort(unique(d$efg))
+  z <- matrix(NA_real_, nrow = length(experts), ncol = length(targets), dimnames = list(experts, targets))
+  z[cbind(match(d$expert, experts), match(d$efg, targets))] <- d$memb
+  hover <- matrix(paste0("Expert: ", rep(experts, times = length(targets)),
+                         "<br>Target: ", rep(targets, each = length(experts)),
+                         "<br>Membership: ", ifelse(is.na(z), "not assessed", sprintf("%.2f", z))),
+                  nrow = length(experts))
+  unit_browser <- plotly::add_trace(
+    unit_browser, type = "heatmap", x = targets, y = experts, z = z,
+    text = hover, hoverinfo = "text", zmin = 0, zmax = 1, xgap = 2, ygap = 2,
+    colorscale = list(list(0, teal_low), list(1, teal_high)),
+    colorbar = list(title = "Membership"), showscale = k == 1, visible = k == 1, name = u
+  )
+  unit_axes[[u]] <- targets
+}
+
+unit_title <- function(u) {
+  row <- unit_disagreement[unit_disagreement$PCTID == u, ]
+  sprintf("PCT %s — mean dissimilarity %.2f (pair range %.2f–%.2f)",
+          u, row$mean_dissimilarity, row$min_dissimilarity, row$max_dissimilarity)
+}
+
+unit_buttons <- lapply(seq_along(browser_units), function(k) {
+  u <- browser_units[[k]]
+  list(label = u, method = "update",
+       args = list(list(visible = seq_along(browser_units) == k,
+                        showscale = seq_along(browser_units) == k),
+                   list(title = list(text = unit_title(u)),
+                        xaxis = list(title = list(text = "Target group (efg)"), type = "category",
+                                     categoryorder = "array", categoryarray = unit_axes[[u]],
+                                     automargin = TRUE, showgrid = FALSE))))
+})
+
+unit_browser |>
+  plotly::layout(
+    title = list(text = unit_title(browser_units[[1]])),
+    xaxis = list(title = "Target group (efg)", type = "category", categoryorder = "array",
+                 categoryarray = unit_axes[[browser_units[[1]]]], automargin = TRUE, showgrid = FALSE),
+    yaxis = list(title = "Expert", type = "category", automargin = TRUE, showgrid = FALSE),
+    updatemenus = list(list(type = "dropdown", active = 0, x = 0, y = 1.2,
+                            xanchor = "left", yanchor = "top", buttons = unit_buttons)),
+    margin = list(l = 80, r = 30, t = 110, b = 80),
+    paper_bgcolor = "white", plot_bgcolor = "white",
+    font = list(family = "Arial, sans-serif", size = 12, color = "#52666F"),
+    hoverlabel = list(bgcolor = "white", bordercolor = "#D4DEE2",
+                      font = list(family = "Arial, sans-serif", size = 12, color = "#17313B"))
+  ) |>
+  plotly::config(displaylogo = FALSE, responsive = TRUE)
+```
+
+## 6. Notes
+
+### Process
+
+1.  **Set up** — load packages and a shared plot style (section 1).
+2.  **Get data** — `DATA_INPUT` points to a folder of expert template CSVs, one or more files, or a data frame. Template files are read past their metadata header, shifted rows are re-aligned, and the `GET` slots are pivoted to one long table with `PCTID`, `efg`, `memb`, `expert` (2.1).
+3.  **Validate** — stop on structural errors (missing columns, blank unit/expert codes, fewer than two usable experts). Leave out, and list, any unit/expert profile with a missing code, a missing or out-of-range share, or a unit listed twice. Report non-standard codes, repeated targets (summed) and totals ≠ 1 without changing them (2.2).
+4.  **Check coverage** — count which combinations of experts assessed each unit (2.3).
+5.  **Build the matrix** — for each unit, complete every assessing expert's profile across all targets any of them used, filling unlisted targets with 0; pivot to a unit × expert by target matrix (3).
+6.  **Compare** — for every unit and expert pair who both assessed it, dissimilarity = ½ × Σ\|difference\| (0 identical, 1 no overlap), similarity = 1 − dissimilarity; summarise per unit and per expert pair (3).
+7.  **Explore overall** — expert × expert similarity/dissimilarity heatmaps, the most contested units by pair, and the spread of agreement for each pair (4).
+8.  **Explore in detail** — expert value distributions, target usage, most contested units, one unit, one expert vs the rest, and an interactive browser (5).
+
+### Summary
+
+The cell below writes the summary from the current data, so it stays correct when `DATA_INPUT` changes.
+
+```{r}
+most_similar <- pair_summary |> dplyr::slice_max(mean_similarity, n = 1, with_ties = FALSE)
+least_similar <- pair_summary |> dplyr::slice_min(mean_similarity, n = 1, with_ties = FALSE)
+expert_mean_sim <- pairwise |>
+  tidyr::pivot_longer(c(expert_a, expert_b), values_to = "expert") |>
+  dplyr::group_by(expert) |>
+  dplyr::summarise(mean_similarity = mean(similarity), .groups = "drop") |>
+  dplyr::arrange(mean_similarity)
+n_identical <- sum(unit_disagreement$max_dissimilarity < 0.001)
+top_contested <- head(unit_disagreement, 5)
+experts_dropped <- setdiff(experts_read, experts)
+
+summary_points <- c(
+  sprintf("Data: %s — %d usable records, %d units, %d target groups, %d experts compared (%s).",
+          data_label, nrow(xref), length(units), length(efg_order), length(experts), paste(experts, collapse = ", ")),
+  sprintf("Profiles left out: %s.%s",
+          paste(sprintf("%s %d of %d", excluded_by_expert$expert, excluded_by_expert$units_excluded,
+                        excluded_by_expert$units_read), collapse = ", "),
+          if (length(experts_dropped) > 0) paste0(" No usable profiles from ", paste(experts_dropped, collapse = ", "), ".") else ""),
+  sprintf("Other checks: %d non-standard target code(s)%s; %d repeated target(s) summed; %d profile total(s) not equal to 1.",
+          dplyr::n_distinct(check_efg_codes$efg),
+          if (nrow(check_efg_codes) > 0) paste0(" (", paste(unique(check_efg_codes$efg), collapse = ", "), ")") else "",
+          nrow(check_repeated_targets), nrow(check_totals)),
+  sprintf("Coverage: %d of %d units assessed by at least two experts; largest group is %s (%d units).",
+          nrow(unit_disagreement), length(units), coverage_sets$experts[[1]], coverage_sets$units[[1]]),
+  sprintf("Targets per unit: %s.",
+          paste(sprintf("%s %.1f", expert_summary$expert, expert_summary$mean_targets_per_unit), collapse = ", ")),
+  sprintf("Overall agreement: mean similarity across all expert pairs and shared units is %.2f; %d of %d compared units (%.0f%%) are identical for every expert.",
+          mean(pairwise$similarity), n_identical, nrow(unit_disagreement), 100 * n_identical / nrow(unit_disagreement)),
+  sprintf("Most similar pair: %s & %s (mean similarity %.2f, identical on %.0f%% of %d shared units).",
+          most_similar$expert_a, most_similar$expert_b, most_similar$mean_similarity,
+          100 * most_similar$share_identical, most_similar$n_units),
+  sprintf("Least similar pair: %s & %s (mean similarity %.2f, identical on %.0f%% of %d shared units).",
+          least_similar$expert_a, least_similar$expert_b, least_similar$mean_similarity,
+          100 * least_similar$share_identical, least_similar$n_units),
+  sprintf("Expert who differs most from the others on average: %s (mean similarity %.2f).",
+          expert_mean_sim$expert[[1]], expert_mean_sim$mean_similarity[[1]]),
+  sprintf("Most contested units: %s.",
+          paste(sprintf("PCT %s (%.2f)", top_contested$PCTID, top_contested$mean_dissimilarity), collapse = ", "))
+)
+cat(paste0("• ", summary_points), sep = "\n")
+```
+
+### Caveats
+
+- Similarity and dissimilarity describe differences between membership profiles. They don't measure ecological similarity or formal inter-rater reliability.
+- Experts assessed different sets of units (2.3), so pair means are over different units and aren't strictly comparable with each other. Check `n` before reading too much into a difference.
+- Treating unlisted targets as 0 assumes an expert who lists a unit assessed all of it. A profile left out in 2.2 is treated as "not assessed", not as disagreement.
+- Leaving out flawed profiles keeps the comparison honest, but it can remove a whole expert (e.g. a file where the first target code is missing on every row). Fix the source file and re-run rather than patching values here.
+- Codes such as `T2.5SG` may be intentional sub-groups rather than typos; confirm with the expert. Until then they count as a separate target, which increases dissimilarity against `T2.5`.
+- Don't weight experts or average them into a final membership table without a defensible project method.
+
+```{r}
+sessionInfo()
+```
