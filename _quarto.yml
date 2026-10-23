@@ -4,21 +4,37 @@ project:
 book:
   title: "Cross-referencing Tasmanian Terrestrial Ecosystems"
   author: 
+    - JR Ferrer-Paris
     - M Tozer
-    - DA Keith
+    - Elliot Gould
+    - Abhimanyu Raj Singh
     - J Balmer
     - A Kitchener
     - A Latinovic
-    - JR Ferrer-Paris
+    - DA Keith
+
   chapters:
     - index.qmd
     - file: stepwise.qmd
       text: "Crossreferencing steps"
-    - membership-tables.qmd
-    - file: "read-input-xref-data.ipynb"
-      text: "Input data"
-    - file: "visualise-agreement.ipynb"
-      text: "Viz agreement"
+    - part: "Assess alignment"
+    - part: "Assemble information"
+    - part: "Membership tables"
+      chapters:
+      - membership-tables.qmd
+      - file: "read-input-xref-data.ipynb"
+        text: "Input data"
+    - part: "Multiple interpreters"
+    - part: "Multiple rounds"
+      chapters:
+      - file: "visualise-agreement.ipynb"
+        text: "Viz agreement"
+      - file: "visualise-agreement.out.ipynb"
+      - file: "viz_explore_ars.ipynb"
+      - file: "viz-agreement-EG.qmd"
+    - part: "Synthesis" 
+      chapters:
+      - "EFG-map.qmd" 
     - references.qmd
   margin-header: |
     <center>

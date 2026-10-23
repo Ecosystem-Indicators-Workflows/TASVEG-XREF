@@ -25,7 +25,7 @@ MT and DAK led the cross-referencing tables.
 AL, AK, JB contributed the agency cross-referencing tables.
 
 JRFP led the technical documentation of all sections.
-Other members of the EIW team contributed to some sections of this resource.
+EG and ARS team contributed to ... sections of this resource.
 
 ## Revision history {.unnumbered}
 
@@ -33,9 +33,9 @@ Version control for this document is maintained in the original [GitHub reposito
 
 |Version | Date | Editor | Summary of Changes |
 |------|------|-----------------|----------------------|
+| 0.3 | 23 Oct 2026 | JRFP | Merged contributions and update structure |
+| 0.2 | 15 Oct 2026 | EG, ARS | Explore visualisations |
 | 0.1 | 13 Aug 2026 | JRFP | Initial draft and project structure |
-
-
 
 ## Reproducibility statement
 
