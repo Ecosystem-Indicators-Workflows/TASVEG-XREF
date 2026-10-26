@@ -17,25 +17,29 @@ book:
     - index.qmd
     - file: stepwise.qmd
       text: "Crossreferencing steps"
-    - part: "Assess alignment"
-    - part: "Assemble information"
-    - part: "Membership tables"
+    - part: "Preparation"
       chapters:
-      - membership-tables.qmd
-      - file: "read-input-xref-data.ipynb"
-        text: "Input data"
-    - part: "Multiple interpreters"
-    - part: "Multiple rounds"
+      - file: preparation/index.qmd
+        text: "Alignment & information"
+    - part: "Expert Elicitation"
       chapters:
-      - file: "visualise-agreement.ipynb"
+      - elicitation/index.qmd
+      - file: "elicitation/visualise-agreement.ipynb"
         text: "Viz agreement"
-      - file: "visualise-agreement.out.ipynb"
-      - file: "viz_explore_ars.ipynb"
-      - file: "viz-agreement-EG.qmd"
+      - file: "elicitation/visualise-agreement.out.ipynb"
+      - file: "elicitation/viz_explore_ars.ipynb"
+      - file: "elicitation/viz-agreement-EG.qmd"
     - part: "Synthesis" 
       chapters:
-      - "EFG-map.qmd" 
+      - "synthesis/EFG-map.qmd" 
     - references.qmd
+    - part: "Appendices"
+      chapters:
+      - appendices/membership-tables.qmd
+      - file: appendices/data-sources.qmd
+        text: "TASVEG data"
+      - file: "appendices/read-input-xref-data.ipynb"
+        text: "Membership tables"
   margin-header: |
     <center>
     ![](/assets/logo_CES.png){height=66px}

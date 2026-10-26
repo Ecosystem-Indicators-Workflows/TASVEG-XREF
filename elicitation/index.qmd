@@ -1,0 +1,111 @@
+# Expert elicitation process {#sec-elicitation}
+
+We have cross-referencing tables from four experts, we identify the expert by their initials: JB, AL, AK, and MGT.
+
+During the first round, the experts used different formats to represent the cross-referencing information.
+
+```{r}
+library(readr)
+library(dplyr)
+library(ecoSynthesis)
+library(ggplot2)
+here::i_am("elicitation/index.qmd")
+output_dir <- here::here("output-XREFs")
+source(here::here("inc/setup.R"))
+source(here::here("inc/functions.R"))
+```
+
+First we will get two look up tables with the valid members of the source and target classifications:
+
+```{r}
+TASVEG_LUT <-
+  read_csv(
+    here::here(output_dir, "Source-lookup-table.csv"),
+    show_col_types = FALSE
+  )
+table(TASVEG_LUT$eligible)
+IUCN_GET_LUT
+```
+
+Read data directly from a CSV file into a membership table:
+
+```{r}
+TASVEG_memb <- read_membership_tbl(
+  here::here(output_dir, "First-round-output.csv"),
+  source_id = "VEGCODE",
+  target_id = "efg",
+  membership = "memb",
+  interpreter = "expert"
+)
+
+TASVEG_memb
+```
+
+Let's check this file for errors:
+
+```{r}
+check_membership(TASVEG_memb)
+```
+
+
+## Pairwise dissimilarity
+
+Calculate pairwise dissimilarities
+
+```{r}
+(pd <- pairwise_dissimilarity(TASVEG_memb))
+
+plot_pairwise_diss(pd) +
+  theme_wp3()
+```
+
+```{r}
+#| eval: false
+efg_order <- sort(unique(TASVEG_memb$efg))
+membership_matrix <- profiles |>
+  tidyr::pivot_wider(names_from = efg, values_from = memb) |>
+  dplyr::select(VEGCODE, expert, dplyr::any_of(efg_order)) |>
+  dplyr::arrange(VEGCODE, expert)
+
+message(
+  nrow(membership_matrix),
+  " rows (unit × expert) × ",
+  length(efg_order),
+  " target columns. ",
+  "NA = target not used by any expert for that unit; 0 = used by another expert but not this one."
+)
+head(membership_matrix, 12)
+```
+
+## Pairwise expert distances for each unit.
+```{r}
+#| eval: true
+
+sid <- rlang::sym(attr(pd, "source_id"))
+
+unit_disagreement <- pd |>
+  dplyr::group_by(!!sid) |>
+  dplyr::summarise(
+    mean_dissimilarity = mean(dissimilarity),
+    min_dissimilarity = min(dissimilarity),
+    max_dissimilarity = max(dissimilarity),
+    n_pairs = dplyr::n(),
+    .groups = "drop"
+  ) |>
+  dplyr::arrange(dplyr::desc(mean_dissimilarity), VEGCODE)
+
+msg <- "%s of %s units have identical profiles from every interpreter."
+
+message(
+  sprintf(
+    msg,
+    sum(unit_disagreement$max_dissimilarity < 0.001),
+    nrow(unit_disagreement)
+  )
+)
+head(unit_disagreement, 10)
+
+ggplot(unit_disagreement, aes(x = mean_dissimilarity)) +
+  geom_histogram(binwidth = 0.1) +
+  theme_wp3()
+```

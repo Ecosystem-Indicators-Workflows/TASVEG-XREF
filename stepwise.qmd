@@ -20,9 +20,19 @@ Membership estimates from multiple interpreters can be combined to produce more 
 
 A stepwise diagnostic process ensures that the cross-referencing exercise aligns with four key principles: alignment of classifications, membership based on entity properties, using weight of evidence, and transparent representation of uncertainty [@IUCN_2025].
 
-![Structure of the stepwise cross-referencing process.](fig/stepwise-xref-2026-10-23-161812.png)
+![Structure of the stepwise cross-referencing process.](fig/stepwise-xref-2026-10-23-182804.png)
+
+Steps 1 and 2 are essential steps for preparation of the information and decisions that will shape the cross-referencing process. 
+
+:::{.aside}
+We adress these two steps in [@sec-preparation].
+:::
 
 Multiple interpreters might be involved in steps 3 and 4. An additional round of expert elicitation is recommended to try to reduce disagreement. 
+
+:::{.aside} 
+We summarise the process of expert elicitation in @sec-elicitation.
+:::
 
 The process of expert elicitation usually involves:
 
@@ -31,6 +41,10 @@ The process of expert elicitation usually involves:
 - and revised individuals contributions. 
 
 In step 5 we are interested in compiling membership matrix from multiple interpreters after the elicitation process, linking back to spatial data for visualisation, and documenting and analysing sources of uncertainties.
+
+:::{.aside} 
+We summarise the results in @sec-synthesis.
+:::
 
 ## Proposed functionality
 
