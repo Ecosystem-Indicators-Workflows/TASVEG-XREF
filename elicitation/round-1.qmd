@@ -1,0 +1,105 @@
+# Round one {#sec-round-one}
+
+:::{.aside}
+
+Our setup for this R session is: 
+```{r}
+#| warnings: false
+#| message: false
+library(readr)
+library(dplyr)
+library(ecoSynthesis)
+library(ggplot2)
+here::i_am("elicitation/index.qmd")
+output_dir <- here::here("output-XREFs")
+source(here::here("inc/setup.R"))
+source(here::here("inc/functions.R"))
+load(here::here(output_dir, "lookup-tables.rda"))
+load(here::here(output_dir, "memb-tables.rda"))
+```
+
+:::
+
+## Pairwise dissimilarity
+
+Calculate pairwise dissimilarities
+
+```{r}
+(pd <- pairwise_dissimilarity(TASVEG_clean))
+
+plot_pairwise_diss(pd) +
+    theme_wp3()
+```
+
+```{r}
+#| eval: false
+efg_order <- sort(unique(TASVEG_clean$efg))
+membership_matrix <- profiles |>
+    tidyr::pivot_wider(names_from = efg, values_from = memb) |>
+    dplyr::select(VEGCODE, expert, dplyr::any_of(efg_order)) |>
+    dplyr::arrange(VEGCODE, expert)
+
+message(
+    nrow(membership_matrix),
+    " rows (unit × expert) × ",
+    length(efg_order),
+    " target columns. ",
+    "NA = target not used by any expert for that unit; 0 = used by another expert but not this one."
+)
+head(membership_matrix, 12)
+```
+
+## Pairwise expert distances for each unit.
+```{r}
+#| eval: true
+
+sid <- rlang::sym(attr(pd, "source_id"))
+
+unit_disagreement <- pd |>
+    dplyr::group_by(!!sid) |>
+    dplyr::summarise(
+        mean_dissimilarity = mean(dissimilarity),
+        min_dissimilarity = min(dissimilarity),
+        max_dissimilarity = max(dissimilarity),
+        n_pairs = dplyr::n(),
+        .groups = "drop"
+    ) |>
+    dplyr::arrange(dplyr::desc(mean_dissimilarity), VEGCODE)
+
+msg <- "%s of %s units have identical profiles from every interpreter."
+
+message(
+    sprintf(
+        msg,
+        sum(unit_disagreement$max_dissimilarity < 0.001),
+        nrow(unit_disagreement)
+    )
+)
+head(unit_disagreement, 10)
+
+ggplot(unit_disagreement, aes(x = mean_dissimilarity)) +
+    geom_histogram(binwidth = 0.1) +
+    theme_wp3()
+```
+
+
+## Visualising
+
+This source unit had the highest dissimilarity:
+
+```{r}
+TASVEG |>
+    dplyr::filter(VEGCODE == "AHL") |>
+    dplyr::glimpse()
+dplyr::filter(TASVEG_clean, VEGCODE == "AHL") |>
+    membership_tile_plot()
+```
+
+
+```{r}
+TASVEG |>
+    dplyr::filter(VEGCODE == "FMG") |>
+    dplyr::glimpse()
+dplyr::filter(TASVEG_clean, VEGCODE == "FMG") |>
+    membership_tile_plot()
+```

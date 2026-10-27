@@ -91,3 +91,52 @@ plot_pairwise_diss <- function(x) {
     facet_grid(rows = vars(!!ia), cols = vars(!!ib))
   return(gp)
 }
+
+clean_membership <- function(x, source, target) {
+  stopifnot(inherits(x, "membership_tbl"))
+  stopifnot(inherits(source, "lookup_tbl"))
+  stopifnot(inherits(target, "lookup_tbl"))
+
+  membership <- attr(x, "membership")
+
+  m <- x[[membership]]
+  f1 <- is.na(m)
+  f2 <- !f1 & (m < 0 | m > 1)
+
+  source_id <- attr(x, "source_id")
+  sid <- x[[source_id]]
+  vid <- rlang::sym(attr(source, "id"))
+  elig <- rlang::sym(attr(source, "eligible"))
+  eid <- dplyr::filter(source, !!elig) |> dplyr::pull(!!vid)
+  f3 <- !(sid %in% eid)
+
+  target_id <- attr(x, "target_id")
+  tid <- x[[target_id]]
+  vid <- attr(target, "id")
+  elig <- attr(target, "eligible")
+  eid <- target[[vid]][target[[elig]]]
+  f4 <- !(tid %in% eid)
+
+  if (any(f1)) {
+    message(sprintf("Flagged %s records with `NA`", sum(f1)))
+  }
+  if (any(f2)) {
+    message(sprintf("Flagged %s records outside bounds [0,1]", sum(f2)))
+  }
+  if (any(f3)) {
+    message(sprintf("Flagged %s records with not eligible source ids", sum(f3)))
+  }
+  if (any(f4)) {
+    message(sprintf("Flagged %s records with invalid target ids", sum(f4)))
+  }
+  if (any(f1 | f2 | f3 | f4)) {
+    message(sprintf(
+      "Removed %s records with one or more flags",
+      sum(f1 | f2 | f3 | f4)
+    ))
+  } else {
+    message("No records removed")
+  }
+  res <- dplyr::filter(x, !f1 & !f2 & !f3 & !f4)
+  res
+}
