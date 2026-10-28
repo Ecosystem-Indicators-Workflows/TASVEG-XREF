@@ -10,3 +10,6 @@ Data preparation is explained in @sec-data-prep, and visualisation of agreement 
 
 ## Second and final round
 
+Uncertainty, disagreement and agreement
+
+Compare first vs. second round
