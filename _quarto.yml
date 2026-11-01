@@ -11,7 +11,7 @@ book:
       affiliations:
         - ref: ces
         - ref: iucn 
-    - name: M Tozer
+    - name: Mark Tozer
       affiliations: 
         - ref: ces
     - name: Elliot Gould
@@ -25,8 +25,15 @@ book:
           name: QCIF
         - ref: ces
     - name: J Balmer
+      affiliations:
+       - id: nre
+         name: Department of Natural Resources and Environment Tasmania
     - name: A Kitchener
+      affiliations:
+       - ref: nre
     - name: A Latinovic
+      affiliations:
+       - ref: nre
     - name: DA Keith
       affiliations:
         - id: ces
@@ -40,35 +47,44 @@ book:
   
   chapters:
     - index.qmd
-    - file: stepwise.qmd
+    - file: preliminaries/stepwise.qmd
       text: "Crossreferencing steps"
+    - file: preliminaries/source-data.qmd
+      text: "TASVEG data"
+    - file: preliminaries/alignment.qmd
+      text: "Alignment with GET"
     - part: "Preparation"
       chapters:
-      - file: preparation/index.qmd
-        text: "TASVEG data"
-      - file: preparation/alignment.qmd
-        text: "Alignment"
-    - part: "Expert Elicitation"
+      - file: preparation/lookup-tables.qmd
+        text: "Lookup tables"
+      - file: "preparation/read-input-xref-data.ipynb"
+        text: "Membership table"
+      - file: "preparation/validation.qmd"
+        text: "Validation"
+      - file: "preparation/exploration.qmd"
+        text: "Exploration"
+    - part: "Analysis"
       chapters:
-      - elicitation/index.qmd
-      - elicitation/data-prep.qmd
-      - elicitation/round-1.qmd
+#      - elicitation/index.qmd
+#      - elicitation/data-prep.qmd
+      - analysis/round-1.qmd
+      - analysis/round-2.qmd
+      - analysis/between-rounds.qmd
     - part: "Synthesis" 
       chapters:
-      - "synthesis/EFG-map.qmd" 
+      - "synthesis/index.qmd" 
     - references.qmd
-    - part: "Appendices"
-      chapters:
-      - appendices/membership-tables.qmd
-      - file: appendices/data-sources.qmd
-        text: "TASVEG data"
-      - file: "appendices/read-input-xref-data.ipynb"
-        text: "Membership tables"
-      - file: "elicitation/visualise-agreement.ipynb"
-        text: "Viz agreement"
-      - file: "elicitation/visualise-agreement.out.ipynb"
-      - file: "elicitation/viz_explore_ars.ipynb"
-      - file: "elicitation/viz-agreement-EG.qmd"
+#    - part: "Appendices"
+#      chapters:
+#      - appendices/membership-tables.qmd
+#      - file: appendices/data-sources.qmd
+#        text: "TASVEG data"
+
+#      - file: "elicitation/visualise-agreement.ipynb"
+#        text: "Viz agreement"
+#      - file: "elicitation/visualise-agreement.out.ipynb"
+#      - file: "elicitation/viz_explore_ars.ipynb"
+#      - file: "elicitation/viz-agreement-EG.qmd"
 
   margin-header: |
     <center>
