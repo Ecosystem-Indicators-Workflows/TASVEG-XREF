@@ -1,15 +1,19 @@
 # Overview of this document {.unnumbered}
 
+This document presents a reproducible computational workflow for the analysis and synthesis of cross-referencing information for Tasmanian terrestrial ecosystems. Cross-referencing aims to elucidate relationships between units of classifications that represent similar types of entities [@IUCN_2025;@sec-process]. 
+
+In this document the source classification is the TASVEG dataset [@TASVEG_5;@KitchenerHarris_2013] that includes 159 mapping units, most of them representing ecological vegetation communities (see chapter @sec-source). These vegetation communities are aligned with the ecosystem concept of the target classification, the IUCN Global Ecosystem Typology (IUCN GET; @Keith_2022; see chapter @sec-alignment). 
+
+The main body of the document is divided in three parts. The first part includes four chapters dedicated to Data preparation. First, we collect the spatial and ecological information from the source and target classifications [@sec-lookup], and membership tables from five interpreters [@sec-memb-table]. Then, we validate and clean the input data, @sec-valid. Finally, we explore the cleaned dataset with a full membership table including the assessments of the five interpreters in two rounds of interpretation [@sec-exploration]. 
+
+The second part of the document is dedicated to Analysis of the cross-referencing data.
+We analysed agreement between interpreters and inherent cross-referencing uncertainty for each round of interpretaton [@sec-round-one;@sec-round-two], and compared differences between rounds [@sec-between-rounds]. 
+
+The final part of the document presents a synthesis of the cross-referencing information and produces different types of outputs, including, symmary tables and maps.
+
 This online document is a joint output of the ARDC "Ecosystem Indicators Workflows" (EIW) project and the ARC Industry Laureate Fellowship Project "Foundations for leading the nature positive ecosystem conservation agenda".
 
-## Document structure
-
-This resource includes the following components :
-
-- Read and harmonise cross-referencing data
-- ...
-
-Use the links on the left to navigate through the different sections of this resource.
+You can use the links on the left to navigate through the different sections of this resource.
 
 ::: {.callout-note}
 ## Target ecosystem types
@@ -17,15 +21,9 @@ Use the links on the left to navigate through the different sections of this res
 - Selected palustrine wetland and other transitional ecosystems of Tasmania.
 :::
 
+## Contributions
 
-
-## Contributors
-
-MT and DAK led the cross-referencing tables.
-AL, AK, JB contributed the agency cross-referencing tables.
-
-JRFP led the technical documentation of all sections.
-EG and ARS team contributed to ... sections of this resource.
+MT led the expert elicitation process. MT, DAK, AL, AK, and JB contributed membership tables for cross-referencing. JRFP led the technical documentation of all sections of the on-line document. JRFP, EG and ARS contributed scripts for all sections.
 
 ## Revision history {.unnumbered}
 
@@ -33,13 +31,14 @@ Version control for this document is maintained in the original [GitHub reposito
 
 |Version | Date | Editor | Summary of Changes |
 |------|------|-----------------|----------------------|
+| 0.4 | 1 Nov 2026 | JRFP, MT | Updated cross-referencing tables, update structure, revised content  |
 | 0.3 | 23 Oct 2026 | JRFP | Merged contributions and update structure |
 | 0.2 | 15 Oct 2026 | EG, ARS | Explore visualisations |
-| 0.1 | 13 Aug 2026 | JRFP | Initial draft and project structure |
+| 0.1 | 13 Aug 2026 | JRFP, MT | Initial draft and project structure |
 
 ## Reproducibility statement
 
-This resource uses Bash, R and Python for most steps of data download, preparation and analysis. All steps are documented using Jupyter notebooks and quarto. This resource is designed to be reproducible, with instructions for data download and code execution provided in the relevant sections. The data used in this resource is publicly available, and the code is open source. Instructions for setting up the environment and running the code and notes on the implementation of FAIR principles are provided in the relevant sections at the end of this document.
+This resource uses Bash and R for steps of data download, preparation and analysis. All steps are documented using Jupyter notebooks and quarto. This resource is designed to be reproducible, with instructions for data download and code execution provided in the relevant sections. The data used in this resource is publicly available, and the code is open source. Instructions for setting up the environment and running the code and notes on the implementation of FAIR principles are provided in the relevant sections at the end of this document.
 
 ## Acknowledgements
 
