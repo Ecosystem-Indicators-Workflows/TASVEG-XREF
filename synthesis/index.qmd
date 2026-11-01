@@ -1,5 +1,7 @@
 # Synthesis {#sec-synthesis}
 
-## Synthesis by interpreter
+## Area summaries
 
-## Synthesis by target
+Synthesis by interpreter and by target unit
+
+## Maps
