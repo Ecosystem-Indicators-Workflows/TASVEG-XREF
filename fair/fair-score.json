@@ -1,0 +1,197 @@
+{
+  "repository": "Ecosystem-Indicators-Workflows/TASVEG-XREF",
+  "commit": "8e9bf14",
+  "date": "2026-11-04",
+  "checklist": "ARDC FAIR Software Checklist v0.2",
+  "ardc_url": "https://fairsoftwarechecklist.net/v0.2?f=01&a=00110&i=20000&r=010",
+  "total": 6,
+  "total_max": 33,
+  "questions_met": 3,
+  "all_met": false,
+  "principles": [
+    {
+      "principle": "Findable",
+      "current": 1,
+      "target": 4,
+      "max": 4,
+      "pct": 25,
+      "_row": "Findable"
+    },
+    {
+      "principle": "Accessible",
+      "current": 2,
+      "target": 10,
+      "max": 10,
+      "pct": 20,
+      "_row": "Accessible"
+    },
+    {
+      "principle": "Interoperable",
+      "current": 2,
+      "target": 12,
+      "max": 12,
+      "pct": 17,
+      "_row": "Interoperable"
+    },
+    {
+      "principle": "Reusable",
+      "current": 1,
+      "target": 6,
+      "max": 7,
+      "pct": 14,
+      "_row": "Reusable"
+    }
+  ],
+  "questions": [
+    {
+      "id": "f:q0",
+      "label": "Indexed by search engines",
+      "current": 0,
+      "target": 3,
+      "max": 3,
+      "met": false,
+      "has": "",
+      "needs": "Not public and no machine-readable metadata"
+    },
+    {
+      "id": "f:q1",
+      "label": "Globally unique identifier",
+      "current": 1,
+      "target": 1,
+      "max": 1,
+      "met": true,
+      "has": "GitHub URL is globally unique",
+      "needs": ""
+    },
+    {
+      "id": "a:q0",
+      "label": "Identifier gives a copy",
+      "current": 0,
+      "target": 3,
+      "max": 3,
+      "met": false,
+      "has": "",
+      "needs": "Repo is private: others cannot download it"
+    },
+    {
+      "id": "a:q1",
+      "label": "Persistent identifier (DOI)",
+      "current": 0,
+      "target": 2,
+      "max": 2,
+      "met": false,
+      "has": "",
+      "needs": "No DOI: a GitHub URL can move or vanish"
+    },
+    {
+      "id": "a:q2",
+      "label": "Open retrieval protocol",
+      "current": 1,
+      "target": 1,
+      "max": 1,
+      "met": true,
+      "has": "Retrievable over HTTPS / git",
+      "needs": ""
+    },
+    {
+      "id": "a:q3",
+      "label": "Open or authenticated access",
+      "current": 1,
+      "target": 1,
+      "max": 1,
+      "met": true,
+      "has": "GitHub supports authentication",
+      "needs": ""
+    },
+    {
+      "id": "a:q4",
+      "label": "Identifier in metadata",
+      "current": 0,
+      "target": 3,
+      "max": 3,
+      "met": false,
+      "has": "",
+      "needs": "No workflow name or ID in metadata (no CITATION.cff)"
+    },
+    {
+      "id": "i:q0",
+      "label": "Open, domain-common formats",
+      "current": 2,
+      "target": 3,
+      "max": 3,
+      "met": false,
+      "has": "Open formats: csv",
+      "needs": "No open geospatial formats (GeoTIFF/COG, GeoPackage)"
+    },
+    {
+      "id": "i:q1",
+      "label": "Versioning scheme",
+      "current": 0,
+      "target": 2,
+      "max": 2,
+      "met": false,
+      "has": "",
+      "needs": "No git tags or version numbers"
+    },
+    {
+      "id": "i:q2",
+      "label": "Dependencies specified",
+      "current": 0,
+      "target": 3,
+      "max": 3,
+      "met": false,
+      "has": "",
+      "needs": "No dependency file (renv.lock / requirements.txt)"
+    },
+    {
+      "id": "i:q3",
+      "label": "Links to related software",
+      "current": 0,
+      "target": 2,
+      "max": 2,
+      "met": false,
+      "has": "",
+      "needs": "No links to related software (CITATION.cff references)"
+    },
+    {
+      "id": "i:q4",
+      "label": "Links to related data",
+      "current": 0,
+      "target": 2,
+      "max": 2,
+      "met": false,
+      "has": "",
+      "needs": "No links to related data"
+    },
+    {
+      "id": "r:q0",
+      "label": "Executable",
+      "current": 0,
+      "target": 1,
+      "max": 1,
+      "met": false,
+      "has": "",
+      "needs": "Missing: README run steps, pinned dependencies, input data"
+    },
+    {
+      "id": "r:q1",
+      "label": "Source + documentation",
+      "current": 1,
+      "target": 2,
+      "max": 3,
+      "met": false,
+      "has": "Source code available",
+      "needs": "README too short to document the workflow"
+    },
+    {
+      "id": "r:q2",
+      "label": "Licence",
+      "current": 0,
+      "target": 3,
+      "max": 3,
+      "met": false,
+      "has": "",
+      "needs": "No LICENSE file"
+    }
+  ]
+}
