@@ -74,6 +74,7 @@ book:
       chapters:
       - "synthesis/index.qmd" 
       - "synthesis/area-summaries.ipynb" 
+      - "synthesis/EFG-map.qmd" 
     - references.qmd
 #    - part: "Appendices"
 #      chapters:

@@ -29,7 +29,11 @@ The shape and form of the summary table for the synthesis step will depend on th
 ###  Keep all records
 
 :::{.aside}
+
+Our setup for this R session is: 
 ```{r}
+#| warnings: false
+#| message: false
 library(sf)
 library(ecoSynthesis)
 library(dplyr)
@@ -37,8 +41,6 @@ library(units)
 library(ggplot2)
 here::i_am("synthesis/index.qmd")
 output_dir <- here::here("output-XREFs")
-#source(here::here("inc/setup.R"))
-#load(here::here(output_dir, "lookup-tables.rda"))
 load(here::here(output_dir, "memb-tables.rda"))
 ```
 :::
@@ -89,10 +91,27 @@ TASVEG_memb_by_target <-
 This method reduced the number of records for this source units to three candidate targets, with two of them having low values of the proportion of votes of membership values:
 
 ```{r}
-TASVEG_max_by_expert |>
+TASVEG_memb_by_target |>
   filter(VEGCODE == "AAP")
 ```
 
+Notice, that this is not the same as the mean membership value, since the membership table ignores the zero-membership values:
+
+```{r}
+TASVEG_revised |>
+  filter(VEGCODE == "AAP") |>
+  summarise(
+    mean_memb = mean(memb),
+    nr_interpreters = n_distinct(expert),
+    .by = all_of(c("EFG"))
+  )
+```
+
+:::{.callout-note}
+
+This could be calculated using a `membership_matrix`. 
+
+:::
 
 ### Aggregate by interpreter, keep best candidate
 
@@ -108,21 +127,32 @@ The result is similar to the mean values of the membership values of the best ca
 ```{r}
 TASVEG_max_target |>
   filter(VEGCODE == "AAP")
-
-TASVEG_revised |>
-  filter(VEGCODE == "AAP") |>
-  summarise(mean_memb = mean(memb), .by = all_of("EFG", "expert", ))
 ```
 
 
+:::{.aside}
+
+We save both these four summary tables in a file that we can load in later steps of the workflow:
+
+```{r}
+save(
+  TASVEG_revised,
+  TASVEG_max_by_expert,
+  TASVEG_memb_by_target,
+  TASVEG_max_target,
+  file = here::here(output_dir, "memb-summaries.rda")
+)
+```
+
+:::
 ## Outputs
 
+The summary of the membership table produces an intermediate output that might still require further steps of transformation. 
 
-In this workflow the output of the synthesis step will be a modified membership table with the following modifications:
+This is the case for spatial analysis, where we need to merge the membership summary with tables of attributes of the spatial objects in order to get the desired output (a spatial summary or a spatial object for plotting target units or membership values).
 
-- Only one round kept,
-- One or more rows per source unit,
-- One target per row, 
-- Membership values from multiple interpreters aggregated,
-- No information for individual interpreters, but the Nr of interpreters supporting the combination of source and target is reported.
+In this cases the type of output will constrain the amount of information that can be kept. 
+
+We will show two examples in the next two chapters: area summaries in @sec-areas; and different types of raster maps in @sec-maps.
+
 
