@@ -33,5 +33,5 @@
 
 ![FAIR scores per question](fair/fair-scores.png)
 
-<sub>Updated 2026-11-04 from commit `5ac36a1` by `.fair/fair_check.R`. Edit `.fair/fair-checklist.yml`, not this block.</sub>
+<sub>Updated 2026-11-04 from commit `8e9bf14` by `.fair/fair_check.R`. Edit `.fair/fair-checklist.yml`, not this block.</sub>
 <!-- FAIR:END -->
