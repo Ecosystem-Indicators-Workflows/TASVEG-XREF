@@ -12,7 +12,7 @@ public: false
 website:
 
 # File formats the workflow writes, if outputs are not committed (e.g. [csv, tif]).
-formats: [csv, tif, geojson]
+formats: [csv]
 
 # Set to true if all input data are committed to the repository.
 data_included: false
