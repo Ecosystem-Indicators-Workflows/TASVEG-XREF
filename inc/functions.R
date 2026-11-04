@@ -31,7 +31,7 @@ read_membership_tbl <- function(data, ...) {
   return(outdata)
 }
 
-
+# method to use different formulas, preferably jaccard
 pairwise_dissimilarity <- function(x) {
   stopifnot(inherits(x, "membership_tbl"))
 
@@ -139,4 +139,82 @@ clean_membership <- function(x, source, target) {
   }
   res <- dplyr::filter(x, !f1 & !f2 & !f3 & !f4)
   res
+}
+
+pivot_wide_membership_table <- function(
+  xref,
+  original_names,
+  target_names,
+  membership_values,
+  expert_name = NULL,
+  round_nr = NULL
+) {
+  memb_table <- xref |>
+    dplyr::select(
+      dplyr::any_of(original_names),
+      dplyr::any_of(target_names),
+      dplyr::any_of(membership_values)
+    ) |>
+    tidyr::pivot_longer(
+      dplyr::any_of(c(target_names, membership_values)),
+      cols_vary = "slowest",
+      names_to = c(".value"),
+      names_pattern = "([[:alpha:]]+)"
+    )
+
+  if (!is.null(expert_name)) {
+    memb_table <- mutate(memb_table, expert = expert_name)
+  }
+  if (!is.null(round_nr)) {
+    memb_table <- mutate(memb_table, round = round_nr)
+  }
+  return(memb_table)
+}
+
+pivot_membership_matrix <- function(
+  xref,
+  original_names,
+  target_names,
+  expert_name = NULL,
+  round_nr = NULL
+) {
+  memb_table <- xref |>
+    tidyr::pivot_longer(
+      dplyr::any_of(target_names),
+      names_to = "EFG",
+      values_to = "memb"
+    )
+  if (!is.null(expert_name)) {
+    memb_table <- mutate(memb_table, expert = expert_name)
+  }
+  if (!is.null(round_nr)) {
+    memb_table <- mutate(memb_table, round = round_nr)
+  }
+  return(memb_table)
+}
+
+summary_disagreement <- function(x) {
+  sid <- rlang::sym(attr(x, "source_id"))
+
+  out <- x |>
+    dplyr::group_by(!!sid) |>
+    dplyr::summarise(
+      mean_dissimilarity = mean(dissimilarity),
+      min_dissimilarity = min(dissimilarity),
+      max_dissimilarity = max(dissimilarity),
+      n_pairs = dplyr::n(),
+      .groups = "drop"
+    ) |>
+    dplyr::arrange(dplyr::desc(mean_dissimilarity), !!sid)
+
+  msg <- "%s of %s units have identical profiles from every interpreter."
+
+  message(
+    sprintf(
+      msg,
+      sum(out$max_dissimilarity < 0.001),
+      nrow(out)
+    )
+  )
+  return(out)
 }

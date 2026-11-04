@@ -1,4 +1,4 @@
-# Crossreferencing TASVEG {#sec-preparation}
+# Source classification: TASVEG {#sec-source}
 
 In this document we are focusing on TASVEG, a comprehensive digital map of Tasmania's vegetation, including sub-Antarctic Macquarie Island [@TASVEG_3;@TASVEG_5]. 
 
