@@ -74,5 +74,5 @@ We then document the different tasks of data preparation in @sec-lookup and @sec
 
 We then document the analysis stage in three separate tasks: analysis of the first round in @sec-round-one; analysis of the second round in @sec-round-two; and the comparison between rounds in @sec-inter-round.
 
-Finally we summarise the synthesis and outputs in @sec-synthesis.
+Finally we summarise the synthesis and outputs in @sec-synthesis, @sec-areas and @sec-maps.
 
