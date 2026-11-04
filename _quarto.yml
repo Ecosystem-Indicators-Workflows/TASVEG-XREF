@@ -73,6 +73,7 @@ book:
     - part: "Synthesis" 
       chapters:
       - "synthesis/index.qmd" 
+      - "synthesis/area-summaries.ipynb" 
     - references.qmd
 #    - part: "Appendices"
 #      chapters:
@@ -103,5 +104,3 @@ format:
     highlight-style: solarized
     toc: true
     sidebar-width: 300px # Default is 250px
-  pdf:
-    documentclass: scrreprt
