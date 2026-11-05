@@ -30,7 +30,7 @@ TASVEG_memb <- read_membership_tbl(
   target_id = "EFG",
   membership = "memb",
   interpreter = "expert",
-  round = round
+  round = "round"
 )
 
 TASVEG_memb
