@@ -76,6 +76,7 @@ book:
       - "synthesis/area-summaries.ipynb" 
       - "synthesis/EFG-map.qmd" 
     - references.qmd
+    - glossary.qmd
 #    - part: "Appendices"
 #      chapters:
 #      - appendices/membership-tables.qmd
