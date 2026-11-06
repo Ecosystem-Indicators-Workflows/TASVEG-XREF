@@ -1,0 +1,179 @@
+
+R version 4.5.2 (2025-10-31) -- "[Not] Part in a Rumble"
+Copyright (C) 2025 The R Foundation for Statistical Computing
+Platform: aarch64-apple-darwin20
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> #  R --vanilla < inc/EFG-membership-raster.R > reproducibility-notes/EFG-membership-raster-out.txt
+> library(ecoSynthesis)
+> library(sf)
+> library(terra)
+> library(fasterize)
+> library(dplyr)
+> 
+> date()
+[1] "Fri Nov  6 07:30:11 2026"
+> 
+> here::i_am("inc/EFG-membership-raster.R")
+> load(here::here("output-XREFs/memb-summaries.rda"))
+> 
+> out_dir <- here::here("gisout")
+> if (!dir.exists(out_dir)) {
++   dir.create(out_dir)
++ }
+> 
+> rez <- 90
+> 
+> TASVEG <- read_sf(here::here("gisdata", "TASVEG_5_0.shp")) |>
++   left_join(TASVEG_summary, by = "VEGCODE", relationship = "many-to-many")
+> 
+> TASVEG_raster <- raster(TASVEG, res = rez)
+> 
+> for (tid in IUCN_GET_LUT$efg_id) {
++   cat(sprintf("Starting %s: %s // ", tid, date()))
++   out_file <- here::here(out_dir, sprintf("%s-res%s.tiff", tid, rez))
++   if (file.exists(out_file)) {
++     cat(sprintf("%s already exists\n", out_file))
++   } else {
++     if (tid %in% TASVEG_summary$EFG) {
++       TASVEG_k <- TASVEG |> filter(EFG == tid)
++       k_raster <- fasterize(
++         TASVEG_k,
++         TASVEG_raster,
++         field = "prop_memb",
++         fun = "sum"
++       )
++ 
++       print(sum(k_raster@data@values, na.rm = T))
++       # plot(k_raster)
++ 
++       writeRaster(k_raster, out_file)
++     } else {
++       cat(sprintf("%s not found\n", tid))
++     }
++   }
++ }
+Starting F1.1: Fri Nov  6 07:33:25 2026 // F1.1 not found
+Starting F1.2: Fri Nov  6 07:33:25 2026 // F1.2 not found
+Starting F1.3: Fri Nov  6 07:33:25 2026 // F1.3 not found
+Starting F1.4: Fri Nov  6 07:33:25 2026 // F1.4 not found
+Starting F1.5: Fri Nov  6 07:33:25 2026 // F1.5 not found
+Starting F1.6: Fri Nov  6 07:33:25 2026 // F1.6 not found
+Starting F1.7: Fri Nov  6 07:33:25 2026 // F1.7 not found
+Starting F2.1: Fri Nov  6 07:33:25 2026 // F2.1 not found
+Starting F2.10: Fri Nov  6 07:33:25 2026 // F2.10 not found
+Starting F2.2: Fri Nov  6 07:33:25 2026 // [1] 3491.323
+Starting F2.3: Fri Nov  6 07:33:35 2026 // [1] 4592.213
+Starting F2.4: Fri Nov  6 07:33:46 2026 // [1] 703.46
+Starting F2.5: Fri Nov  6 07:33:46 2026 // F2.5 not found
+Starting F2.6: Fri Nov  6 07:33:46 2026 // F2.6 not found
+Starting F2.7: Fri Nov  6 07:33:46 2026 // F2.7 not found
+Starting F2.8: Fri Nov  6 07:33:46 2026 // [1] 4.32
+Starting F2.9: Fri Nov  6 07:33:47 2026 // F2.9 not found
+Starting F3.1: Fri Nov  6 07:33:47 2026 // [1] 192.22
+Starting F3.2: Fri Nov  6 07:33:48 2026 // F3.2 not found
+Starting F3.3: Fri Nov  6 07:33:48 2026 // [1] 419.76
+Starting F3.4: Fri Nov  6 07:33:48 2026 // F3.4 not found
+Starting F3.5: Fri Nov  6 07:33:48 2026 // F3.5 not found
+Starting FM1.1: Fri Nov  6 07:33:48 2026 // FM1.1 not found
+Starting FM1.2: Fri Nov  6 07:33:48 2026 // FM1.2 not found
+Starting FM1.3: Fri Nov  6 07:33:48 2026 // FM1.3 not found
+Starting M1.1: Fri Nov  6 07:33:48 2026 // M1.1 not found
+Starting M1.10: Fri Nov  6 07:33:48 2026 // M1.10 not found
+Starting M1.2: Fri Nov  6 07:33:48 2026 // M1.2 not found
+Starting M1.3: Fri Nov  6 07:33:48 2026 // M1.3 not found
+Starting M1.4: Fri Nov  6 07:33:48 2026 // M1.4 not found
+Starting M1.5: Fri Nov  6 07:33:48 2026 // M1.5 not found
+Starting M1.6: Fri Nov  6 07:33:48 2026 // M1.6 not found
+Starting M1.7: Fri Nov  6 07:33:48 2026 // M1.7 not found
+Starting M1.8: Fri Nov  6 07:33:48 2026 // M1.8 not found
+Starting M1.9: Fri Nov  6 07:33:48 2026 // M1.9 not found
+Starting M2.1: Fri Nov  6 07:33:48 2026 // M2.1 not found
+Starting M2.2: Fri Nov  6 07:33:48 2026 // M2.2 not found
+Starting M2.3: Fri Nov  6 07:33:48 2026 // M2.3 not found
+Starting M2.4: Fri Nov  6 07:33:48 2026 // M2.4 not found
+Starting M2.5: Fri Nov  6 07:33:48 2026 // M2.5 not found
+Starting M3.1: Fri Nov  6 07:33:48 2026 // M3.1 not found
+Starting M3.2: Fri Nov  6 07:33:48 2026 // M3.2 not found
+Starting M3.3: Fri Nov  6 07:33:48 2026 // M3.3 not found
+Starting M3.4: Fri Nov  6 07:33:48 2026 // M3.4 not found
+Starting M3.5: Fri Nov  6 07:33:48 2026 // M3.5 not found
+Starting M3.6: Fri Nov  6 07:33:48 2026 // M3.6 not found
+Starting M3.7: Fri Nov  6 07:33:48 2026 // M3.7 not found
+Starting M4.1: Fri Nov  6 07:33:48 2026 // M4.1 not found
+Starting M4.2: Fri Nov  6 07:33:48 2026 // M4.2 not found
+Starting MFT1.1: Fri Nov  6 07:33:48 2026 // MFT1.1 not found
+Starting MFT1.2: Fri Nov  6 07:33:48 2026 // MFT1.2 not found
+Starting MFT1.3: Fri Nov  6 07:33:48 2026 // [1] 9740.42
+Starting MT1.1: Fri Nov  6 07:33:49 2026 // MT1.1 not found
+Starting MT1.2: Fri Nov  6 07:33:49 2026 // MT1.2 not found
+Starting MT1.3: Fri Nov  6 07:33:49 2026 // MT1.3 not found
+Starting MT1.4: Fri Nov  6 07:33:49 2026 // MT1.4 not found
+Starting MT2.1: Fri Nov  6 07:33:49 2026 // [1] 103588.8
+Starting MT2.2: Fri Nov  6 07:33:50 2026 // [1] 1031.32
+Starting MT3.1: Fri Nov  6 07:33:50 2026 // [1] 88.06
+Starting S1.1: Fri Nov  6 07:33:51 2026 // S1.1 not found
+Starting S1.2: Fri Nov  6 07:33:51 2026 // S1.2 not found
+Starting S2.1: Fri Nov  6 07:33:51 2026 // S2.1 not found
+Starting SF1.1: Fri Nov  6 07:33:51 2026 // SF1.1 not found
+Starting SF1.2: Fri Nov  6 07:33:51 2026 // SF1.2 not found
+Starting SF2.1: Fri Nov  6 07:33:51 2026 // SF2.1 not found
+Starting SF2.2: Fri Nov  6 07:33:51 2026 // SF2.2 not found
+Starting SM1.1: Fri Nov  6 07:33:51 2026 // SM1.1 not found
+Starting SM1.2: Fri Nov  6 07:33:51 2026 // SM1.2 not found
+Starting SM1.3: Fri Nov  6 07:33:51 2026 // SM1.3 not found
+Starting T1.1: Fri Nov  6 07:33:51 2026 // T1.1 not found
+Starting T1.2: Fri Nov  6 07:33:51 2026 // T1.2 not found
+Starting T1.3: Fri Nov  6 07:33:51 2026 // T1.3 not found
+Starting T1.4: Fri Nov  6 07:33:51 2026 // T1.4 not found
+Starting T2.1: Fri Nov  6 07:33:51 2026 // T2.1 not found
+Starting T2.2: Fri Nov  6 07:33:51 2026 // T2.2 not found
+Starting T2.3: Fri Nov  6 07:33:51 2026 // [1] 995223.3
+Starting T2.4: Fri Nov  6 07:33:54 2026 // [1] 15123.82
+Starting T2.5: Fri Nov  6 07:33:55 2026 // [1] 1540520
+Starting T2.6: Fri Nov  6 07:33:58 2026 // [1] 1687098
+Starting T3.1: Fri Nov  6 07:34:04 2026 // T3.1 not found
+Starting T3.2: Fri Nov  6 07:34:04 2026 // [1] 184947
+Starting T3.3: Fri Nov  6 07:34:05 2026 // T3.3 not found
+Starting T3.4: Fri Nov  6 07:34:05 2026 // [1] 1740.96
+Starting T4.1: Fri Nov  6 07:34:06 2026 // T4.1 not found
+Starting T4.2: Fri Nov  6 07:34:06 2026 // T4.2 not found
+Starting T4.3: Fri Nov  6 07:34:06 2026 // T4.3 not found
+Starting T4.4: Fri Nov  6 07:34:06 2026 // [1] 282605.2
+Starting T4.5: Fri Nov  6 07:34:07 2026 // [1] 117791.2
+Starting T5.1: Fri Nov  6 07:34:08 2026 // T5.1 not found
+Starting T5.2: Fri Nov  6 07:34:08 2026 // T5.2 not found
+Starting T5.3: Fri Nov  6 07:34:08 2026 // T5.3 not found
+Starting T5.4: Fri Nov  6 07:34:08 2026 // T5.4 not found
+Starting T5.5: Fri Nov  6 07:34:08 2026 // T5.5 not found
+Starting T6.1: Fri Nov  6 07:34:08 2026 // T6.1 not found
+Starting T6.2: Fri Nov  6 07:34:08 2026 // T6.2 not found
+Starting T6.3: Fri Nov  6 07:34:08 2026 // T6.3 not found
+Starting T6.4: Fri Nov  6 07:34:08 2026 // [1] 162763.5
+Starting T6.5: Fri Nov  6 07:34:09 2026 // T6.5 not found
+Starting T7.1: Fri Nov  6 07:34:09 2026 // [1] 557272.7
+Starting T7.2: Fri Nov  6 07:34:10 2026 // [1] 882819.7
+Starting T7.3: Fri Nov  6 07:34:11 2026 // [1] 401134.2
+Starting T7.4: Fri Nov  6 07:34:12 2026 // [1] 101029.1
+Starting T7.5: Fri Nov  6 07:34:13 2026 // [1] 116019.8
+Starting TF1.1: Fri Nov  6 07:34:14 2026 // [1] 329.82
+Starting TF1.2: Fri Nov  6 07:34:15 2026 // [1] 87633.11
+Starting TF1.3: Fri Nov  6 07:34:16 2026 // [1] 17092.94
+Starting TF1.4: Fri Nov  6 07:34:16 2026 // [1] 1509.218
+Starting TF1.5: Fri Nov  6 07:34:17 2026 // [1] 39.07
+Starting TF1.6: Fri Nov  6 07:34:17 2026 // [1] 896255.6
+Starting TF1.7: Fri Nov  6 07:34:19 2026 // [1] 3455.59
+> 

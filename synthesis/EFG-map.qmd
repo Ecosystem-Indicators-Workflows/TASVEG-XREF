@@ -1,131 +1,37 @@
 # Spatial outputs {#sec-maps}
 
 ```{r}
-#| eval: false
-library(ecoSynthesis)
-library(sf)
-library(terra)
-
-library(readr)
-library(fasterize)
-library(dplyr)
-
-here::i_am("EFG-map.qmd")
-TASVEG <- read_sf(here::here("gisdata", "TASVEG_5_0.shp"))
-xref <- read_csv(here::here("output-XREFs/First-round-output.csv"))
-
-sum_membs <- xref |>
-  group_by(VEGCODE) |>
-  summarise(
-    k = sum(if_else(efg == "TF1.3", memb, 0)),
-    total = sum(memb),
-    prop = k / total
-  )
-
-TASVEG_k <- TASVEG |> left_join(sum_membs, by = "VEGCODE")
-
-
-TASVEG_rast <- rast(TASVEG, res = 10000)
-TASVEG_raster <- raster(TASVEG, res = 10000)
-
-k_rast <- rasterize(TASVEG_k, TASVEG_rast, field = "prop", fun = "sum")
-k_raster <- fasterize(TASVEG_k, TASVEG_raster, field = "prop", fun = "sum")
-
-out_dir <- here::here("gisout")
-if (!dir.exists(out_dir)) {
-  dir.create(out_dir)
-}
-
-sum(values(k_rast), na.rm = TRUE)
-sum(k_raster@data@values, na.rm = T)
-plot(k_raster)
-
-out_file <- here::here(out_dir, "TF1_3-rasterize.tiff")
-writeRaster(k_raster, out_file)
-
-out_file <- here::here(out_dir, "TF1_3-fasterize.tiff")
-writeRaster(k_rast, out_file)
-
-
-bench <- microbenchmark::microbenchmark(
-  terrarize = k_rast <- rasterize(
-    TASVEG_k,
-    TASVEG_rast,
-    field = "prop",
-    fun = "sum"
-  ),
-  fasterize = k_raster <- fasterize(
-    TASVEG_k,
-    TASVEG_raster,
-    field = "prop",
-    fun = "sum"
-  ),
-  unit = "ms"
-)
-
-print(bench, digits = 3)
-```
-
-Results:
-Unit: milliseconds
-      expr   min    lq  mean median    uq   max neval
- terrarize 57834 59656 60775  60406 61092 97913   100
- fasterize  3564  4538  5441   5677  6405  7635   100
-
-
- ```{r}
- #| eval: false
-out_dir <- here::here("gisout")
-if (!dir.exists(out_dir)) {
-   dir.create(out_dir
-})
-
-rez <- 10000 / 100
-rez <- 90
-TASVEG_raster <- raster(TASVEG, res = rez)
-
-for (tid in IUCN_GET_LUT$efg_id) {
-   cat(sprintf("Starting %s: %s // ", tid, date()))
-   out_file <- here::here(out_dir ,sprintf("%s-res%s.tiff", tid, rez))
-   if (file.exists(out_file)) {
-     cat(sprintf("%s already exists\n", out_file))
-   } else {
-     if (tid %in% xref$efg) {
-       sum_membs <- xref | 
-         group_by(VEGCODE) | 
-         summarise(
-           k = sum(if_else(efg == tid, memb, 0)),
-           total = sum(memb),
-           prop =  k /tota
-        )
-
-       TASVEG_k <- TASVEG |> left_join(sum_membs, b y ="VEGCODE")
-       k_raster <- fasterize
-        (TASVEG_k
-       , TASVEG_raster
-       , fiel d ="prop"
-       , fun = "sum
-      )
-
-       print(sum(k_raster@data@values ,na.r m =T))
-       plot(k_raster)
- 
-       writeRaster(k_raster, out_file)
-     } else {
-       cat(sprintf("%s not found\n", tid))
-     }
-   }
-}
- ```
-
- ```{r}
+#| eval: true
 library(terra)
 here::i_am("synthesis/EFG-map.qmd")
 out_dir <- here::here("gisout")
 tas_all <- rast(dir(out_dir, pattern = "res90", full.names = TRUE))
+```
 
-tas_which <- app(tas_all, fun = "which.max")
-tas_max <- app(tas_all, fun = "max")
+
+```{r}
+#| output: false
+tas_which <- app(tas_all, fun = "which.max", na.rm = T)
+```
+
+
+```{r}
 plot(tas_which)
+```
+
+
+```{r}
+#| output: false
+tas_max <- app(tas_all, fun = "max", na.rm = T)
+```
+
+
+```{r}
+#| eval: true
 plot(tas_max)
- ```
+```
+
+
+```R
+{{< include ../inc/EFG-membership-raster.R >}}
+```
