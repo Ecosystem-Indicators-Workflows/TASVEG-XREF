@@ -123,6 +123,9 @@ memb_data <- foreach(j = dir(here::here("xrefdata")), .combine = bind_rows) %do%
     }
   }
 
+memb_data <- memb_data |>
+  mutate(round = if_else(expert == "Anne Kitchener", 2, round))
+
 TASVEG_xref <- memb_data |>
   filter(
     !is.na(memb),
@@ -154,9 +157,63 @@ TASVEG_best_summary <-
 ## Step 4: outputs
 
 ### Standard pixel values for Global Ecosystem Atlas
-efg_pixel_values <- geco_efg_data() |>
-  select(efg_code, efg_pixel_value) |>
+efg_info <- geco_efg_data() |>
+  select(efg_code, efg_name, efg_pixel_value, efg_hex_code, efg_rgb_code) |>
   rename("EFG" = "efg_code")
+
+efg_pixel_values <- efg_info |>
+  select(EFG, efg_pixel_value)
+
+### Export tabular lookup and synthesis tables
+xref_best_tbl <- TASVEG |>
+  as_tibble() |>
+  left_join(TASVEG_best_summary, by = "VEGCODE") |>
+  left_join(efg_info, by = "EFG") |>
+  select(
+    VEG_GROUP, VEGCODE, VEGCODE_D, eligible,
+    EFG, efg_name, efg_pixel_value, efg_hex_code, efg_rgb_code,
+    round, prop_memb, total_memb, supporting, total_interp
+  )
+
+write_csv(
+  xref_best_tbl,
+  here::here(out_dir, "TASVEG-xref-best-candidate.csv")
+)
+
+efg_lookup_tbl <- xref_best_tbl |>
+  filter(!is.na(EFG)) |>
+  summarise(
+    n_tasveg_units = n_distinct(VEGCODE),
+    .by = c(efg_pixel_value, EFG, efg_name, efg_hex_code, efg_rgb_code)
+  ) |>
+  left_join(
+    as_tibble(IUCN_GET) |>
+      select(efg_id, realm_id, realm_name, biome_id, biome_name),
+    by = c("EFG" = "efg_id")
+  ) |>
+  select(
+    efg_pixel_value, EFG, efg_name,
+    realm_id, realm_name, biome_id, biome_name,
+    efg_hex_code, efg_rgb_code, n_tasveg_units
+  ) |>
+  arrange(efg_pixel_value)
+
+write_csv(
+  efg_lookup_tbl,
+  here::here(out_dir, "IUCN-GET-pixel-lookup.csv")
+)
+
+clr_lines <- efg_lookup_tbl |>
+  tidyr::separate(efg_rgb_code, into = c("R", "G", "B"), sep = ",") |>
+  transmute(
+    line = sprintf("%d %s %s %s 255 %s %s", efg_pixel_value, R, G, B, EFG, efg_name)
+  ) |>
+  pull(line)
+
+writeLines(
+  clr_lines,
+  here::here(out_dir, "TASVEG-xref-target.clr")
+)
 
 ### Combined attribute table (vector data)
 TASVEG_xy_best <- TASVEG_xy |>
@@ -197,7 +254,7 @@ metags(target_raster) <- rast_metadata
 
 writeRaster(target_raster, out_file, overwrite = TRUE)
 
-#### Best candidate
+#### Best candidate membership
 
 memb_raster <- fasterize(
   TASVEG_xy_best,
@@ -209,13 +266,14 @@ memb_raster <- fasterize(
 out_file <- here::here(out_dir, "TASVEG-xref-membership.tiff")
 
 rast_metadata[
-  "title"
+  "TITLE"
 ] <- "Membership for the best candidate ecosystem function group"
 
 metags(memb_raster) <- rast_metadata
 
 writeRaster(memb_raster, out_file, overwrite = TRUE)
 
+#### Supporting interpreters
 
 supp_raster <- fasterize(
   TASVEG_xy_best,
@@ -227,7 +285,7 @@ supp_raster <- fasterize(
 
 out_file <- here::here(out_dir, "TASVEG-xref-supporting.tiff")
 
-rast_metadata["title"] <- "Nr. of interpreters supporting assignment"
+rast_metadata["TITLE"] <- "Nr. of interpreters supporting assignment"
 
 metags(supp_raster) <- rast_metadata
 

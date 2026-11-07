@@ -7,8 +7,6 @@ R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
 
-  Natural language support but running in an English locale
-
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
 'citation()' on how to cite R or R packages in publications.
@@ -49,6 +47,17 @@ Type 'q()' to quit R.
 > 
 > #### tidyverse libraries
 > library(dplyr)
+
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
 > library(readr)
 > library(tidyr)
 > library(stringr)
@@ -58,8 +67,28 @@ Type 'q()' to quit R.
 > 
 > #### Spatial data
 > library(terra)
+terra 1.9.50
+
+Attaching package: ‘terra’
+
+The following object is masked from ‘package:tidyr’:
+
+    extract
+
 > library(sf)
+Linking to GEOS 3.13.0, GDAL 3.8.5, PROJ 9.5.1; sf_use_s2() is TRUE
 > library(fasterize)
+
+Attaching package: ‘fasterize’
+
+The following object is masked from ‘package:graphics’:
+
+    plot
+
+The following object is masked from ‘package:base’:
+
+    plot
+
 > 
 > #### Cross-referencing
 > library(ecoSynthesis)
@@ -67,6 +96,7 @@ Type 'q()' to quit R.
 > 
 > ### Paths
 > here::i_am("inc/TASVEG-xref-IUCNGET-output-best-90m.R")
+here() starts at /Users/z3529065/proyectos/EIW/TASVEG-XREF
 > 
 > out_dir <- here::here("output-best-candidate")
 > if (!dir.exists(out_dir)) {
@@ -160,6 +190,9 @@ First cross-referencing of Tasmanian Vegetation Communities to GET level 3
 Read MGT_V2_240626_TASVEG_5_0.csv, interpreter Mark_Tozer
 Revised cross-references following discussions with David Keith, Anne Kitchener, Adelina Latinovic and Jayne Balmer (Tasmanian government NRE) covering each of the vegetation communities over which there was disagreement
 > 
+> memb_data <- memb_data |>
++   mutate(round = if_else(expert == "Anne Kitchener", 2, round))
+> 
 > TASVEG_xref <- memb_data |>
 +   filter(
 +     !is.na(memb),
@@ -176,24 +209,91 @@ Revised cross-references following discussions with David Keith, Anne Kitchener,
 +   interpreter = "expert",
 +   round = "round"
 + )
+Read 2354 rows from data frame supplied in session
 > 
 > TASVEG_clean <- clean_membership(TASVEG_memb, TASVEG, IUCN_GET)
+Flagged 90 records with not eligible source ids
+Flagged 312 records with invalid target ids
+Removed 396 records with one or more flags
 > 
 > 
 > check_membership(TASVEG_clean, TASVEG, IUCN_GET)
+✔ Membership column is numeric
+✔ All records have a membership value
+✔ Membership values are within [0,1]
+✔ Lookup table for source classification provided
+✔ All source ids are eligible
+✔ Lookup table for target classification provided
+✔ All target ids are valid
+✔ All checks passed, Membership table is valid.
 > 
 > 
 > ## Step 3: synthesis
 > 
 > TASVEG_best_summary <-
 +   summarise_membership(TASVEG_clean, keep_all = FALSE, which_round = 2)
+Round nr. 2 selected.
 > 
 > ## Step 4: outputs
 > 
 > ### Standard pixel values for Global Ecosystem Atlas
-> efg_pixel_values <- geco_efg_data() |>
-+   select(efg_code, efg_pixel_value) |>
+> efg_info <- geco_efg_data() |>
++   select(efg_code, efg_name, efg_pixel_value, efg_hex_code, efg_rgb_code) |>
 +   rename("EFG" = "efg_code")
+> 
+> efg_pixel_values <- efg_info |>
++   select(EFG, efg_pixel_value)
+> 
+> ### Export tabular lookup and synthesis tables
+> xref_best_tbl <- TASVEG |>
++   as_tibble() |>
++   left_join(TASVEG_best_summary, by = "VEGCODE") |>
++   left_join(efg_info, by = "EFG") |>
++   select(
++     VEG_GROUP, VEGCODE, VEGCODE_D, eligible,
++     EFG, efg_name, efg_pixel_value, efg_hex_code, efg_rgb_code,
++     round, prop_memb, total_memb, supporting, total_interp
++   )
+> 
+> write_csv(
++   xref_best_tbl,
++   here::here(out_dir, "TASVEG-xref-best-candidate.csv")
++ )
+> 
+> efg_lookup_tbl <- xref_best_tbl |>
++   filter(!is.na(EFG)) |>
++   summarise(
++     n_tasveg_units = n_distinct(VEGCODE),
++     .by = c(efg_pixel_value, EFG, efg_name, efg_hex_code, efg_rgb_code)
++   ) |>
++   left_join(
++     as_tibble(IUCN_GET) |>
++       select(efg_id, realm_id, realm_name, biome_id, biome_name),
++     by = c("EFG" = "efg_id")
++   ) |>
++   select(
++     efg_pixel_value, EFG, efg_name,
++     realm_id, realm_name, biome_id, biome_name,
++     efg_hex_code, efg_rgb_code, n_tasveg_units
++   ) |>
++   arrange(efg_pixel_value)
+> 
+> write_csv(
++   efg_lookup_tbl,
++   here::here(out_dir, "IUCN-GET-pixel-lookup.csv")
++ )
+> 
+> clr_lines <- efg_lookup_tbl |>
++   tidyr::separate(efg_rgb_code, into = c("R", "G", "B"), sep = ",") |>
++   transmute(
++     line = sprintf("%d %s %s %s 255 %s %s", efg_pixel_value, R, G, B, EFG, efg_name)
++   ) |>
++   pull(line)
+> 
+> writeLines(
++   clr_lines,
++   here::here(out_dir, "TASVEG-xref-target.clr")
++ )
 > 
 > ### Combined attribute table (vector data)
 > TASVEG_xy_best <- TASVEG_xy |>
@@ -234,7 +334,7 @@ Revised cross-references following discussions with David Keith, Anne Kitchener,
 > 
 > writeRaster(target_raster, out_file, overwrite = TRUE)
 > 
-> #### Best candidate
+> #### Best candidate membership
 > 
 > memb_raster <- fasterize(
 +   TASVEG_xy_best,
@@ -246,13 +346,14 @@ Revised cross-references following discussions with David Keith, Anne Kitchener,
 > out_file <- here::here(out_dir, "TASVEG-xref-membership.tiff")
 > 
 > rast_metadata[
-+   "title"
++   "TITLE"
 + ] <- "Membership for the best candidate ecosystem function group"
 > 
 > metags(memb_raster) <- rast_metadata
 > 
 > writeRaster(memb_raster, out_file, overwrite = TRUE)
 > 
+> #### Supporting interpreters
 > 
 > supp_raster <- fasterize(
 +   TASVEG_xy_best,
@@ -264,7 +365,7 @@ Revised cross-references following discussions with David Keith, Anne Kitchener,
 > 
 > out_file <- here::here(out_dir, "TASVEG-xref-supporting.tiff")
 > 
-> rast_metadata["title"] <- "Nr. of interpreters supporting assignment"
+> rast_metadata["TITLE"] <- "Nr. of interpreters supporting assignment"
 > 
 > metags(supp_raster) <- rast_metadata
 > 
@@ -275,7 +376,7 @@ Revised cross-references following discussions with David Keith, Anne Kitchener,
 > 
 > end_time <- Sys.time()
 > end_time - start_time
-Time difference of 1.325144 mins
+Time difference of 1.374279 mins
 > 
 > sessionInfo()
 R version 4.5.2 (2025-10-31)
@@ -287,7 +388,7 @@ BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/ve
 LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
 
 locale:
-[1] en_AU.UTF-8/en_AU.UTF-8/en_AU.UTF-8/C/en_AU.UTF-8/en_AU.UTF-8
+[1] C.UTF-8/C.UTF-8/C.UTF-8/C/C.UTF-8/C.UTF-8
 
 time zone: Australia/Sydney
 tzcode source: internal
