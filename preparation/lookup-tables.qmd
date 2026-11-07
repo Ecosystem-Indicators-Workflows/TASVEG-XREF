@@ -2,6 +2,8 @@
 
 For the next steps of this workflow we will need lookup tables with the valid units of both classifications. 
 
+### TASVEG
+
 For the TASVEG classification we can explore the look up table to display the basic information for each unit.
 
 :::{.aside}
@@ -23,10 +25,10 @@ output_dir <- here::here("output-XREFs")
 
 ```{r}
 TASVEG_DBF <-
-  read.dbf(
-    here::here("gisdata", "TASVEG_5_0_Fire_Attributes_LUT.dbf"),
-    as.is = TRUE
-  )
+    read.dbf(
+        here::here("gisdata", "TASVEG_5_0_Fire_Attributes_LUT.dbf"),
+        as.is = TRUE
+    )
 ```
 
 We focus on three attributes:
@@ -39,11 +41,11 @@ We focus on three attributes:
 
 ```{r}
 TASVEG_LUT <-
-  TASVEG_DBF |>
-  select(VEG_GROUP, VEGCODE, VEGCODE_D) |>
-  arrange(VEG_GROUP, VEGCODE) |>
-  unique() |>
-  as_tibble()
+    TASVEG_DBF |>
+    select(VEG_GROUP, VEGCODE, VEGCODE_D) |>
+    arrange(VEG_GROUP, VEGCODE) |>
+    unique() |>
+    as_tibble()
 ```
 
 
@@ -56,17 +58,23 @@ Here we flag the units that are deemed not eligible and convert this table into 
 ```{r}
 not_eligible <- c("OAQ", "OSM", "ORO")
 TASVEG <- TASVEG_LUT |>
-  mutate(eligible = !(VEGCODE %in% not_eligible)) |>
-  lookup_tbl("VEGCODE", "VEGCODE_D", "eligible")
+    mutate(eligible = !(VEGCODE %in% not_eligible)) |>
+    lookup_tbl("VEGCODE", "VEGCODE_D", "eligible")
 
 TASVEG
 ```
 
-For the IUCN GET, we use the `IUCN_GET_LUT` data included in the `ecoSynthesis` package and assume all units are eligible and valid:
+
+### IUCN GET
+
+The [IUCN GET controlled vocabulary](https://w3id.org/iucn-get/IUCNEcosystemTypology) defines all units in the upper levels of the typology. 
+
+We use the version included in the `IUCN_GET_LUT` data from the `ecoSynthesis` package and assume all units are eligible and valid:
 
 ```{r}
 IUCN_GET <- lookup_tbl(IUCN_GET_LUT, "efg_id", "efg_name")
 ```
+
 
 :::{.aside}
 
