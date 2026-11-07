@@ -1,0 +1,50 @@
+# Reproducibility of R code
+
+
+All steps in this workflow were written in R and the project structure rendered using quarto. 
+
+```{r}
+library(quarto)
+R.version
+quarto_version()
+```
+
+## Installing from source
+
+Three R package were installed from GitHub repositories:
+
+```{r}
+#| eval: false
+pak::pak("ecoSynthesis")
+pak::pak("Global-Ecosystems-Atlas/geco")
+```
+
+## Benchmarking
+
+The following files contain benchmarking information for reproducibility of R scripts. These include R session information and execution time.
+
+```{r}
+#| filename: "inc/TASVEG-data-download.R"
+#| eval: false
+#| code-fold: true
+#| code-summary: "Download source data / TASVEG 5.0"
+#| file: TASVEG-data-download-out.txt
+```
+
+
+```{r}
+#| filename: "inc/TASVEG-xref-IUCNGET-output-best-90m.R"
+#| eval: false
+#| code-fold: true
+#| code-summary: "Workflow for raster outputs (best candidate)"
+#| file: TASVEG-xref-IUCNGET-output-best-90m-out.txt
+```
+
+```{r}
+#| filename: "inc/benchmark-fasterize.R"
+#| eval: false
+#| code-fold: true
+#| code-summary: "Benchmarking fasterize vs rasterize"
+#| file: benchmark-fasterize-out.txt
+```
+
