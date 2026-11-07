@@ -1,22 +1,24 @@
-### Glossary
+# Glossary
 
-| Term | Definition | Example |
+| Term | Definition | Examples from this document |
 |---|---|---|
-| **Cross-reference (xref) or membership table** | A table that summarises assessments of membership of units of one (source) classification to units of another (target) classification. | See @sec-memb-table |
-| **Source** | The classification being cross-referenced *from*. In this document the source classification is TASVEG 5.0, the Tasmanian vegetation mapping. | See @sec-
-| **Source unit** | One mapping unit of the source classification, identified by its TASVEG code (e.g. `AHL`). Each unit is assessed separately. |
-| **Source unit id / Source id** | `VEGCODE` | One mapping unit of the source classification, identified by its TASVEG code (e.g. `AHL`). Each unit is assessed separately. |
-| **Target** | `efg` | The classification being cross-referenced *to*: an Ecosystem Functional Group (EFG) of the IUCN Global Ecosystem Typology. Codes are realm + biome + group, e.g. `T2.6` (terrestrial), `F2.2` (freshwater), `MT1.3` (marine–terrestrial shoreline), `TF1.6` (terrestrial–freshwater wetland), `MFT1.3` (marine–freshwater–terrestrial). |
-| **Expert** | `expert` | The person who made the assessment, identified by initials (AK, AL, JB, MGT). Each expert works independently, and their assessments are compared, not merged. |
-| **Membership** | `memb` | An expert's estimate of how much of a source unit corresponds to a target group, from 0 (none) to 1 (all of it). One unit can be split across several targets, so an expert's memberships for a unit should sum to 1. |
-| **Assigned / not assigned** | — | A target is *assigned* when the expert lists it for the unit with a membership above 0. A target listed by another expert but not by this one is *not assigned* and is treated as 0. |
-| **Not assessed** | — | The expert gave no record for the unit at all. This is different from "not assigned" and is never filled with 0. |
-| **Record** | one row | One expert's membership for one unit and one target. Long format means one record per row. |
-| **Profile** | — | An expert's full set of memberships for one unit, across every target that any expert used for that unit. |
-| **Matrix table** | `membership_matrix` | The data reshaped wide: one row per unit and expert, one column per target group. |
-| **Dissimilarity** | `dissimilarity` | How different two experts' profiles are for a unit: ½ × the sum of absolute differences, i.e. the share of membership that would have to move to make them identical. 0 = identical, 1 = no shared membership. |
-| **Similarity** | `similarity` | 1 − dissimilarity. 1 = identical profiles, 0 = no overlap. |
-| **Identical** | `share_identical` | Two profiles with a dissimilarity of essentially 0 (below 0.001). |
-| **Expert pair** | `expert_a`, `expert_b` | Two experts compared on the same unit. With four experts there are six pairs. |
-| **Contested unit** | `unit_disagreement` | A unit where experts disagree. Units are ranked by their mean dissimilarity across all expert pairs. |
-| **Data checks** | `check_*` | Problems that are reported but not fixed: missing membership values, target codes that don't match the `XX0.0` pattern, and totals per unit and expert that aren't 1. |
+| **Cross-reference (xref) or membership table** | A table that summarises assessments of membership of units of one (source) classification to units of another (target) classification. | See @sec-memb-table. |
+| **Source** | The classification being cross-referenced *from*. | In this document the source classification is TASVEG 5.0, the Tasmanian vegetation mapping. See @sec-source. |
+| **Source unit** | One concept or mapping unit of the source classification. Each unit is assessed separately. | In TASVEG the classification units represent vegetation communities, see @sec-source.   |
+| **Source unit id / Source id** | Unique ids for the units in the source classification. | `VEGCODE` column in the TASVEG Look-up table (@sec-lookup) | 
+| **Target** | The classification being cross-referenced *to*. | In this document the target classification is the IUCN Global Ecosystem Typology, see @sec-alignment.|
+| **Target unit** | One unit of the target classification. | Here we use level 3 of the IUCN Global Ecosystem Typology: Ecosystem Functional Group (EFG), see @sec-source.   |
+| **Target unit id / Target id** | Unique ids for the units in the target classification. | `EFG` or `efg_id` columns. Codes for EFG Codes are realm + biome + group, e.g. `T2.6` (terrestrial), `F2.2` (freshwater), `MT1.3` (marine–terrestrial shoreline), `TF1.6` (terrestrial–freshwater wetland), `MFT1.3` (marine–freshwater–terrestrial). |
+| **Interpreter** | The person who made the assessment of memberships. | Here we refer to `interpreter` or `expert` interchangeably, see @sec-memb-table. | 
+| **Membership** | An interpreter's estimate of the relationship between a source unit and a target unit. Target units have a broader scope, so they can group multiple source units. Memberships are interpreted as fuzzy memberships, such that a source unit might belong to multiple target units. This fuzzy membership is expressed as a continuous value between 0 (excluded from the group) and 1 (unambiguous membership). | See @sec-memb-table. |
+| **Assigned / not assigned** | Each interpreter assigns one or multiple target for each source unit with membership values above 0 (*assigned target*). The sum of membership values for assigned targets of a single interpreter should sum to 1. Potential targets (for example, those assigned by other interpreters) that are not listed by an interpreter, are considered *not assigned* and have a membership value of 0. | See @sec-memb-table. |
+| **Not assessed** | The interpreter gave no record for the unit at all. This is different from "not assigned" and is never filled with 0. | See @sec-memb-table. |
+| **Record** | One interpreter's membership for one unit and one target. Long format means one record per row. | See @sec-memb-table. |
+| **Profile** | An interpreter's full set of memberships for one unit, across every target that any expert used for that unit. | |
+| **Matrix table** | The data reshaped wide: one row per unit and interpreter, one column per target group. | `membership_matrix` | 
+| **Dissimilarity** | How different two interpreter' profiles are for a unit: ½ × the sum of absolute differences, i.e. the share of membership that would have to move to make them identical. 0 = identical, 1 = no shared membership. | `dissimilarity` | 
+| **Similarity** | 1 − dissimilarity. 1 = identical profiles, 0 = no overlap. | `similarity` | 
+| **Identical** | Two profiles with a dissimilarity of essentially 0 (below 0.001). | `share_identical` |
+| **Expert pair** |  Two interpreter compared on the same unit. With four interpreter there are six pairs. | `expert_a`, `expert_b` |
+| **Contested unit** | A unit where interpreter disagree. Units are ranked by their mean dissimilarity across all expert pairs. | `unit_disagreement` | 
+| **Data checks** | Problems that are reported but not fixed: missing membership values, target codes that don't match the `XX0.0` pattern, and totals per unit and expert that aren't 1. | `check_*` | 
