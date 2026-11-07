@@ -1,0 +1,247 @@
+---
+title: Area summaries
+---
+
+:::{.aside}
+Our setup for this R session is: 
+
+```{r}
+#| warnings: false
+#| message: false
+library(sf)
+library(ecoSynthesis)
+library(dplyr)
+library(units)
+library(ggplot2)
+library(tidyr)
+```
+
+```{r}
+here::i_am("synthesis/EFG-map.qmd")
+output_dir <- here::here("output-XREFs")
+source(here::here("inc/setup.R"))
+load(here::here(output_dir, "lookup-tables.rda"))
+load(here::here(output_dir, "memb-summaries.rda"))
+```
+
+:::
+
+## Summarising areas
+
+We read the spatial data from the TASVEG dataset using `read_sf` from the `sf` package.
+
+We then use the `st_area` to calculate the spatial extent of each spatial feature.For the next calculation we don't need to keep the spatial information, so we use  but we drop the geometry column to speed up other calculations.  
+
+```{r}
+TASVEG_xy <- read_sf(here::here("gisdata", "TASVEG_5_0.shp")) |>
+    select(VEG_GROUP, VEGCODE, VEGCODE_D)
+TASVEG_areas <- TASVEG_xy |>
+    mutate(area = st_area(geometry)) |>
+    st_drop_geometry()
+```
+
+We have four different membership summary tables created in @sec-synthesis. Each one of these approaches will lead to different interpretation of spatial data linked to the source concepts and their mapping units.
+
+### Weighted area estimates
+
+For calculations of areas we have to consider that each source unit might be represented by multiple map units, and each map unit might be assigned to more that one target unit.
+
+The calculations in this workflow assume that the relationships between source and target units are the same for all mapping unit within each source unit. 
+
+This can be calculated using a left join of both tables with a `many to many` relationship:
+
+```{r}
+
+EFG_memb_exp_areas <- TASVEG_areas |> # nolint: object_name_linter.
+    left_join(TASVEG_revised, by = "VEGCODE", relationship = "many-to-many") |>
+    mutate(EFG = coalesce(EFG, "!XREF"))
+```
+
+Furthermore, we need to decide if we want to adjust the areas to represent uncertainty in the assignment of the relationship. One possible way to adjust the areas is to use the membership value as an estimate of the proportion of the area that can be assigned to the target unit.
+
+Using an example of one target unit (T2.5), we can summarise the data by expert and membership and calculate total areas of the units vs the weighed area estimates:
+
+```{r}
+
+EFG_memb_exp_areas |>
+    filter(EFG == "T2.5") |>
+    summarise(
+        nr_VEGCODE = n_distinct(VEGCODE),
+        mean_memb = mean(memb),
+        area_total = set_units(sum(area), "km2"),
+        area_weighted = set_units(sum(area * memb), "km2"),
+        .by = c(expert, EFG, best)
+    ) |>
+    filter(!is.na(area_total))
+```
+
+Interpreters differ in the nr of source of unit and the mean membership values assigned to those units. Consequently the total and weighted area estimates will be different.
+
+We need to reshape the data if we want to explore this at the level of the source units:
+
+```{r}
+
+plot_data <- EFG_memb_exp_areas |>
+    filter(EFG == "T2.5") |>
+    summarise(
+        total_area = sum(drop_units(area)),
+        .by = all_of(c("expert", "VEGCODE", "memb", "best"))
+    ) |>
+    mutate(
+        sid = reorder(VEGCODE, total_area),
+        assigned_area = total_area * memb,
+        remaining_area = total_area - assigned_area
+    ) |>
+    pivot_longer(
+        cols = c(assigned_area, remaining_area),
+        names_to = "segment", values_to = "height"
+    ) |>
+    mutate(segment = factor(segment, levels = c("remaining_area", "assigned_area"))) |>
+    arrange(sid)
+```
+
+```{r}
+
+ggplot(plot_data, aes(x = sid, y = height, fill = segment)) +
+    geom_col(position = "stack") +
+    scale_fill_manual(
+        values = c("assigned_area" = "#db349e", "remaining_area" = "#e1a6cb"),
+        labels = c("assigned_area" = "Assigned (area * memb)", "remaining_area" = "Remaining area")
+    ) +
+    labs(
+        title = "Units assigned to T2.5 ordered by Total Area (x)",
+        x = "Source units (Ordered by x)",
+        y = "Total Area (x)",
+        fill = "Status"
+    ) +
+    facet_wrap(~expert) +
+    theme_wp3()
+```
+
+This plot reveals that some large units have low membership values, thus they contribute to larger total areas but only marginally to the weighted area estimates. 
+
+We can choose to keep only the best candidate target unit for these area calculations
+
+```{r}
+
+ggplot(filter(plot_data, best), aes(x = sid, y = height, fill = segment)) +
+    geom_col(position = "stack") +
+    scale_fill_manual(
+        values = c("assigned_area" = "#db349e", "remaining_area" = "#e1a6cb"),
+        labels = c("assigned_area" = "Assigned (area * memb)", "remaining_area" = "Remaining area")
+    ) +
+    labs(
+        title = "Units assigned to T2.5 ordered by Total Area (x)",
+        x = "Source units (Ordered by x)",
+        y = "Total Area (x)",
+        fill = "Status"
+    ) +
+    facet_wrap(~expert) +
+    theme_wp3()
+```
+
+
+```{r}
+
+EFG_memb_agg_areas <- TASVEG_areas |>
+    left_join(TASVEG_summary, by = "VEGCODE", relationship = "many-to-many") |>
+    mutate(EFG = coalesce(EFG, "!XREF"))
+```
+
+```{r}
+
+EFG_memb_agg_areas |>
+    filter(EFG == "T2.5") |>
+    summarise(
+        nr_VEGCODE = n_distinct(VEGCODE),
+        mean_memb = mean(prop_memb),
+        area_total = set_units(sum(area), "km2"),
+        area_weighted = set_units(sum(area * prop_memb), "km2"),
+        .by = c(EFG, best)
+    ) |>
+    filter(!is.na(area_total))
+```
+
+```{r}
+
+plot_data <- EFG_memb_agg_areas |>
+    filter(EFG == "T2.5") |>
+    summarise(
+        total_area = sum(drop_units(area)),
+        .by = all_of(c("VEGCODE", "prop_memb", "best"))
+    ) |>
+    mutate(
+        sid = reorder(VEGCODE, total_area),
+        assigned_area = total_area * prop_memb,
+        remaining_area = total_area - assigned_area
+    ) |>
+    pivot_longer(
+        cols = c(assigned_area, remaining_area),
+        names_to = "segment", values_to = "height"
+    ) |>
+    mutate(segment = factor(segment, levels = c("remaining_area", "assigned_area"))) |>
+    arrange(sid)
+```
+
+```{r}
+
+ggplot(filter(plot_data), aes(x = sid, y = height, fill = segment)) +
+    geom_col(position = "stack") +
+    scale_fill_manual(
+        values = c("assigned_area" = "#db349e", "remaining_area" = "#e1a6cb"),
+        labels = c("assigned_area" = "Assigned (area * memb)", "remaining_area" = "Remaining area")
+    ) +
+    labs(
+        title = "Units assigned to T2.5 ordered by Total Area (x)",
+        x = "Source units (Ordered by x)",
+        y = "Total Area (x)",
+        fill = "Status"
+    ) +
+    facet_grid(best ~ .) +
+    theme_wp3()
+```
+
+```{r}
+
+d1 <- EFG_memb_exp_areas |>
+    summarise(
+        nr_VEGCODE = n_distinct(VEGCODE),
+        mean_memb = mean(memb),
+        area_total = set_units(sum(area), "km2"),
+        area_weighted = set_units(sum(area * memb), "km2"),
+        .by = c(expert, EFG, best)
+    ) |>
+    filter(!is.na(area_total))
+
+d2 <- EFG_memb_agg_areas |>
+    summarise(
+        nr_VEGCODE = n_distinct(VEGCODE),
+        mean_memb = mean(prop_memb),
+        area_total = set_units(sum(area), "km2"),
+        area_weighted = set_units(sum(area * prop_memb), "km2"),
+        .by = c(EFG, best)
+    ) |>
+    filter(!is.na(area_total))
+
+plot_data <- bind_rows(d1, d2)
+```
+
+```{r}
+
+options(repr.plot.width = 12, repr.plot.height = 18)
+ggplot(plot_data) +
+    geom_point(aes(y = EFG, x = drop_units(area_weighted), shape = is.na(expert), colour = best), size = 4) +
+    scale_x_log10() +
+    scale_colour_manual(
+        values = c("FALSE" = "peru", "TRUE" = "orchid4"),
+        na.value = "grey50",
+        name = "Is best candidate?"
+    ) +
+    scale_shape_manual(
+        values = c("TRUE" = 19, "FALSE" = 21),
+        name = "Aggregated"
+    ) +
+    theme_wp3()
+```
+
+

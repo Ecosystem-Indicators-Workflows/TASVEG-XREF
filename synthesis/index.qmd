@@ -43,6 +43,7 @@ here::i_am("synthesis/index.qmd")
 output_dir <- here::here("output-XREFs")
 load(here::here(output_dir, "memb-tables.rda"))
 ```
+
 :::
 
 The first option is simply a filtered membership table, where each sources unit will keep all valid records from the selected round:

@@ -1,37 +1,152 @@
 # Spatial outputs {#sec-maps}
 
+:::{.aside}
 ```{r}
 #| eval: true
+#| code-fold: true
+#| message: false
+#| warning: false
+#| code-summary: Setup for this R session
 library(terra)
+library(sf)
+library(dplyr)
+library(ecoSynthesis)
+library(geco)
+library(fasterize)
+
 here::i_am("synthesis/EFG-map.qmd")
+output_dir <- here::here("output-XREFs")
+load(here::here(output_dir, "memb-tables.rda"))
 out_dir <- here::here("gisout")
-tas_all <- rast(dir(out_dir, pattern = "res90", full.names = TRUE))
+if (!dir.exists(out_dir)) {
+    dir.create(out_dir)
+}
+efg_pixel_values <- geco_efg_data() |>
+    select(efg_code, efg_pixel_value) |>
+    rename("EFG" = "efg_code")
+```
+
+:::
+
+In order to create spatial outputs from the synthesis of membership values, we need to combine the membership table with the spatial attribute table.
+
+The spatial attribute table attached to the spatial dataset (in Shapefile format) contains one entry per polygon, and hundred of thousands of polygons.
+
+```{r}
+TASVEG_xy <- read_sf(here::here("gisdata", "TASVEG_5_0.shp"))
+
+TASVEG_xy |>
+    st_drop_geometry()
+```
+
+The decisions about how we synthetise the data will constrain the type of data we can export as output. Here we show certain examples.
+
+## Best candidates from aggregated membership
+
+Here we aggregate the data from the second round of expert elicitation.
+
+```{r}
+TASVEG_best_summary <-
+    summarise_membership(TASVEG_clean, keep_all = FALSE, which_round = 2)
+```
+
+Then we combine this dataset with the spatial table and a 
+```{r}
+TASVEG_xy_best <- TASVEG_xy |>
+    left_join(TASVEG_best_summary, by = "VEGCODE", relationship = "many-to-one") |>
+    left_join(efg_pixel_values, by = "EFG")
+```
+
+```{r}
+nrow(TASVEG_xy_best) == nrow(TASVEG_xy)
+TASVEG_xy_best |>
+    st_drop_geometry() |>
+    select(VEG_GROUP, VEGCODE, EFG, prop_memb, supporting, efg_pixel_value) |>
+    slice_sample(n = 10)
+```
+
+```{r}
+#| eval: false
+rez <- 90
+TASVEG_raster <- raster(TASVEG_xy, res = rez)
+memb_raster <- fasterize(
+    TASVEG_xy_best,
+    TASVEG_raster,
+    field = "prop_memb",
+    fun = "max"
+) |> rast()
+target_raster <- fasterize(
+    TASVEG_xy_best,
+    TASVEG_raster,
+    field = "efg_pixel_value",
+    fun = "first"
+) |> rast()
+supp_raster <- fasterize(
+    TASVEG_xy_best,
+    TASVEG_raster,
+    field = "supporting",
+    fun = "max"
+) |> rast()
+
+ctab <- data.frame(value = 1:5, color = wesanderson::wes_palette("Moonrise3"))
+coltab(supp_raster) <- ctab
+plot(supp_raster)
+
+ctab <- geco_efg_data() |> transmute(value = efg_pixel_value, color = efg_hex_code)
+coltab(target_raster) <- ctab
+plot(target_raster)
+plot(memb_raster)
+out_file <- here::here(out_dir, "TASVEG-xref-target.tiff")
+
+rast_metadata <- c(
+    PROJECT = "Ecosystem Indicators Workflows",
+    TITLE = "Best candidate ecosystem function group",
+    DESCRIPTION = "Synthesis of crossreference from TASVEG to IUCN GET"
+)
+metags(target_raster) <- rast_metadata
+
+writeRaster(target_raster,
+    out_file,
+    overwrite = TRUE
+)
 ```
 
 
+## Combining membership table with spatial data
+
 ```{r}
+#| filename: "inc/EFG-membership-raster.R"
+#| eval: false
+#| code-fold: true
+#| code-summary: "Script for membership raster layers"
+#| file: ../inc/EFG-membership-raster.R
+```
+
+## Combining 
+
+```{r}
+#| eval: false
 #| output: false
+tas_all <- rast(dir(out_dir, pattern = "res90", full.names = TRUE))
 tas_which <- app(tas_all, fun = "which.max", na.rm = T)
 ```
 
 
 ```{r}
+#| eval: false
 plot(tas_which)
 ```
 
 
 ```{r}
+#| eval: false
 #| output: false
 tas_max <- app(tas_all, fun = "max", na.rm = T)
 ```
 
 
 ```{r}
-#| eval: true
+#| eval: false
 plot(tas_max)
 ```
 
-
-```R
-{{< include ../inc/EFG-membership-raster.R >}}
-```
