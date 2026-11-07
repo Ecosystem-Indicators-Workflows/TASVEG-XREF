@@ -29,6 +29,13 @@ MT led the expert elicitation process. MT, DAK, AL, AK, and JB contributed membe
 
 Version control for this document is maintained in the original [GitHub repository](https://github.com/Ecosystem-Indicators-Workflows/).
 
+
+::: {.callout-caution}
+
+This document is still work in progress.
+
+:::
+
 |Version | Date | Editor | Summary of Changes |
 |------|------|-----------------|----------------------|
 | 0.0.5 | 7 Nov 2026 | JRFP, ARS, EG, MGT, DAK | Full structure of the document, benchmarks on reproducibility, preparing outputs, implementation of FAIR kit. |

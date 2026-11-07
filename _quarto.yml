@@ -82,6 +82,8 @@ book:
       - file: appendices/membership-tables.qmd
         text: "Membership data formats"
       - reproducibility-notes/reproducibility-R.qmd
+      - file: appendices/outputs.qmd
+        text: "Overview of outputs"
 
 #      - file: "elicitation/visualise-agreement.ipynb"
 #        text: "Viz agreement"

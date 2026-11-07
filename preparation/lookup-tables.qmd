@@ -26,7 +26,7 @@ output_dir <- here::here("output-XREFs")
 ```{r}
 TASVEG_DBF <-
     read.dbf(
-        here::here("gisdata", "TASVEG_5_0_Fire_Attributes_LUT.dbf"),
+        here::here("gisdata", "LIST_TASVEG_50_STATEWIDE", "TASVEG_5_0_Fire_Attributes_LUT.dbf"),
         as.is = TRUE
     )
 ```

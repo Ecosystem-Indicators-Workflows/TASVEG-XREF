@@ -33,7 +33,7 @@ In order to create spatial outputs from the synthesis of membership values, we n
 The spatial attribute table attached to the spatial dataset (in Shapefile format) contains one entry per polygon, and hundred of thousands of polygons.
 
 ```{r}
-TASVEG_xy <- read_sf(here::here("gisdata", "TASVEG_5_0.shp"))
+TASVEG_xy <- read_sf(here::here("gisdata", "LIST_TASVEG_50_STATEWIDE", "TASVEG_5_0.shp"))
 
 TASVEG_xy |>
     st_drop_geometry()

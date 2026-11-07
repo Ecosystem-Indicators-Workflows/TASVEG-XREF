@@ -33,7 +33,7 @@ We read the spatial data from the TASVEG dataset using `read_sf` from the `sf` p
 We then use the `st_area` to calculate the spatial extent of each spatial feature.For the next calculation we don't need to keep the spatial information, so we use  but we drop the geometry column to speed up other calculations.  
 
 ```{r}
-TASVEG_xy <- read_sf(here::here("gisdata", "TASVEG_5_0.shp")) |>
+TASVEG_xy <- read_sf(here::here("gisdata", "LIST_TASVEG_50_STATEWIDE", "TASVEG_5_0.shp")) |>
     select(VEG_GROUP, VEGCODE, VEGCODE_D)
 TASVEG_areas <- TASVEG_xy |>
     mutate(area = st_area(geometry)) |>
