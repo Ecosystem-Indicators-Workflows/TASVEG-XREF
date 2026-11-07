@@ -3,24 +3,22 @@
 <!-- FAIR:START -->
 ## FAIR assessment
 
-[![FAIR checklist badge](https://fairsoftwarechecklist.net/badge.svg)](https://fairsoftwarechecklist.net/v0.2?f=01&a=00110&i=20000&r=010) ![EIW FAIR score](https://img.shields.io/badge/EIW%20FAIR-6%2F33-orange)
+[![FAIR checklist badge](https://fairsoftwarechecklist.net/badge.svg)](https://fairsoftwarechecklist.net/v0.2?f=21&a=30110&i=30000&r=010) ![EIW FAIR score](https://img.shields.io/badge/EIW%20FAIR-12%2F33-orange)
 
-**6 / 33 points · 3 / 15 questions at EIW target** · not yet at EIW minimum
+**12 / 33 points · 5 / 15 questions at EIW target** · not yet at EIW minimum
 
 | Principle | Score | EIW target |
 |---|---|---|
-| Findable | 1 / 4 (25%) | 4 / 4 |
-| Accessible | 2 / 10 (20%) | 10 / 10 |
-| Interoperable | 2 / 12 (17%) | 12 / 12 |
+| Findable | 3 / 4 (75%) | 4 / 4 |
+| Accessible | 5 / 10 (50%) | 10 / 10 |
+| Interoperable | 3 / 12 (25%) | 12 / 12 |
 | Reusable | 1 / 7 (14%) | 6 / 7 |
 
-<details><summary>Gaps to close (12)</summary>
+<details><summary>Gaps to close (10)</summary>
 
-- **f:q0 Indexed by search engines** (0 / 3): Not public and no machine-readable metadata
-- **a:q0 Identifier gives a copy** (0 / 3): Repo is private: others cannot download it
+- **f:q0 Indexed by search engines** (2 / 3): No web page with SEO (Quarto site / WorkflowHub)
 - **a:q1 Persistent identifier (DOI)** (0 / 2): No DOI: a GitHub URL can move or vanish
 - **a:q4 Identifier in metadata** (0 / 3): No workflow name or ID in metadata (no CITATION.cff)
-- **i:q0 Open, domain-common formats** (2 / 3): No open geospatial formats (GeoTIFF/COG, GeoPackage)
 - **i:q1 Versioning scheme** (0 / 2): No git tags or version numbers
 - **i:q2 Dependencies specified** (0 / 3): No dependency file (renv.lock / requirements.txt)
 - **i:q3 Links to related software** (0 / 2): No links to related software (CITATION.cff references)
@@ -33,5 +31,5 @@
 
 ![FAIR scores per question](fair/fair-scores.png)
 
-<sub>Updated 2026-11-04 from commit `8e9bf14` by `.fair/fair_check.R`. Edit `.fair/fair-checklist.yml`, not this block.</sub>
+<sub>Updated 2026-11-07 from commit `23c2f04` by `.fair/fair_check.R`. Edit `.fair/fair-checklist.yml`, not this block.</sub>
 <!-- FAIR:END -->
