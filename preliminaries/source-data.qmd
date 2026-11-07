@@ -16,4 +16,20 @@ TASVEG has several components and we are going to use them in different steps of
     - metadata in PDF format,
     - fire attributes in DBF format (used in @sec-alignment).
 
-Instructions for downloading TASVEG 5.0 data is available in @sec-download.
+## Data download
+
+TASVEG data is supplied under Creative Commons Attribution 3.0 Australia (CC BY 3.0 AU) Licence http://creativecommons.org/licenses/by/3.0/au/ 
+
+The Department Natural Resources and Environment Tasmania requests attribution be provided in the following manner: “TASVEG 5.0 from www.theLIST.tas.gov.au ©State of Tasmania” 
+
+Expand this section to explore the script for data download. 
+
+```{r}
+#| filename: "inc/TASVEG-data-download.R"
+#| eval: false
+#| code-fold: true
+#| code-summary: "Script to download TASVEG 5.0 data"
+#| file: ../inc/TASVEG-data-download.R
+```
+
+Benchmarking information for this script is available in @sec-reproducibility.

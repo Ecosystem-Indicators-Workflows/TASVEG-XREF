@@ -1,6 +1,6 @@
 input-XREFs/
 processed_xrefs/
-output-XREFs/
+output-*
 gisdata/
 gisout/
 .venv

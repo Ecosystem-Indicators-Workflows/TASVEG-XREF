@@ -18,8 +18,8 @@
 ## 4) Outputs in preferred format
 
 ## Recommended usage:
-## R --vanilla < inc/TASVEG-xref-IUCNGET-output-best-90m.R \
-##  > reproducibility-notes/TASVEG-xref-IUCNGET-output-best-90m-out.txt
+## R --vanilla < inc/TASVEG-xref-IUCNGET-output-best-90m.R >\
+##  reproducibility-notes/TASVEG-xref-IUCNGET-output-best-90m-out.txt
 
 ## Step O: Setup
 
@@ -49,6 +49,10 @@ library(geco)
 ### Paths
 here::i_am("inc/TASVEG-xref-IUCNGET-output-best-90m.R")
 
+out_dir <- here::here("output-best-candidate")
+if (!dir.exists(out_dir)) {
+  dir.create(out_dir)
+}
 
 ### Custom functions
 source(here::here("inc", "functions.R"))
@@ -57,7 +61,10 @@ source(here::here("inc", "functions.R"))
 
 ### Lookup table source classification
 
-TASVEG_xy <- read_sf(here::here("gisdata", "TASVEG_5_0.shp"))
+TASVEG_xy <- read_sf(here::here(
+  "gisdata/LIST_TASVEG_50_STATEWIDE/",
+  "TASVEG_5_0.shp"
+))
 
 
 TASVEG_LUT <-
@@ -179,7 +186,7 @@ target_raster <- fasterize(
 ctab <- geco_efg_data() |>
   transmute(value = efg_pixel_value, color = efg_hex_code)
 coltab(target_raster) <- ctab
-out_file <- here::here("gisout", "TASVEG-xref-target.tiff")
+out_file <- here::here(out_dir, "TASVEG-xref-target.tiff")
 
 rast_metadata <- c(
   PROJECT = "Ecosystem Indicators Workflows",
@@ -199,7 +206,7 @@ memb_raster <- fasterize(
   fun = "max"
 ) |>
   rast()
-out_file <- here::here("gisout", "TASVEG-xref-membership.tiff")
+out_file <- here::here(out_dir, "TASVEG-xref-membership.tiff")
 
 rast_metadata[
   "title"
@@ -218,7 +225,7 @@ supp_raster <- fasterize(
 ) |>
   rast()
 
-out_file <- here::here("gisout", "TASVEG-xref-membership.tiff")
+out_file <- here::here(out_dir, "TASVEG-xref-supporting.tiff")
 
 rast_metadata["title"] <- "Nr. of interpreters supporting assignment"
 

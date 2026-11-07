@@ -1,4 +1,4 @@
-# Reproducibility of R code
+# Reproducibility of R code {#sec-reproducibility}
 
 
 All steps in this workflow were written in R and the project structure rendered using quarto. 
@@ -31,6 +31,13 @@ The following files contain benchmarking information for reproducibility of R sc
 #| file: TASVEG-data-download-out.txt
 ```
 
+```{r}
+#| filename: "inc/benchmark-fasterize.R"
+#| eval: false
+#| code-fold: true
+#| code-summary: "Benchmarking fasterize vs rasterize"
+#| file: benchmark-fasterize-out.txt
+```
 
 ```{r}
 #| filename: "inc/TASVEG-xref-IUCNGET-output-best-90m.R"
@@ -41,10 +48,9 @@ The following files contain benchmarking information for reproducibility of R sc
 ```
 
 ```{r}
-#| filename: "inc/benchmark-fasterize.R"
+#| filename: "inc/EFG-membership-raster.R"
 #| eval: false
 #| code-fold: true
-#| code-summary: "Benchmarking fasterize vs rasterize"
-#| file: benchmark-fasterize-out.txt
+#| code-summary: "Workflow for calculation of membership raster layers"
+#| file: EFG-membership-raster-out.txt
 ```
-

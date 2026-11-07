@@ -114,14 +114,6 @@ writeRaster(target_raster,
 
 ## Combining membership table with spatial data
 
-```{r}
-#| filename: "inc/EFG-membership-raster.R"
-#| eval: false
-#| code-fold: true
-#| code-summary: "Script for membership raster layers"
-#| file: ../inc/EFG-membership-raster.R
-```
-
 ## Combining 
 
 ```{r}
