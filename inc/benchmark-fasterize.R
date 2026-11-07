@@ -8,7 +8,7 @@ library(dplyr)
 date()
 
 here::i_am("inc/benchmark-fasterize.R")
-load(here::here("output-XREFs/memb-summaries.rda"))
+load(here::here("outputs/XREFs/memb-summaries.rda"))
 
 TASVEG <- read_sf(here::here("gisdata", "TASVEG_5_0.shp"))
 

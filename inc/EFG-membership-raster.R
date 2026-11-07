@@ -8,7 +8,7 @@ library(dplyr)
 date()
 
 here::i_am("inc/EFG-membership-raster.R")
-load(here::here("output-XREFs/memb-summaries.rda"))
+load(here::here("outputs/XREFs/memb-summaries.rda"))
 
 out_dir <- here::here("gisout")
 if (!dir.exists(out_dir)) {

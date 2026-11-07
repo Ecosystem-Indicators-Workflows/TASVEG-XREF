@@ -18,7 +18,7 @@ library(tidyr)
 
 ```{r}
 here::i_am("synthesis/EFG-map.qmd")
-output_dir <- here::here("output-XREFs")
+output_dir <- here::here("outputs/XREFs")
 source(here::here("inc/setup.R"))
 load(here::here(output_dir, "lookup-tables.rda"))
 load(here::here(output_dir, "memb-summaries.rda"))
