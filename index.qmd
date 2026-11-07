@@ -31,10 +31,11 @@ Version control for this document is maintained in the original [GitHub reposito
 
 |Version | Date | Editor | Summary of Changes |
 |------|------|-----------------|----------------------|
-| 0.4 | 1 Nov 2026 | JRFP, MT | Updated cross-referencing tables, update structure, revised content  |
-| 0.3 | 23 Oct 2026 | JRFP | Merged contributions and update structure |
-| 0.2 | 15 Oct 2026 | EG, ARS | Explore visualisations |
-| 0.1 | 13 Aug 2026 | JRFP, MT | Initial draft and project structure |
+| 0.0.5 | 7 Nov 2026 | JRFP | Full structure of the document, benchmarks on reproducibility, preparing outputs.  |
+| 0.0.4 | 1 Nov 2026 | JRFP, MT | Updated cross-referencing tables, update structure, revised content.  |
+| 0.0.3 | 23 Oct 2026 | JRFP | Merged contributions and update structure. |
+| 0.0.2 | 15 Oct 2026 | EG, ARS | Explore visualisations. |
+| 0.0.1 | 13 Aug 2026 | JRFP, MT | Initial draft and project structure. |
 
 ## Reproducibility statement
 
