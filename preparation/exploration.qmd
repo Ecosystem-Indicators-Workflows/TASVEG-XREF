@@ -32,18 +32,18 @@ Test if there are any assessments with total membership values below 1:
 
 ```{r}
 TASVEG_clean |>
-  group_by(VEGCODE, expert, round) |>
-  summarise(total = sum(memb), .groups = "drop") |>
-  filter(total < 0.999) |>
-  arrange(total) |>
-  print.data.frame(digits = 3)
+    group_by(VEGCODE, expert, round) |>
+    summarise(total = sum(memb), .groups = "drop") |>
+    filter(total < 0.999) |>
+    arrange(total) |>
+    print.data.frame(digits = 3)
 ```
 
 Only one case:
 
 ```{r}
 TASVEG_clean |>
-  filter(expert == "Jayne_Balmer", VEGCODE == "HSE")
+    filter(expert == "Jayne_Balmer", VEGCODE == "HSE")
 ```
 
 ### Are memberships duplicated?
@@ -52,11 +52,11 @@ Test if there are any assessments with total membership values above 1:
 
 ```{r}
 TASVEG_clean |>
-  group_by(VEGCODE, expert, round) |>
-  summarise(total = sum(memb), .groups = "drop") |>
-  filter(total > 1.001) |>
-  arrange(total) |>
-  print.data.frame(digits = 3)
+    group_by(VEGCODE, expert, round) |>
+    summarise(total = sum(memb), .groups = "drop") |>
+    filter(total > 1.001) |>
+    arrange(total) |>
+    print.data.frame(digits = 3)
 ```
 
 No problems detected!
@@ -66,11 +66,11 @@ No problems detected!
 
 ```{r}
 TASVEG_clean |>
-  group_by(VEGCODE, EFG, expert, round) |>
-  summarise(n = n(), .groups = "drop") |>
-  filter(n > 1) |>
-  arrange(n) |>
-  print.data.frame(digits = 3)
+    group_by(VEGCODE, EFG, expert, round) |>
+    summarise(n = n(), .groups = "drop") |>
+    filter(n > 1) |>
+    arrange(n) |>
+    print.data.frame(digits = 3)
 ```
 
 There is a potential typo in round 2:
@@ -78,7 +78,7 @@ There is a potential typo in round 2:
 ```{r}
 
 TASVEG_clean |>
-  filter(expert == "Mark_Tozer", VEGCODE == "SWR")
+    filter(expert == "Mark_Tozer", VEGCODE == "SWR")
 ```
 
 There is a potential typo in round 1:
@@ -86,7 +86,7 @@ There is a potential typo in round 1:
 ```{r}
 
 TASVEG_clean |>
-  filter(expert == "David_Keith", VEGCODE == "SLL")
+    filter(expert == "David_Keith", VEGCODE == "SLL")
 ```
 
 ## Variability in the assessments
@@ -95,16 +95,16 @@ The number of candidates per source unit is an indicator of how much agreement a
 
 ```{r}
 candidates_per_vegcode <- TASVEG_clean |>
-  group_by(VEGCODE) |>
-  summarise(
-    `Nr. of candidates` = n_distinct(EFG),
-    `Highest membership` = max(memb),
-    .groups = "drop"
-  )
+    group_by(VEGCODE) |>
+    summarise(
+        `Nr. of candidates` = n_distinct(EFG),
+        `Highest membership` = max(memb),
+        .groups = "drop"
+    )
 
 candidates_per_vegcode |>
-  group_by(`Nr. of candidates`) |>
-  summarise(`Distinct VEGCODES` = n_distinct(VEGCODE))
+    group_by(`Nr. of candidates`) |>
+    summarise(`Distinct VEGCODES` = n_distinct(VEGCODE))
 ```
 
 For 25 units from the source classification, all experts agree in one single candidate from the target classification. 
@@ -113,22 +113,22 @@ A dynamic and filterable table allows to browse the records according to the num
 
 ```{r}
 TASVEG_clean |>
-  filter(round == 1) |>
-  group_by(VEGCODE, EFG, memb) |>
-  summarise(
-    `Nr. of experts` = n_distinct(expert),
-    experts = paste(expert, collapse = ";"),
-    .groups = "drop"
-  ) |>
-  arrange(desc(`Nr. of experts`), desc(memb)) |>
-  DT::datatable()
+    filter(round == 1) |>
+    group_by(VEGCODE, EFG, memb) |>
+    summarise(
+        `Nr. of experts` = n_distinct(expert),
+        experts = paste(expert, collapse = ";"),
+        .groups = "drop"
+    ) |>
+    arrange(desc(`Nr. of experts`), desc(memb)) |>
+    DT::datatable()
 ```
 
 Particularly, we are interested in the four units with the larger number of candidates (6) across interpreters/rounds:
 
 ```{r}
 candidates_per_vegcode |>
-  filter(`Nr. of candidates` == 6)
+    filter(`Nr. of candidates` == 6)
 ```
 
 Looking at some of these in details reveals some cases where interpreters do not change their assessment after group discussion (divergent opinions).  
@@ -136,19 +136,19 @@ Looking at some of these in details reveals some cases where interpreters do not
 ```{r}
 #| fig-width: 10
 r1plot <- TASVEG_clean |>
-  filter(VEGCODE == "SWR", round == 1) |>
-  membership_tile_plot()
+    filter(VEGCODE == "SWR", round == 1) |>
+    membership_tile_plot()
 
 r2plot <- TASVEG_clean |>
-  filter(VEGCODE == "SWR", round == 2) |>
-  membership_tile_plot()
+    filter(VEGCODE == "SWR", round == 2) |>
+    membership_tile_plot()
 
 plot_grid(
-  r1plot,
-  r2plot,
-  ncol = 2,
-  labels = c('Round 1', 'Round 2'),
-  align = "hv"
+    r1plot,
+    r2plot,
+    ncol = 2,
+    labels = c("Round 1", "Round 2"),
+    align = "hv"
 )
 ```
 
@@ -157,19 +157,19 @@ But in other cases there are some signs of improved alignment after group discus
 ```{r}
 
 r1plot <- TASVEG_clean |>
-  filter(VEGCODE == "RKX", round == 1) |>
-  membership_tile_plot()
+    filter(VEGCODE == "RKX", round == 1) |>
+    membership_tile_plot()
 
 r2plot <- TASVEG_clean |>
-  filter(VEGCODE == "RKX", round == 2) |>
-  membership_tile_plot()
+    filter(VEGCODE == "RKX", round == 2) |>
+    membership_tile_plot()
 
 plot_grid(
-  r1plot,
-  r2plot,
-  ncol = 2,
-  labels = c('Round 1', 'Round 2'),
-  align = "hv"
+    r1plot,
+    r2plot,
+    ncol = 2,
+    labels = c("Round 1", "Round 2"),
+    align = "hv"
 )
 ```
 
@@ -182,77 +182,79 @@ This is a selection of vegetation communities belonging to "Native grasslands" v
 
 ```{r}
 TASVEG |>
-  filter(VEG_GROUP == "Native grassland") |>
-  select(VEG_GROUP, VEGCODE_D) |>
-  DT::datatable()
+    filter(VEG_GROUP == "Native grassland") |>
+    select(VEG_GROUP, VEGCODE_D) |>
+    DT::datatable()
 ```
 
 This group appears to include units that are assigned to different groups in the target classification, however, all experts agree with this dychotomy:
 
 ```{r}
 TASVEG_clean |>
-  left_join(TASVEG, by = "VEGCODE") |>
-  filter(VEG_GROUP == "Native grassland") |>
-  group_by(EFG) |>
-  summarise(
-    `Nr. VEGCODE` = n_distinct(VEGCODE),
-    `Nr. experts` = n_distinct(expert),
-    `Mean memberships` = mean(memb)
-  ) |>
-  arrange(desc(`Nr. experts`), desc(`Nr. VEGCODE`))
+    left_join(TASVEG, by = "VEGCODE") |>
+    filter(VEG_GROUP == "Native grassland") |>
+    group_by(EFG) |>
+    summarise(
+        `Nr. VEGCODE` = n_distinct(VEGCODE),
+        `Nr. experts` = n_distinct(expert),
+        `Mean memberships` = mean(memb)
+    ) |>
+    arrange(desc(`Nr. experts`), desc(`Nr. VEGCODE`))
 ```
 
 In contrast, the "Wet eucalypt forest and woodland" is a larger group, but all experts agree that most units belong primarily to a single group in the target classification, with some experts assigned minority values to other groups.
 
 ```{r}
 TASVEG |>
-  filter(VEG_GROUP == "Wet eucalypt forest and woodland") |>
-  select(VEG_GROUP, VEGCODE_D) |>
-  DT::datatable()
+    filter(VEG_GROUP == "Wet eucalypt forest and woodland") |>
+    select(VEG_GROUP, VEGCODE_D) |>
+    DT::datatable()
 ```
+
 ```{r}
 TASVEG_clean |>
-  left_join(TASVEG, by = "VEGCODE") |>
-  filter(VEG_GROUP == "Wet eucalypt forest and woodland") |>
-  group_by(EFG) |>
-  summarise(
-    `Nr. VEGCODE` = n_distinct(VEGCODE),
-    `Nr. experts` = n_distinct(expert),
-    `Mean memberships` = mean(memb)
-  ) |>
-  arrange(desc(`Nr. experts`), desc(`Nr. VEGCODE`))
+    left_join(TASVEG, by = "VEGCODE") |>
+    filter(VEG_GROUP == "Wet eucalypt forest and woodland") |>
+    group_by(EFG) |>
+    summarise(
+        `Nr. VEGCODE` = n_distinct(VEGCODE),
+        `Nr. experts` = n_distinct(expert),
+        `Mean memberships` = mean(memb)
+    ) |>
+    arrange(desc(`Nr. experts`), desc(`Nr. VEGCODE`))
 ```
 
 Similarly the "Dry eucalypt forest and woodland" includes many source units with consistently high relationship values to particular units in the target classification.
 
 ```{r}
 TASVEG |>
-  filter(VEG_GROUP == "Dry eucalypt forest and woodland") |>
-  select(VEG_GROUP, VEGCODE_D) |>
-  DT::datatable()
+    filter(VEG_GROUP == "Dry eucalypt forest and woodland") |>
+    select(VEG_GROUP, VEGCODE_D) |>
+    DT::datatable()
 ```
+
 ```{r}
 TASVEG_clean |>
-  left_join(TASVEG, by = "VEGCODE") |>
-  filter(VEG_GROUP == "Dry eucalypt forest and woodland") |>
-  group_by(EFG) |>
-  summarise(
-    `Nr. VEGCODE` = n_distinct(VEGCODE),
-    `Nr. experts` = n_distinct(expert),
-    `Mean memberships` = mean(memb)
-  ) |>
-  arrange(desc(`Nr. experts`), desc(`Nr. VEGCODE`))
+    left_join(TASVEG, by = "VEGCODE") |>
+    filter(VEG_GROUP == "Dry eucalypt forest and woodland") |>
+    group_by(EFG) |>
+    summarise(
+        `Nr. VEGCODE` = n_distinct(VEGCODE),
+        `Nr. experts` = n_distinct(expert),
+        `Mean memberships` = mean(memb)
+    ) |>
+    arrange(desc(`Nr. experts`), desc(`Nr. VEGCODE`))
 ```
 
 Within the Dry eucalypt forest and woodland group, the *Eucalyptus perriniana forest and woodland* community has a slightly different membership profile.
 
 ```{r}
 TASVEG_clean |>
-  filter(grepl("^DPE", VEGCODE)) |>
-  group_by(EFG) |>
-  summarise(
-    `Nr. experts` = n_distinct(expert),
-    `Mean memberships` = mean(memb)
-  ) |>
-  arrange(desc(`Nr. experts`))
+    filter(grepl("^DPE", VEGCODE)) |>
+    group_by(EFG) |>
+    summarise(
+        `Nr. experts` = n_distinct(expert),
+        `Mean memberships` = mean(memb)
+    ) |>
+    arrange(desc(`Nr. experts`))
 ```
