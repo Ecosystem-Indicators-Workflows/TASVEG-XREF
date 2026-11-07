@@ -43,13 +43,22 @@ here::i_am("synthesis/index.qmd")
 output_dir <- here::here("output-XREFs")
 load(here::here(output_dir, "memb-tables.rda"))
 ```
+
 :::
 
 The first option is simply a filtered membership table, where each sources unit will keep all valid records from the selected round:
 
 ```{r}
 TASVEG_revised <- TASVEG_clean |>
-  filter(round == 2)
+  filter(round == 2) |>
+  group_by(VEGCODE, expert) |>
+  mutate(
+    total_memb = sum(memb),
+    best = memb == max(memb),
+    supporting = 1,
+    total_interp = 1
+  ) |>
+  ungroup()
 ```
 
 For example, for the source unit `AAP`:
@@ -59,39 +68,26 @@ TASVEG_revised |>
   filter(VEGCODE == "AAP")
 ```
 
-### Keep best candidate per interpreter 
-
-Alternatively, we can keep one record per interpreter and source unit, keeping the one with the largest membership value (or the first if there is more than one with same membership value):
-
-```{r}
-TASVEG_max_by_expert <-
-  TASVEG_revised |>
-  slice_max(memb, by = c(VEGCODE, expert), with_ties = FALSE, n = 1)
-```
-
-In this case, all interpreters agree on the target unit, but propose different levels of membership:
-
-```{r}
-TASVEG_max_by_expert |>
-  filter(VEGCODE == "AAP")
-```
 
 ### Aggregate by interpreter, keep all candidates
 
 For some applications we want to summmarise across interpreters, and consider all potential target units:
 
 ```{r}
-TASVEG_memb_by_target <-
-  TASVEG_revised |>
-  mutate(total_memb = sum(memb), .by = VEGCODE) |>
-  summarise(prop = sum(memb / total_memb), .by = c(VEGCODE, EFG))
+TASVEG_summary <-
+  TASVEG_clean |>
+  summarise_membership(keep_all = TRUE, which_round = 2) |>
+  mutate(
+    best = prop_memb == max(prop_memb),
+    .by = (VEGCODE)
+  )
 ```
 
 
 This method reduced the number of records for this source units to three candidate targets, with two of them having low values of the proportion of votes of membership values:
 
 ```{r}
-TASVEG_memb_by_target |>
+TASVEG_summary |>
   filter(VEGCODE == "AAP")
 ```
 
@@ -113,22 +109,47 @@ This could be calculated using a `membership_matrix`.
 
 :::
 
-### Aggregate by interpreter, keep best candidate
+### Keep best candidate per interpreter 
+
+Alternatively, we can keep one record per interpreter and source unit, keeping the one with the largest membership value (or the first if there is more than one with same membership value):
+
+```{r}
+TASVEG_best_revised <-
+  TASVEG_revised |>
+  slice_max(memb, by = c(VEGCODE, expert), with_ties = FALSE, n = 1) |>
+  mutate(keep = "best")
+```
+
+In this case, all interpreters agree on the target unit, but propose different levels of membership:
+
+```{r}
+TASVEG_best_revised |>
+  filter(VEGCODE == "AAP")
+```
+
+
+### Keep best candidate from summary
 
 Finally, we can keep the best candidate from the previous method:
 ```{r}
-TASVEG_max_target <-
-  TASVEG_memb_by_target |>
-  slice_max(prop, by = c(VEGCODE), with_ties = FALSE, n = 1)
+TASVEG_best_summary <-
+  summarise_membership(TASVEG_clean, keep_all = FALSE, which_round = 2)
 ```
 
 The result is similar to the mean values of the membership values of the best candidates, provided that the membership values are balanced among interpreters (all membership values of each interpreter sum to one).
 
 ```{r}
-TASVEG_max_target |>
+TASVEG_best_summary |>
   filter(VEGCODE == "AAP")
 ```
 
+
+```{r}
+TASVEG_best_summary |>
+  mutate(memb = round(prop_memb, 1)) |>
+  group_by(EFG, memb) |>
+  summarise(n = n_distinct(VEGCODE), .groups = "drop")
+```
 
 :::{.aside}
 
@@ -137,9 +158,7 @@ We save both these four summary tables in a file that we can load in later steps
 ```{r}
 save(
   TASVEG_revised,
-  TASVEG_max_by_expert,
-  TASVEG_memb_by_target,
-  TASVEG_max_target,
+  TASVEG_summary,
   file = here::here(output_dir, "memb-summaries.rda")
 )
 ```

@@ -1,131 +1,144 @@
 # Spatial outputs {#sec-maps}
 
+:::{.aside}
 ```{r}
-#| eval: false
-library(ecoSynthesis)
-library(sf)
+#| eval: true
+#| code-fold: true
+#| message: false
+#| warning: false
+#| code-summary: Setup for this R session
 library(terra)
-
-library(readr)
-library(fasterize)
+library(sf)
 library(dplyr)
+library(ecoSynthesis)
+library(geco)
+library(fasterize)
 
-here::i_am("EFG-map.qmd")
-TASVEG <- read_sf(here::here("gisdata", "TASVEG_5_0.shp"))
-xref <- read_csv(here::here("output-XREFs/First-round-output.csv"))
-
-sum_membs <- xref |>
-  group_by(VEGCODE) |>
-  summarise(
-    k = sum(if_else(efg == "TF1.3", memb, 0)),
-    total = sum(memb),
-    prop = k / total
-  )
-
-TASVEG_k <- TASVEG |> left_join(sum_membs, by = "VEGCODE")
-
-
-TASVEG_rast <- rast(TASVEG, res = 10000)
-TASVEG_raster <- raster(TASVEG, res = 10000)
-
-k_rast <- rasterize(TASVEG_k, TASVEG_rast, field = "prop", fun = "sum")
-k_raster <- fasterize(TASVEG_k, TASVEG_raster, field = "prop", fun = "sum")
-
+here::i_am("synthesis/EFG-map.qmd")
+output_dir <- here::here("output-XREFs")
+load(here::here(output_dir, "memb-tables.rda"))
 out_dir <- here::here("gisout")
 if (!dir.exists(out_dir)) {
-  dir.create(out_dir)
+    dir.create(out_dir)
 }
-
-sum(values(k_rast), na.rm = TRUE)
-sum(k_raster@data@values, na.rm = T)
-plot(k_raster)
-
-out_file <- here::here(out_dir, "TF1_3-rasterize.tiff")
-writeRaster(k_raster, out_file)
-
-out_file <- here::here(out_dir, "TF1_3-fasterize.tiff")
-writeRaster(k_rast, out_file)
-
-
-bench <- microbenchmark::microbenchmark(
-  terrarize = k_rast <- rasterize(
-    TASVEG_k,
-    TASVEG_rast,
-    field = "prop",
-    fun = "sum"
-  ),
-  fasterize = k_raster <- fasterize(
-    TASVEG_k,
-    TASVEG_raster,
-    field = "prop",
-    fun = "sum"
-  ),
-  unit = "ms"
-)
-
-print(bench, digits = 3)
+efg_pixel_values <- geco_efg_data() |>
+    select(efg_code, efg_pixel_value) |>
+    rename("EFG" = "efg_code")
 ```
 
-Results:
-Unit: milliseconds
-      expr   min    lq  mean median    uq   max neval
- terrarize 57834 59656 60775  60406 61092 97913   100
- fasterize  3564  4538  5441   5677  6405  7635   100
+:::
 
+In order to create spatial outputs from the synthesis of membership values, we need to combine the membership table with the spatial attribute table.
 
- ```{r}
- #| eval: false
-out_dir <- here::here("gisout")
-if (!dir.exists(out_dir)) {
-   dir.create(out_dir
-})
+The spatial attribute table attached to the spatial dataset (in Shapefile format) contains one entry per polygon, and hundred of thousands of polygons.
 
-rez <- 10000 / 100
+```{r}
+TASVEG_xy <- read_sf(here::here("gisdata", "LIST_TASVEG_50_STATEWIDE", "TASVEG_5_0.shp"))
+
+TASVEG_xy |>
+    st_drop_geometry()
+```
+
+The decisions about how we synthetise the data will constrain the type of data we can export as output. Here we show certain examples.
+
+## Best candidates from aggregated membership
+
+Here we aggregate the data from the second round of expert elicitation.
+
+```{r}
+TASVEG_best_summary <-
+    summarise_membership(TASVEG_clean, keep_all = FALSE, which_round = 2)
+```
+
+Then we combine this dataset with the spatial table and a 
+```{r}
+TASVEG_xy_best <- TASVEG_xy |>
+    left_join(TASVEG_best_summary, by = "VEGCODE", relationship = "many-to-one") |>
+    left_join(efg_pixel_values, by = "EFG")
+```
+
+```{r}
+nrow(TASVEG_xy_best) == nrow(TASVEG_xy)
+TASVEG_xy_best |>
+    st_drop_geometry() |>
+    select(VEG_GROUP, VEGCODE, EFG, prop_memb, supporting, efg_pixel_value) |>
+    slice_sample(n = 10)
+```
+
+```{r}
+#| eval: false
 rez <- 90
-TASVEG_raster <- raster(TASVEG, res = rez)
+TASVEG_raster <- raster(TASVEG_xy, res = rez)
+memb_raster <- fasterize(
+    TASVEG_xy_best,
+    TASVEG_raster,
+    field = "prop_memb",
+    fun = "max"
+) |> rast()
+target_raster <- fasterize(
+    TASVEG_xy_best,
+    TASVEG_raster,
+    field = "efg_pixel_value",
+    fun = "first"
+) |> rast()
+supp_raster <- fasterize(
+    TASVEG_xy_best,
+    TASVEG_raster,
+    field = "supporting",
+    fun = "max"
+) |> rast()
 
-for (tid in IUCN_GET_LUT$efg_id) {
-   cat(sprintf("Starting %s: %s // ", tid, date()))
-   out_file <- here::here(out_dir ,sprintf("%s-res%s.tiff", tid, rez))
-   if (file.exists(out_file)) {
-     cat(sprintf("%s already exists\n", out_file))
-   } else {
-     if (tid %in% xref$efg) {
-       sum_membs <- xref | 
-         group_by(VEGCODE) | 
-         summarise(
-           k = sum(if_else(efg == tid, memb, 0)),
-           total = sum(memb),
-           prop =  k /tota
-        )
+ctab <- data.frame(value = 1:5, color = wesanderson::wes_palette("Moonrise3"))
+coltab(supp_raster) <- ctab
+plot(supp_raster)
 
-       TASVEG_k <- TASVEG |> left_join(sum_membs, b y ="VEGCODE")
-       k_raster <- fasterize
-        (TASVEG_k
-       , TASVEG_raster
-       , fiel d ="prop"
-       , fun = "sum
-      )
+ctab <- geco_efg_data() |> transmute(value = efg_pixel_value, color = efg_hex_code)
+coltab(target_raster) <- ctab
+plot(target_raster)
+plot(memb_raster)
+out_file <- here::here(out_dir, "TASVEG-xref-target.tiff")
 
-       print(sum(k_raster@data@values ,na.r m =T))
-       plot(k_raster)
- 
-       writeRaster(k_raster, out_file)
-     } else {
-       cat(sprintf("%s not found\n", tid))
-     }
-   }
-}
- ```
+rast_metadata <- c(
+    PROJECT = "Ecosystem Indicators Workflows",
+    TITLE = "Best candidate ecosystem function group",
+    DESCRIPTION = "Synthesis of crossreference from TASVEG to IUCN GET"
+)
+metags(target_raster) <- rast_metadata
 
- ```{r}
-library(terra)
-here::i_am("synthesis/EFG-map.qmd")
-out_dir <- here::here("gisout")
+writeRaster(target_raster,
+    out_file,
+    overwrite = TRUE
+)
+```
+
+
+## Combining membership table with spatial data
+
+## Combining 
+
+```{r}
+#| eval: false
+#| output: false
 tas_all <- rast(dir(out_dir, pattern = "res90", full.names = TRUE))
+tas_which <- app(tas_all, fun = "which.max", na.rm = T)
+```
 
-tas_which <- app(tas_all, fun = "which.max")
-tas_max <- app(tas_all, fun = "max")
+
+```{r}
+#| eval: false
 plot(tas_which)
+```
+
+
+```{r}
+#| eval: false
+#| output: false
+tas_max <- app(tas_all, fun = "max", na.rm = T)
+```
+
+
+```{r}
+#| eval: false
 plot(tas_max)
- ```
+```
+

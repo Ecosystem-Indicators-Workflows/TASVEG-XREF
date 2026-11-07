@@ -73,14 +73,17 @@ book:
     - part: "Synthesis" 
       chapters:
       - "synthesis/index.qmd" 
-      - "synthesis/area-summaries.ipynb" 
+      - "synthesis/area-summaries.qmd" 
       - "synthesis/EFG-map.qmd" 
     - references.qmd
-#    - part: "Appendices"
-#      chapters:
-#      - appendices/membership-tables.qmd
-#      - file: appendices/data-sources.qmd
-#        text: "TASVEG data"
+    - part: "Appendices"
+      chapters:
+      - glossary.qmd
+      - file: appendices/membership-tables.qmd
+        text: "Membership data formats"
+      - reproducibility-notes/reproducibility-R.qmd
+      - file: appendices/outputs.qmd
+        text: "Overview of outputs"
 
 #      - file: "elicitation/visualise-agreement.ipynb"
 #        text: "Viz agreement"

@@ -1,4 +1,4 @@
-## Membership tables
+## Membership tables {#sec-formats}
 
 The following diagram illustrates a minimal example consisting of two classifications with two concepts each, and lines joining the source and target concepts with membership values.
 

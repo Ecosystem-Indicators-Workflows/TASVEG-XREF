@@ -1,0 +1,26 @@
+# Outputs
+
+Outputs from this workflow are uploaded to zenodo.org.
+
+## Best-Candidate Spatial Synthesis
+
+The code for *Cross-referencing Tasmanian Terrestrial Ecosystems (TASVEG 5.0) to the IUCN Global Ecosystem Typology: 90m Best-Candidate Spatial Synthesis* [@OUTPUT1_best_candidate] is available here:
+
+```{r}
+#| filename: "inc/TASVEG-xref-IUCNGET-output-best-90m.R"
+#| eval: false
+#| code-fold: true
+#| code-summary: "Workflow for raster outputs (best candidate)"
+#| file: ../inc/TASVEG-xref-IUCNGET-output-best-90m.R
+```
+
+A quarto file for generating and updating the README is available here:
+
+```{r}
+#| filename: "output-best-candidate/README.qmd"
+#| eval: false
+#| code-fold: true
+#| code-summary: "README for the deposition"
+#| file: ../output-best-candidate/README.qmd
+```
+
