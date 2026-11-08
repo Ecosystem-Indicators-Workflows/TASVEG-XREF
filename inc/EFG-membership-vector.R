@@ -11,7 +11,7 @@
 ## > plus a companion unit-level summary table (`TASVEG-xref-{EFG code}-unit-summary.csv`)
 ##
 ## Recommended usage (example  TF1.7 Boreal and temperate fens):
-## R --vanilla --verbose --file="inc/EFG-membership-vector.R" --args TF1.7 > reproducibility-notes/TF1.7-membership-vector-out.txt
+## R --vanilla --file="inc/EFG-membership-vector.R" --args TF1.7 > reproducibility-notes/TF1.7-membership-vector-out.txt
 
 ## Step 0: Setup
 
