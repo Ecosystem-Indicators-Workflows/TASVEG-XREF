@@ -10,7 +10,10 @@ date()
 here::i_am("inc/benchmark-fasterize.R")
 load(here::here("outputs/XREFs/memb-summaries.rda"))
 
-TASVEG <- read_sf(here::here("gisdata", "TASVEG_5_0.shp"))
+TASVEG <- read_sf(here::here(
+  "gisdata/LIST_TASVEG_50_STATEWIDE",
+  "TASVEG_5_0.shp"
+))
 
 TASVEG_k <- TASVEG |>
   left_join(TASVEG_summary, by = "VEGCODE", relationship = "many-to-many") |>

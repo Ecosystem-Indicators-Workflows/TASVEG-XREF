@@ -49,9 +49,9 @@ library(geco)
 ### Paths
 here::i_am("inc/TASVEG-xref-IUCNGET-output-best-90m.R")
 
-out_dir <- here::here("output-best-candidate")
+out_dir <- here::here("outputs", "best-candidate")
 if (!dir.exists(out_dir)) {
-  dir.create(out_dir)
+  dir.create(out_dir, recursive = TRUE)
 }
 
 ### Custom functions
