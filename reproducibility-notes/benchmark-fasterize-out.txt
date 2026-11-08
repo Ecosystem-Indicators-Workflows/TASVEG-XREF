@@ -25,12 +25,15 @@ Type 'q()' to quit R.
 > library(dplyr)
 > 
 > date()
-[1] "Fri Nov  6 07:05:38 2026"
+[1] "Sun Nov  8 11:47:08 2026"
 > 
 > here::i_am("inc/benchmark-fasterize.R")
-> load(here::here("output-XREFs/memb-summaries.rda"))
+> load(here::here("outputs/XREFs/memb-summaries.rda"))
 > 
-> TASVEG <- read_sf(here::here("gisdata", "TASVEG_5_0.shp"))
+> TASVEG <- read_sf(here::here(
++   "gisdata/LIST_TASVEG_50_STATEWIDE",
++   "TASVEG_5_0.shp"
++ ))
 > 
 > TASVEG_k <- TASVEG |>
 +   left_join(TASVEG_summary, by = "VEGCODE", relationship = "many-to-many") |>
@@ -60,24 +63,24 @@ Type 'q()' to quit R.
 + }
 [1] 10000
 Unit: milliseconds
-      expr   min    lq  mean median  uq    max neval
- terrarize 950.6 965.5 979.8  969.7 983 1052.5    10
- fasterize  57.1  61.1  62.9   61.6  62   80.9    10
+      expr   min    lq   mean median     uq    max neval
+ terrarize 985.8 994.7 1018.1 1014.6 1043.9 1059.1    10
+ fasterize  60.2  62.4   66.4   63.6   64.9   82.4    10
 [1] 1000
 Unit: milliseconds
-      expr min    lq  mean median    uq   max neval
- terrarize 912 917.8 930.3  924.6 931.6 982.6    10
- fasterize  56  57.2  58.2   57.6  59.7  60.9    10
+      expr   min    lq mean median    uq max neval
+ terrarize 926.9 935.9  955  957.3 969.7 989    10
+ fasterize  56.8  58.8   60   60.1  61.2  63    10
 [1] 100
 Unit: milliseconds
       expr   min  lq mean median  uq max neval
- terrarize 904.3 926  934    937 943 963    10
- fasterize  97.2 102  103    104 104 105    10
+ terrarize 945.2 952  958    955 966 971    10
+ fasterize  99.5 102  104    103 106 117    10
 [1] 90
 Unit: milliseconds
       expr min  lq mean median  uq max neval
- terrarize 917 924  936    940 945 949    10
- fasterize 105 107  110    110 113 113    10
+ terrarize 901 906  927    924 949 956    10
+ fasterize 110 121  140    139 147 182    10
 > sessionInfo()
 R version 4.5.2 (2025-10-31)
 Platform: aarch64-apple-darwin20

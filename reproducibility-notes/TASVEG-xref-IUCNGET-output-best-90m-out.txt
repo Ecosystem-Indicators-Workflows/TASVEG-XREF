@@ -7,6 +7,8 @@ R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
 
+  Natural language support but running in an English locale
+
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
 'citation()' on how to cite R or R packages in publications.
@@ -47,17 +49,6 @@ Type 'q()' to quit R.
 > 
 > #### tidyverse libraries
 > library(dplyr)
-
-Attaching package: ‘dplyr’
-
-The following objects are masked from ‘package:stats’:
-
-    filter, lag
-
-The following objects are masked from ‘package:base’:
-
-    intersect, setdiff, setequal, union
-
 > library(readr)
 > library(tidyr)
 > library(stringr)
@@ -67,28 +58,8 @@ The following objects are masked from ‘package:base’:
 > 
 > #### Spatial data
 > library(terra)
-terra 1.9.50
-
-Attaching package: ‘terra’
-
-The following object is masked from ‘package:tidyr’:
-
-    extract
-
 > library(sf)
-Linking to GEOS 3.13.0, GDAL 3.8.5, PROJ 9.5.1; sf_use_s2() is TRUE
 > library(fasterize)
-
-Attaching package: ‘fasterize’
-
-The following object is masked from ‘package:graphics’:
-
-    plot
-
-The following object is masked from ‘package:base’:
-
-    plot
-
 > 
 > #### Cross-referencing
 > library(ecoSynthesis)
@@ -96,11 +67,10 @@ The following object is masked from ‘package:base’:
 > 
 > ### Paths
 > here::i_am("inc/TASVEG-xref-IUCNGET-output-best-90m.R")
-here() starts at /Users/z3529065/proyectos/EIW/TASVEG-XREF
 > 
-> out_dir <- here::here("output-best-candidate")
+> out_dir <- here::here("outputs", "best-candidate")
 > if (!dir.exists(out_dir)) {
-+   dir.create(out_dir)
++   dir.create(out_dir, recursive = TRUE)
 + }
 > 
 > ### Custom functions
@@ -209,30 +179,17 @@ Revised cross-references following discussions with David Keith, Anne Kitchener,
 +   interpreter = "expert",
 +   round = "round"
 + )
-Read 2354 rows from data frame supplied in session
 > 
 > TASVEG_clean <- clean_membership(TASVEG_memb, TASVEG, IUCN_GET)
-Flagged 90 records with not eligible source ids
-Flagged 312 records with invalid target ids
-Removed 396 records with one or more flags
 > 
 > 
 > check_membership(TASVEG_clean, TASVEG, IUCN_GET)
-✔ Membership column is numeric
-✔ All records have a membership value
-✔ Membership values are within [0,1]
-✔ Lookup table for source classification provided
-✔ All source ids are eligible
-✔ Lookup table for target classification provided
-✔ All target ids are valid
-✔ All checks passed, Membership table is valid.
 > 
 > 
 > ## Step 3: synthesis
 > 
 > TASVEG_best_summary <-
 +   summarise_membership(TASVEG_clean, keep_all = FALSE, which_round = 2)
-Round nr. 2 selected.
 > 
 > ## Step 4: outputs
 > 
@@ -376,7 +333,7 @@ Round nr. 2 selected.
 > 
 > end_time <- Sys.time()
 > end_time - start_time
-Time difference of 1.374279 mins
+Time difference of 2.192891 mins
 > 
 > sessionInfo()
 R version 4.5.2 (2025-10-31)
@@ -388,7 +345,7 @@ BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/ve
 LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
 
 locale:
-[1] C.UTF-8/C.UTF-8/C.UTF-8/C/C.UTF-8/C.UTF-8
+[1] en_AU.UTF-8/en_AU.UTF-8/en_AU.UTF-8/C/en_AU.UTF-8/en_AU.UTF-8
 
 time zone: Australia/Sydney
 tzcode source: internal
