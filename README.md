@@ -1,3 +1,33 @@
+# Cross-referencing Tasmanian Terrestrial Ecosystems (TASVEG-XREF)
+A reproducible workflow that cross-references the 159 mapping units of TASVEG 5.0, Tasmania’s vegetation map, to the ecosystem functional groups of the IUCN Global Ecosystem Typology (GET).
+
+Five expert interpreters assigned each TASVEG unit to IUCN GET units over two rounds. This workflow cleans and validates their membership tables, measures how well the interpreters agree and how uncertain each assignment is, then summarises and maps the results. The whole workflow is written as a Quarto book.
+
+It is a joint output of the ARDC Ecosystem Indicators Workflows (EIW) project and the ARC Industry Laureate Fellowship Foundations for leading the nature positive ecosystem conservation agenda (IL240100030).
+## Keywords
+`#tasmania`, `#tasveg`, `#ecosystem-classification`, `#quarto`, `#r`, `#expert-elicitation`, `#ardc`.
+
+## Requirements
+- R ≥ 4.3, Quarto ≥ 1.4, and Jupyter with the R kernel (IRkernel) for the .ipynb chapters
+- CRAN packages: here dplyr tidyr readr readxl stringr tibble rlang ggplot2 cowplot DT foreign sf terra fasterize units foreach IRkernel
+- ecoSynthesis, installed with remotes::install_github("Ecosystem-Indicators-Workflows/ecoSynthesis")
+
+## Input data
+
+The expert membership tables are included in xrefdata/. TASVEG 5.0 is not included. Download it from theLIST open data (© State of Tasmania) and put these files in a gisdata/ folder at the repository root:
+
+- TASVEG_5_0.shp, plus its .dbf, .shx and .prj files
+- TASVEG_5_0_Fire_Attributes_LUT.dbf
+
+The workflow writes its outputs to output-XREFs/. That folder, along with gisdata/, is ignored by git.
+
+## Running the workflow
+```
+git clone https://github.com/Ecosystem-Indicators-Workflows/TASVEG-XREF.git
+cd TASVEG-XREF
+quarto render
+```
+The rendered book is written to _book/; open _book/index.html in a browser. Chapters build on outputs from earlier ones, so run them in the order listed in _quarto.yml.
 
 ## Fair Check
 <!-- FAIR:START -->

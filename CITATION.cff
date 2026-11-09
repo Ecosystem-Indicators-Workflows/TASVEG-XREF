@@ -1,0 +1,35 @@
+cff-version: 1.2.0
+message: "If you use this workflow, please cite it using the metadata from this file."
+type: software
+title: "Cross-referencing Tasmanian Terrestrial Ecosystems (TASVEG-XREF)"
+abstract: >-
+  A reproducible workflow that cross-references the 159 mapping units of
+  TASVEG 5.0 ... to the ecosystem functional groups of the IUCN Global
+  Ecosystem Typology (GET). ...
+version: "0.4"
+date-released: "2026-11-01"
+# doi: 10.5281/zenodo.XXXXXXX   # add once a Zenodo release is minted
+# license: MIT                  # add once a LICENSE file is chosen
+repository-code: "https://github.com/Ecosystem-Indicators-Workflows/TASVEG-XREF"
+# url: "https://ecosystem-indicators-workflows.github.io/TASVEG-XREF/"   # once Pages is on
+keywords: [cross-referencing, IUCN Global Ecosystem Typology, TASVEG, Tasmania,
+           ecosystem classification, expert elicitation, Quarto, R]
+authors:
+  - family-names: Ferrer-Paris
+    given-names: José R.
+    email: j.ferrer@unsw.edu.au
+    orcid: "https://orcid.org/0000-0002-9554-3395"
+    affiliation: "Centre for Ecosystem Science, UNSW Sydney; IUCN Commission on Ecosystem Management"
+  - family-names: Tozer          # Mark, CES UNSW
+  - family-names: Gould          # Elliot, ORCID 0000-0002-6585-538X
+  - family-names: Singh          # Abhimanyu Raj, ORCID 0000-0002-2279-7060, QCIF; CES UNSW
+  - family-names: Balmer         # J., NRE Tasmania
+  - family-names: Kitchener      # A., NRE Tasmania
+  - family-names: Latinovic      # A., NRE Tasmania
+  - family-names: Keith          # David A., CES UNSW; IUCN CEM
+references:
+  - type: software   # ecoSynthesis, github.com/Ecosystem-Indicators-Workflows/ecoSynthesis
+  - type: data       # TASVEG 5.0 (2025), theLIST open data, © State of Tasmania
+  - type: report     # Kitchener & Harris 2013, From Forest to Fjaeldmark (2nd ed.)
+  - type: article    # Keith et al. 2022, Nature 610:513–518, doi 10.1038/s41586-022-05318-4
+  - type: book       # IUCN 2025, cross-referencing guidelines v1.0, doi 10.2305/CPPC6126
