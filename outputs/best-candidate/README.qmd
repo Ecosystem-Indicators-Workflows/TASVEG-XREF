@@ -18,8 +18,8 @@ library(tidyr)
 library(knitr)
 library(jsonlite)
 
-here::i_am("output-best-candidate/README.qmd")
-out_dir <- here::here("output-best-candidate")
+here::i_am("outputs/best-candidate/README.qmd")
+out_dir <- here::here("outputs", "best-candidate")
 
 # Load metadata, CSV tables, and GeoTIFF rasters
 zenodo_meta <- fromJSON( file.path(out_dir, ".zenodo.json") )
