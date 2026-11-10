@@ -57,7 +57,7 @@ book:
       chapters:
       - file: preparation/lookup-tables.qmd
         text: "Lookup tables"
-      - file: "preparation/read-input-xref-data.ipynb"
+      - file: "preparation/input-memb-tables.qmd"
         text: "Membership table"
       - file: "preparation/validation.qmd"
         text: "Validation"
