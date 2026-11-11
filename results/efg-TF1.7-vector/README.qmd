@@ -1,0 +1,286 @@
+---
+format:
+  gfm:
+    output-file: README.md
+    wrap: none
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup-and-stats
+library(sf)
+library(readr)
+library(dplyr)
+library(tidyr)
+library(knitr)
+library(jsonlite)
+
+here::i_am("outputs/efg-TF1.7-vector/README.qmd")
+out_dir <- here::here("outputs", "efg-TF1.7-vector")
+
+zenodo_meta  <- fromJSON(file.path(out_dir, ".zenodo.json"))
+unit_summary <- read_csv(
+  file.path(out_dir, "TASVEG-xref-TF1.7-unit-summary.csv"),
+  show_col_types = FALSE
+)
+
+gpkg_path <- file.path(out_dir, "TASVEG-xref-TF1.7-memb.gpkg")
+tf17_sf   <- read_sf(gpkg_path)
+
+crs_obj   <- st_crs(tf17_sf)
+crs_label <- sprintf("%s (%s)", crs_obj$Name, crs_obj$input)
+bbox_vec  <- as.numeric(st_bbox(tf17_sf)) # xmin, ymin, xmax, ymax
+geom_type <- as.character(unique(st_geometry_type(tf17_sf)))[1]
+
+n_polygons       <- nrow(tf17_sf)
+n_units          <- nrow(unit_summary)
+n_best_units     <- sum(unit_summary$best)
+best_unit_code   <- unit_summary$VEGCODE[unit_summary$best][1]
+round_nr         <- unit_summary$round[1]
+n_interp         <- max(unit_summary$total_interp)
+
+total_unweighted_km2 <- sum(unit_summary$unweighted_area_km2)
+total_weighted_prop  <- sum(unit_summary$weighted_area_prop_km2)
+total_weighted_AK    <- sum(unit_summary$weighted_area_AK_km2)
+total_weighted_AL    <- sum(unit_summary$weighted_area_AL_km2)
+total_weighted_DAK   <- sum(unit_summary$weighted_area_DAK_km2)
+total_weighted_JB    <- sum(unit_summary$weighted_area_JB_km2)
+total_weighted_MGT   <- sum(unit_summary$weighted_area_MGT_km2)
+```
+
+# `r zenodo_meta$title`
+
+**Version:** `r zenodo_meta$version`  
+**Release Date:** `r zenodo_meta$publication_date`  
+**Dataset License:** [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) (with source spatial data attribution to [TASVEG 5.0 © State of Tasmania](https://www.theLIST.tas.gov.au) under [CC BY 3.0 AU](http://creativecommons.org/licenses/by/3.0/au/))  
+**Code License:** MIT  
+**Workflow Repository:** <https://github.com/Ecosystem-Indicators-Workflows/TASVEG-XREF>
+
+> *Note: This `README.md` is dynamically generated from [`README.qmd`](README.qmd) by inspecting `TASVEG-xref-TF1.7-memb.gpkg` and `TASVEG-xref-TF1.7-unit-summary.csv`. To update all statistics after regenerating the data, run `quarto render outputs/efg-TF1.7-vector/README.qmd --to gfm`.*
+
+---
+
+## Authors & Contributors
+
+### Authors (Creators)
+```{r}
+#| label: creators-list
+#| results: asis
+for (i in seq_len(nrow(zenodo_meta$creators))) {
+  cr <- zenodo_meta$creators[i, ]
+  orcid_str <- if (!is.null(cr$orcid) && !is.na(cr$orcid) && nzchar(cr$orcid)) {
+    sprintf(" (ORCID: [%s](https://orcid.org/%s))", cr$orcid, cr$orcid)
+  } else {
+    ""
+  }
+  cat(sprintf("- **%s**%s — *%s*\n", cr$name, orcid_str, cr$affiliation))
+}
+```
+
+### Contributors
+```{r}
+#| label: contributors-list
+#| results: asis
+for (i in seq_len(nrow(zenodo_meta$contributors))) {
+  ct <- zenodo_meta$contributors[i, ]
+  orcid_str <- if (!is.null(ct$orcid) && !is.na(ct$orcid) && nzchar(ct$orcid)) {
+    sprintf(" (ORCID: [%s](https://orcid.org/%s))", ct$orcid, ct$orcid)
+  } else {
+    ""
+  }
+  cat(sprintf("- **%s**%s (%s) — *%s*\n", ct$name, orcid_str, ct$type, ct$affiliation))
+}
+```
+
+**Contribution Summary:** MGT led the expert elicitation process. MGT, DAK, AL, AK, and JB contributed membership tables for cross-referencing. JRFP led the technical documentation and synthesis workflow. JRFP, EG, and ARS contributed scripts for data preparation, validation, analysis, and spatial output generation.
+
+---
+
+## 1. Overview & Methodology
+
+This dataset provides a **polygon vector layer (`TASVEG-xref-TF1.7-memb.gpkg`)** and **unit-level summary table (`TASVEG-xref-TF1.7-unit-summary.csv`)** for **Level 3 Ecosystem Functional Group `TF1.7` (*Boreal and temperate fens*)** of the **IUCN Global Ecosystem Typology (IUCN GET)** in Tasmania, derived from **TASVEG 5.0**.
+
+### Selection & Cross-Referencing Methodology
+
+1. **Candidate Unit Filtering:**
+   - Out of the 153 eligible vegetation community mapping units in **TASVEG 5.0**, **``r n_units`` vegetation communities (`VEGCODE`)** were assigned non-zero fuzzy membership ($\text{memb} > 0$) to **`TF1.7` (*Boreal and temperate fens*)** by at least one of the ``r n_interp`` domain experts in **Round ``r round_nr``** of structured expert elicitation.
+   - All **``r format(n_polygons, big.mark = ",")`` polygons** belonging to these ``r n_units`` `VEGCODE` units were extracted from `TASVEG_5_0.shp` (total unweighted polygon area: **``r format(round(total_unweighted_km2, 2), big.mark = ",", nsmall = 2)`` $\text{km}^2$**).
+
+2. **Individual Interpreter & Aggregated Membership Attributes:**
+   - To preserve full transparency across interpreters, the polygon attribute table includes both:
+     - **Individual interpreter fuzzy memberships** in Round ``r round_nr`` (`memb_AK`, `memb_AL`, `memb_DAK`, `memb_JB`, `memb_MGT`, each in $[0, 1]$), and
+     - **Aggregated synthesis metrics** across all ``r n_interp`` interpreters:
+       - `prop_memb`: Proportion of total Round ``r round_nr`` membership votes assigned to `TF1.7` ($\sum_{i=1}^{`r n_interp`} m_{s, \text{TF1.7}, i} / `r n_interp`$).
+       - `supporting`: Number of interpreters (out of ``r n_interp``) assigning $>0$ membership to `TF1.7`.
+       - `best`: Logical flag (`TRUE` / `FALSE`) indicating whether `TF1.7` is the single highest-scoring ("best") candidate EFG for that `VEGCODE` (`TRUE` for ``r best_unit_code``; `FALSE` for the remaining ``r n_units - n_best_units`` units where `TF1.7` represents a partial/secondary ecosystem component).
+
+---
+
+## 2. File Inventory
+
+| File Name | Format | Description |
+|---|---|---|
+| `TASVEG-xref-TF1.7-memb.gpkg` | OGC GeoPackage (`r geom_type`, ``r format(n_polygons, big.mark = ",")`` features) | **Spatial polygon vector dataset** for all ``r n_units`` TASVEG 5.0 communities linked to `TF1.7`, with core TASVEG columns, 5 individual interpreter membership columns, and aggregated synthesis metrics. |
+| `TASVEG-xref-TF1.7-unit-summary.csv` | CSV (UTF-8, ``r n_units`` rows) | **Unit-level cross-reference & area summary table** for the ``r n_units`` TASVEG 5.0 communities, including polygon counts and unweighted vs. membership-weighted areas ($\text{km}^2$) overall and per interpreter. |
+| `TASVEG-xref-TF1.7-memb.qml` | QGIS Style XML | **QGIS vector style file** for `TASVEG-xref-TF1.7-memb.gpkg` (categorized by `VEGCODE` with `prop_memb` and `supporting` legend labels). |
+| `datapackage.json` | JSON (Frictionless Data) | **Machine-readable Frictionless Data Package specification** describing the GeoPackage and CSV schemas. |
+| `.zenodo.json` | JSON | **Zenodo deposit metadata** (creators, contributors, grants, communities, license, keywords, and related DOIs/URLs). |
+| `LICENSE` | Plain text / Markdown | **Full licensing terms** (CC BY 4.0 for data/docs, CC BY 3.0 AU attribution for TASVEG 5.0, MIT for code). |
+| `README.md` / `README.qmd` | Markdown / Quarto | **Dataset documentation file** and the reproducible Quarto template that generates it. |
+
+---
+
+## 3. Spatial Vector Specifications (`TASVEG-xref-TF1.7-memb.gpkg`)
+
+| Property | Value |
+|---|---|
+| **Format & Layer Name** | OGC GeoPackage (`TASVEG-xref-TF1.7-memb.gpkg`), layer: `TASVEG_TF1_7_membership` |
+| **Coordinate Reference System (CRS)** | ``r crs_label`` |
+| **Geometry Type** | ``r geom_type`` |
+| **Feature Count** | ``r format(n_polygons, big.mark = ",")`` polygons across ``r n_units`` `VEGCODE` units |
+| **Bounding Box (`xmin, ymin, xmax, ymax`)** | ``r sprintf("%.0f, %.0f, %.0f, %.0f", bbox_vec[1], bbox_vec[2], bbox_vec[3], bbox_vec[4])`` (meters, EPSG:28355) |
+| **Total Unweighted Polygon Area** | ``r sprintf("%s km²", format(round(total_unweighted_km2, 2), big.mark = ",", nsmall = 2))`` |
+| **Total Aggregated Weighted Area (`area * prop_memb`)** | ``r sprintf("%s km²", format(round(total_weighted_prop, 2), big.mark = ",", nsmall = 2))`` |
+
+---
+
+## 4. Summary of TASVEG 5.0 Units Linked to `TF1.7` (*Boreal and temperate fens*)
+
+```{r}
+#| label: tf17-unit-table
+#| results: asis
+tbl_units <- unit_summary |>
+  transmute(
+    `VEGCODE` = sprintf("**`%s`**", VEGCODE),
+    `TASVEG 5.0 Community Description` = VEGCODE_D,
+    `memb_AK` = sprintf("%.2f", memb_AK),
+    `memb_AL` = sprintf("%.2f", memb_AL),
+    `memb_DAK` = sprintf("%.2f", memb_DAK),
+    `memb_JB` = sprintf("%.2f", memb_JB),
+    `memb_MGT` = sprintf("%.2f", memb_MGT),
+    `prop_memb` = sprintf("**%.2f**", prop_memb),
+    `Supporting` = sprintf("%d/%d", supporting, total_interp),
+    `Best?` = ifelse(best, "`TRUE`", "`FALSE`"),
+    `Polygons` = format(n_polygons, big.mark = ","),
+    `Unweighted Area (km²)` = format(round(unweighted_area_km2, 2), big.mark = ",", nsmall = 2),
+    `Weighted Area (km²)` = format(round(weighted_area_prop_km2, 2), big.mark = ",", nsmall = 2)
+  )
+
+total_row <- tibble(
+  `VEGCODE` = "**Total**",
+  `TASVEG 5.0 Community Description` = sprintf("**%d TASVEG 5.0 Communities**", n_units),
+  `memb_AK` = sprintf("*%.2f km²*", total_weighted_AK),
+  `memb_AL` = sprintf("*%.2f km²*", total_weighted_AL),
+  `memb_DAK` = sprintf("*%.2f km²*", total_weighted_DAK),
+  `memb_JB` = sprintf("*%.2f km²*", total_weighted_JB),
+  `memb_MGT` = sprintf("*%.2f km²*", total_weighted_MGT),
+  `prop_memb` = "—",
+  `Supporting` = "—",
+  `Best?` = sprintf("**%d best**", n_best_units),
+  `Polygons` = sprintf("**%s**", format(n_polygons, big.mark = ",")),
+  `Unweighted Area (km²)` = sprintf("**%s**", format(round(total_unweighted_km2, 2), big.mark = ",", nsmall = 2)),
+  `Weighted Area (km²)` = sprintf("**%s**", format(round(total_weighted_prop, 2), big.mark = ",", nsmall = 2))
+)
+
+kable(
+  bind_rows(tbl_units, total_row),
+  format = "pipe",
+  align = c("l", "l", "r", "r", "r", "r", "r", "r", "c", "c", "r", "r", "r")
+)
+```
+
+*(Note: Italicised values in the **Total** row under `memb_AK` through `memb_MGT` show each interpreter's total membership-weighted area $\sum \text{area} \times \text{memb}_i$ in $\text{km}^2$).*
+
+---
+
+## 5. Attribute Table Dictionary (`TASVEG-xref-TF1.7-memb.gpkg`)
+
+| Field Name | Type | Description |
+|---|---|---|
+| `VEG_GROUP` | `string` | Broad TASVEG 5.0 vegetation group (`Highland treeless vegetation`, `Moorland, sedgeland and rushland`, `Saltmarsh and wetland`). |
+| `VEGCODE` | `string` | Three-letter TASVEG 5.0 vegetation community code (`AAP`, `AHL`, `HCM`, `HSE`, `HSW`, `MGH`). |
+| `VEGCODE_D` | `string` | Full name/description of the TASVEG 5.0 community. |
+| `EFG` | `string` | Target IUCN GET Level 3 Ecosystem Functional Group code (`"TF1.7"`). |
+| `round` | `integer` | Expert elicitation round (``r round_nr``). |
+| `memb_AK` | `numeric` | Fuzzy membership assigned to `TF1.7` by interpreter **Anne Kitchener** ($[0, 1]$). |
+| `memb_AL` | `numeric` | Fuzzy membership assigned to `TF1.7` by interpreter **Adelina Latinovic** ($[0, 1]$). |
+| `memb_DAK` | `numeric` | Fuzzy membership assigned to `TF1.7` by interpreter **David A. Keith** ($[0, 1]$). |
+| `memb_JB` | `numeric` | Fuzzy membership assigned to `TF1.7` by interpreter **Jayne Balmer** ($[0, 1]$). |
+| `memb_MGT` | `numeric` | Fuzzy membership assigned to `TF1.7` by interpreter **Mark G. Tozer** ($[0, 1]$). |
+| `prop_memb` | `numeric` | Aggregated proportion of total Round ``r round_nr`` membership votes across all ``r n_interp`` interpreters assigned to `TF1.7` ($[0.01, 0.94]$). |
+| `supporting` | `integer` | Number of interpreters in Round ``r round_nr`` assigning $>0$ membership to `TF1.7` (`1`, `4`, or `5`). |
+| `total_interp` | `integer` | Total number of interpreters assessing the community in Round ``r round_nr`` (``r n_interp``). |
+| `best` | `boolean` | `TRUE` if `TF1.7` is the best-candidate EFG for this `VEGCODE` (`AAP`), `FALSE` otherwise. |
+| `SHAPE_LEN` | `numeric` | Polygon perimeter length in meters (from TASVEG 5.0, `EPSG:28355`). |
+| `SHAPE_AREA` | `numeric` | Polygon area in square meters ($\text{m}^2$, from TASVEG 5.0, `EPSG:28355`). |
+
+---
+
+## 6. How to Use This Dataset
+
+### In QGIS
+Keep `TASVEG-xref-TF1.7-memb.qml` in the same folder as `TASVEG-xref-TF1.7-memb.gpkg` (or load style via **Layer Properties → Symbology → Style → Load Style**).
+
+### In R (`sf`)
+
+```r
+library(sf)
+library(dplyr)
+
+# 1. Read the GeoPackage
+tf17_sf <- read_sf("TASVEG-xref-TF1.7-memb.gpkg")
+
+# 2. Compute membership-weighted area (km2) by VEGCODE
+tf17_sf |>
+  st_drop_geometry() |>
+  summarise(
+    n_polygons = n(),
+    unweighted_km2 = sum(SHAPE_AREA) / 1e6,
+    weighted_km2   = sum(SHAPE_AREA * prop_memb) / 1e6,
+    .by = c(VEGCODE, VEGCODE_D, prop_memb, supporting, best)
+  )
+
+# 3. Filter to polygons supported by at least 4 of 5 interpreters (AAP and MGH)
+tf17_consensus <- tf17_sf |> filter(supporting >= 4)
+```
+
+### In Python (`geopandas`)
+
+```python
+import geopandas as gpd
+
+gdf = gpd.read_file("TASVEG-xref-TF1.7-memb.gpkg")
+gdf["weighted_area_km2"] = (gdf["SHAPE_AREA"] * gdf["prop_memb"]) / 1e6
+print(gdf.groupby(["VEGCODE", "prop_memb", "supporting", "best"])["weighted_area_km2"].sum())
+```
+
+### Reproducing the Outputs from Source
+
+```bash
+# 1. Run the TF1.7 vector extraction and synthesis script
+R --vanilla < inc/TF1.7-membership-vector.R > reproducibility-notes/TF1.7-membership-vector-out.txt
+
+# 2. Render README.md with updated statistics
+quarto render outputs/efg-TF1.7-vector/README.qmd --to gfm
+```
+
+---
+
+## 7. Licensing, Attribution & Acknowledgements
+
+- **Dataset & Documentation:** Licensed under **Creative Commons Attribution 4.0 International ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/))**.
+- **Source Spatial Data Attribution:** TASVEG 5.0 is supplied under the **Creative Commons Attribution 3.0 Australia ([CC BY 3.0 AU](http://creativecommons.org/licenses/by/3.0/au/))** licence. Attribution must be provided as: `"TASVEG 5.0 from www.theLIST.tas.gov.au ©State of Tasmania"`.
+- **Scripts/Code:** Licensed under the **MIT License** (see [`LICENSE`](LICENSE)).
+- **Funding:** Supported by the ARC Industry Laureate Fellowship Project *"Foundations for leading the nature positive ecosystem conservation agenda"* (`IL240100030`), ARC Linkage Project (`LP170101143`), and the Australian Research Data Commons (ARDC) *Ecosystem Indicators Workflows* (`PLT019`, DOI: `10.3565/j5sq-a757`) co-investment project enabled by NCRIS.
+
+---
+
+## 8. References
+
+- **IUCN (2025).** *Standards, methods and guidelines for cross-referencing ecosystem classifications and maps to the IUCN Global Ecosystem Typology*. Version 1.0. Gland, Switzerland: IUCN. <https://doi.org/10.2305/CPPC6126>
+- **Keith, D. A., Ferrer-Paris, J. R., Nicholson, E., et al. (2022).** A function-based typology for Earth's ecosystems. *Nature*, 610(7932), 513–518. <https://doi.org/10.1038/s41586-022-05318-4>
+- **Kitchener, A. & Harris, S. (2013).** *From Forest to Fjaeldmark: Descriptions of Tasmania's Vegetation*. Edition 2. Department of Primary Industries, Parks, Water and Environment, Tasmania.
+- **Tasmanian Vegetation Monitoring and Mapping Program (2025).** *TASVEG 5.0* (Released November 2025). Department of Natural Resources and Environment, Tasmania. <https://www.theLIST.tas.gov.au>
