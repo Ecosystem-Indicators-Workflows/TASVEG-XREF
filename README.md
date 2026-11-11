@@ -71,6 +71,13 @@ quarto render output-best-candidate/README.qmd
 
 See the [output-generation script](https://github.com/Ecosystem-Indicators-Workflows/TASVEG-XREF/blob/main/inc/TASVEG-xref-IUCNGET-output-best-90m.R) and [R reproducibility notes](https://github.com/Ecosystem-Indicators-Workflows/TASVEG-XREF/blob/main/reproducibility-notes/reproducibility-R.qmd) for details.
 
+## Publish the book to GitHub Pages
+
+From the repository root, run:
+```bash
+quarto publish gh-pages
+```
+
 ## Output files
 
 | File | Format | Contents |
