@@ -218,3 +218,106 @@ summary_disagreement <- function(x) {
   )
   return(out)
 }
+
+
+qml_styler <- function(cat_table, attribute, output_file) {
+  ## based on Kay Cichini's qml-styler.R
+  ## https://github.com/gimoya/theBioBucket-Archives/blob/master/R/qml_styler.R
+  base <- newXMLNode("qgis")
+  addAttributes(
+    base,
+    version = "3.34.0",
+    styleCategories = "Symbology|Labeling",
+    labelsEnabled = "0"
+  )
+  trans <- newXMLNode("transparencyLevelInt", 255)
+  rend <- newXMLNode(
+    "renderer-v2",
+    attrs = c(attr = attribute, symbollevels = "0", type = "categorizedSymbol")
+  )
+
+  # sort the categories
+  categories <- newXMLNode("categories")
+  category <- lapply(seq_along(cat_table$value), function(x) {
+    newXMLNode(
+      "category",
+      attrs = c(
+        symbol = as.character(x - 1),
+        value = cat_table$value[x],
+        label = cat_table$label[x],
+        render = "true",
+        type = "string"
+      )
+    )
+  })
+  addChildren(categories, category)
+
+  # sort the symbols
+  symbols <- newXMLNode("symbols")
+  symbol <- lapply(seq_along(cat_table$value), function(x) {
+    dum.sym <- newXMLNode(
+      "symbol",
+      attrs = c(
+        alpha = cat_table$alpha[x],
+        type = "fill",
+        name = as.character(x - 1),
+        clip_to_extent = "1",
+        force_rhr = "0"
+      )
+    )
+    layer <- newXMLNode(
+      "layer",
+      attrs = c(
+        pass = "0",
+        class = "SimpleFill",
+        locked = "0"
+      )
+    )
+    prop <- newXMLNode("Option", attrs = c(type = "Map"))
+    addChildren(
+      prop,
+      newXMLNode(
+        "Option",
+        attrs = c(type = "QString", name = "color", value = cat_table$colour[x])
+      )
+    )
+    addChildren(
+      prop,
+      newXMLNode(
+        "Option",
+        attrs = c(
+          type = "QString",
+          name = "outline_color",
+          value = "250,250,230,255"
+        )
+      )
+    )
+
+    addChildren(
+      prop,
+      newXMLNode(
+        "Option",
+        attrs = c(type = "QString", name = "outline_style", value = "solid")
+      )
+    )
+    addChildren(
+      prop,
+      newXMLNode(
+        "Option",
+        attrs = c(type = "QString", name = "outline_width", value = "0.26")
+      )
+    )
+    addChildren(layer, prop)
+    addChildren(dum.sym, layer)
+  })
+
+  addChildren(symbols, symbol)
+
+  # add categories and symbols to rend
+  addChildren(rend, list(categories, symbols))
+  addChildren(base, list(trans, rend))
+
+  # save to qml-file
+  writeLines(saveXML(base), output_file)
+  #return(base)
+}
