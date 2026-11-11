@@ -10,8 +10,9 @@
 ##  > reproducibility-notes/TASVEG-data-download-out.txt
 
 ## Summary of steps from data source to prepared data:
-## 1. Obtaining the original data from www.theLIST.tas.gov.au
-## 2. Extract target file from downloaded zip archive
+## 1. Check if data is already present
+## 2. Obtaining the original data from www.theLIST.tas.gov.au
+## 3. Extract target file from downloaded zip archive
 
 ## Time for action:
 
@@ -36,34 +37,62 @@ if (!dir.exists(gisdata)) {
 # For Windows users: Please refer to the wget documentation for installation instructions at:
 # https://eternallybored.org/misc/wget/
 
-## 1. Obtaining the original data from www.theLIST.tas.gov.au
+## 1. Check if data is already present, and if data is complete:
 
-## This is the source URL at theLIST repository
-data_url <- 'https://listdata.thelist.tas.gov.au/opendata/data/LIST_TASVEG_50_STATEWIDE.zip'
+completed <- FALSE
 
-## Download to a tempfile
-temp_zip <- tempfile(fileext = ".zip")
+if ("LIST_TASVEG_50_STATEWIDE" %in% list.files(gisdata)) {
+  cat("The folder is already present, ")
+  all_files <- list.files(
+    here::here(gisdata, "LIST_TASVEG_50_STATEWIDE"),
+    recursive = TRUE
+  )
+  how_many <- length(all_files)
+  cat(sprintf("there are %s files in there, ", how_many))
+  if (how_many == 71) {
+    cat("that sounds about right!, nothing else to do.\n")
+    ## if present there is nothing to do,
+    completed <- TRUE
+  } else {
+    if (how_many < 71) {
+      cat("files missing?, will proceed to download again.\n")
+      completed <- FALSE
+    } else {
+      cat("that's too many, please check!.\n")
+      completed <- TRUE
+    }
+  }
+}
 
-## very large file (1.7GB) will require sometime to download
-options(timeout = max(300, getOption("timeout")))
+if (!completed) {
+  ## 2. Obtaining the original data from www.theLIST.tas.gov.au
 
-## Download with wget seems to be more stable
-download.file(
-  data_url,
-  destfile = temp_zip,
-  mode = "wb",
-  method = "wget",
-  extra = c("-c")
-)
+  ## This is the source URL at theLIST repository
+  data_url <- 'https://listdata.thelist.tas.gov.au/opendata/data/LIST_TASVEG_50_STATEWIDE.zip'
 
-## 2. Extract all files from downloaded zip archive
+  ## Download to a tempfile
+  temp_zip <- tempfile(fileext = ".zip")
 
-## Unzip the selected file
-unzip(
-  temp_zip,
-  exdir = gisdata
-)
+  ## very large file (1.7GB) will require sometime to download
+  options(timeout = max(300, getOption("timeout")))
 
+  ## Download with wget seems to be more stable
+  download.file(
+    data_url,
+    destfile = temp_zip,
+    mode = "wb",
+    method = "wget",
+    extra = c("-c")
+  )
+
+  ## 3. Extract all files from downloaded zip archive
+
+  ## Unzip the selected file
+  unzip(
+    temp_zip,
+    exdir = gisdata
+  )
+}
 ## Step X: Benchmarking and session info
 
 end_time <- Sys.time()
