@@ -15,7 +15,7 @@ library(geco)
 library(fasterize)
 
 here::i_am("synthesis/EFG-map.qmd")
-output_dir <- here::here("output-XREFs")
+output_dir <- here::here("outputs/XREFs")
 load(here::here(output_dir, "memb-tables.rda"))
 out_dir <- here::here("gisout")
 if (!dir.exists(out_dir)) {

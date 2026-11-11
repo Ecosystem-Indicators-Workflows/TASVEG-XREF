@@ -1,0 +1,241 @@
+---
+format:
+  gfm:
+    output-file: README.md
+    wrap: none
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup-and-stats
+library(terra)
+library(readr)
+library(dplyr)
+library(tidyr)
+library(knitr)
+library(jsonlite)
+
+here::i_am("outputs/efg-membership-rasters/README.qmd")
+out_dir <- here::here("outputs", "efg-membership-rasters")
+
+zenodo_meta <- fromJSON(file.path(out_dir, ".zenodo.json"))
+summary_tbl <- read_csv(
+    file.path(out_dir, "TASVEG-xref-EFG-membership-summary.csv"),
+    show_col_types = FALSE
+)
+
+# Inspect first GeoTIFF for shared grid specifications
+sample_rast <- rast(file.path(out_dir, summary_tbl$file_name[1]))
+crs_info <- crs(sample_rast, describe = TRUE)
+crs_label <- sprintf("%s (%s:%s)", crs_info$name[1], crs_info$authority[1], crs_info$code[1])
+res_xy <- res(sample_rast)
+pixel_km2 <- prod(res_xy) / 1e6
+pixel_ha <- prod(res_xy) / 1e4
+n_rows <- nrow(sample_rast)
+n_cols <- ncol(sample_rast)
+n_bands <- nlyr(sample_rast)
+total_cells <- ncell(sample_rast)
+ext_bbox <- as.vector(ext(sample_rast))
+
+n_efgs <- nrow(summary_tbl)
+n_best_efgs <- sum(summary_tbl$n_best_units > 0)
+n_nonbest_efgs <- sum(summary_tbl$n_best_units == 0)
+n_realms <- n_distinct(summary_tbl$realm_id)
+n_biomes <- n_distinct(summary_tbl$biome_id)
+round_nr <- summary_tbl$round[1]
+n_interp <- max(summary_tbl$total_interp)
+total_weighted_km2 <- sum(summary_tbl$weighted_area_km2, na.rm = TRUE)
+```
+
+# `r zenodo_meta$title`
+
+**Version:** `r zenodo_meta$version`  
+**Release Date:** `r zenodo_meta$publication_date`  
+**Dataset License:** [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) (with source spatial data attribution to [TASVEG 5.0 © State of Tasmania](https://www.theLIST.tas.gov.au) under [CC BY 3.0 AU](http://creativecommons.org/licenses/by/3.0/au/))  
+**Code License:** MIT  
+**Workflow Repository:** <https://github.com/Ecosystem-Indicators-Workflows/TASVEG-XREF>
+
+> *Note: This `README.md` is dynamically generated from [`README.qmd`](README.qmd) by inspecting the output GeoTIFF rasters and summary CSV table. To update all statistics after regenerating the data, run `quarto render outputs/efg-membership-rasters/README.qmd --to gfm`.*
+
+---
+
+## Authors & Contributors
+
+### Authors (Creators)
+```{r}
+#| label: creators-list
+#| results: asis
+for (i in seq_len(nrow(zenodo_meta$creators))) {
+    cr <- zenodo_meta$creators[i, ]
+    orcid_str <- if (!is.null(cr$orcid) && !is.na(cr$orcid) && nzchar(cr$orcid)) {
+        sprintf(" (ORCID: [%s](https://orcid.org/%s))", cr$orcid, cr$orcid)
+    } else {
+        ""
+    }
+    cat(sprintf("- **%s**%s — *%s*\n", cr$name, orcid_str, cr$affiliation))
+}
+```
+
+### Contributors
+```{r}
+#| label: contributors-list
+#| results: asis
+for (i in seq_len(nrow(zenodo_meta$contributors))) {
+    ct <- zenodo_meta$contributors[i, ]
+    cat(sprintf("- **%s** (%s) — *%s*\n", ct$name, ct$type, ct$affiliation))
+}
+```
+
+**Contribution Summary:** MGT led the expert elicitation process. MGT, DAK, AL, AK, and JB contributed membership tables for cross-referencing. JRFP led the technical documentation and synthesis workflow. JRFP, EG, and ARS contributed scripts for data preparation, validation, analysis, and spatial output generation.
+
+---
+
+## 1. Overview & Methodology
+
+This dataset provides **`r n_efgs` spatial raster layers (`r res_xy[1]` m resolution GeoTIFFs)** representing the aggregated fuzzy membership (`prop_memb`) of Tasmania's statewide vegetation map (**TASVEG 5.0**) to each candidate Level 3 **Ecosystem Functional Group (EFG)** of the **IUCN Global Ecosystem Typology (IUCN GET)**.
+
+### Why Per-EFG Membership Rasters?
+
+When cross-referencing regional vegetation classifications (TASVEG 5.0) to global functional typologies (IUCN GET), individual mapping units (`VEGCODE`) frequently have partial or one-to-many relationships across multiple target EFGs (due to environmental gradients, broad mapping complex definitions, or expert uncertainty).
+
+- Whereas a single **"best-candidate" ("winner-takes-all")** map retains only the single highest-scoring EFG per source unit (`r n_best_efgs` EFGs in Tasmania), this **per-EFG membership raster stack** retains **all `r n_efgs` candidate EFGs** assigned any non-zero membership in Round `r round_nr` across the `r n_interp` interpreters—including **`r n_nonbest_efgs` additional EFGs** that represent secondary/partial ecosystem components within TASVEG mapping units.
+- For each source `VEGCODE` $s$ and candidate target EFG $t$, the aggregated membership proportion is calculated across all `r n_interp` interpreters in Round `r round_nr` (`ecoSynthesis::summarise_membership(..., keep_all = TRUE, which_round = 2)`):
+  $$\text{prop\_memb}_{s, t} = \frac{\sum_{i=1}^{`r n_interp`} m_{s, t, i}}{\sum_{k} \sum_{i=1}^{`r n_interp`} m_{s, k, i}}$$
+- For each EFG $t$, polygons in `TASVEG_5_0.shp` with $\text{prop\_memb}_{s, t} > 0$ are rasterized at **`r res_xy[1]` m × `r res_xy[2]` m** resolution using `fasterize::fasterize(..., field = "prop_memb", fun = "sum")`. Pixels outside polygons assigned to EFG $t$ (as well as the three non-eligible natural units `OAQ`, `ORO`, and `OSM`) are encoded as `NoData` (`NA`).
+
+---
+
+## 2. File Inventory
+
+| File Name | Format | Description |
+|---|---|---|
+| `TASVEG-xref-{EFG}-memb-90m.tiff` (`r n_efgs` files) | GeoTIFF (`r datatype(sample_rast)` / float32) | **`r res_xy[1]` m membership raster for each candidate IUCN GET EFG** (`prop_memb` in $(0, 1]$, `NA` where membership is 0 or outside eligible polygons). |
+| `TASVEG-xref-EFG-membership-summary.csv` | CSV (UTF-8, `r n_efgs` rows) | **Summary table for all `r n_efgs` EFG rasters**, including file names, IUCN GET hierarchy, Global Ecosystems Atlas pixel/color codes, contributing TASVEG unit counts, membership ranges, and unweighted/weighted areas ($\text{km}^2$). |
+| `datapackage.json` | JSON (Frictionless Data) | **Machine-readable Frictionless Data Package specification** describing the CSV schema and GeoTIFF resources. |
+| `.zenodo.json` | JSON | **Zenodo deposit metadata** (creators, contributors, grants, communities, license, keywords, and related DOIs/URLs). |
+| `LICENSE` | Plain text / Markdown | **Full licensing terms** (CC BY 4.0 for data/docs, CC BY 3.0 AU attribution for TASVEG 5.0, MIT for code). |
+| `README.md` / `README.qmd` | Markdown / Quarto | **Dataset documentation file** and the reproducible Quarto template that generates it. |
+
+---
+
+## 3. Spatial Specifications
+
+All `r n_efgs` GeoTIFF files (`TASVEG-xref-{EFG}-memb-90m.tiff`) share an identical spatial grid:
+
+| Property | Value |
+|---|---|
+| **Coordinate Reference System (CRS)** | ``r crs_label`` |
+| **Spatial Resolution** | ``r sprintf("%g m × %g m", res_xy[1], res_xy[2])`` (``r sprintf("%.4f km²", pixel_km2)`` / ``r sprintf("%.2f ha", pixel_ha)`` per pixel) |
+| **Grid Dimensions** | ``r sprintf("%d rows × %d columns × %d band", n_rows, n_cols, n_bands)`` (``r format(total_cells, big.mark = ",")`` total grid cells) |
+| **Bounding Box (`xmin, xmax, ymin, ymax`)** | ``r sprintf("%.0f, %.0f, %.0f, %.0f", ext_bbox[1], ext_bbox[2], ext_bbox[3], ext_bbox[4])`` (meters, `r paste0(crs_info$authority[1], ":", crs_info$code[1])`) |
+| **Pixel Values (`prop_memb`)** | Continuous floating-point values in $(0, 1]$ where EFG membership $>0$; `NA` (`NoData`) elsewhere |
+| **Total Weighted Area Across All `r n_efgs` Layers** | ``r sprintf("%s km²", format(round(total_weighted_km2, 2), big.mark = ",", nsmall = 2))`` ($\sum_{t=1}^{`r n_efgs`} \sum_{\text{pixels}} \text{prop\_memb}_{t} \times 0.0081\text{ km}^2$) |
+| **Embedded GDAL Metadata Tags** | `AREA_OR_POINT = Area`, `PROJECT`, `TITLE`, `DESCRIPTION`, `EFG_CODE`, `EFG_NAME` |
+
+---
+
+## 4. Summary of the `r n_efgs` EFG Membership Rasters
+
+The table below summarises all **`r n_efgs` IUCN GET Level 3 Ecosystem Functional Groups** included in this dataset (also available in `TASVEG-xref-EFG-membership-summary.csv`):
+
+```{r}
+#| label: efg-summary-table
+#| results: asis
+tbl_display <- summary_tbl |>
+    transmute(
+        `File Name` = sprintf("`%s`", file_name),
+        `EFG` = sprintf("**`%s`**", EFG),
+        `Ecosystem Functional Group Name` = efg_name,
+        `Realm` = sprintf("`%s`", realm_id),
+        `TASVEG Units (n_tasveg_units)` = n_tasveg_units,
+        `Best-Cand. Units (n_best_units)` = n_best_units,
+        `prop_memb Range` = sprintf("%.2f–%.2f", min_prop_memb, max_prop_memb),
+        `Max Support` = sprintf("%d/%d", max_supporting, total_interp),
+        `Mapped Pixels (>0)` = format(mapped_pixels_90m, big.mark = ","),
+        `Unweighted Area (km²)` = format(round(unweighted_area_km2, 2), big.mark = ",", nsmall = 2),
+        `Weighted Area (km²)` = format(round(weighted_area_km2, 2), big.mark = ",", nsmall = 2)
+    )
+
+kable(
+    tbl_display,
+    format = "pipe",
+    align = c("l", "l", "l", "c", "r", "r", "c", "c", "r", "r", "r")
+)
+```
+
+---
+
+## 5. Tabular Data Dictionary (`TASVEG-xref-EFG-membership-summary.csv`)
+
+| Column | Type | Description |
+|---|---|---|
+| `file_name` | `string` | GeoTIFF file name (`TASVEG-xref-{EFG}-memb-90m.tiff`). |
+| `EFG` | `string` | IUCN GET Level 3 Ecosystem Functional Group code (primary key, e.g., `T2.5`, `TF1.7`). |
+| `efg_name` | `string` | Full name of the Ecosystem Functional Group. |
+| `efg_pixel_value` | `integer` | Standard integer pixel code in the Global Ecosystems Atlas (`geco` package). |
+| `realm_id` / `realm_name` | `string` | IUCN GET Level 1 Realm code and name (`F`, `MFT`, `MT`, `T`, `TF`). |
+| `biome_id` / `biome_name` | `string` | IUCN GET Level 2 Functional Biome code and name. |
+| `efg_hex_code` / `efg_rgb_code` | `string` | Official hexadecimal (`#RRGGBB`) and RGB (`R,G,B`) colors from `geco`. |
+| `round` | `integer` | Expert elicitation round (`r round_nr`). |
+| `total_interp` | `integer` | Total number of interpreters in Round `r round_nr` (`r n_interp`). |
+| `n_tasveg_units` | `integer` | Number of TASVEG 5.0 communities with $>0$ membership to this EFG. |
+| `n_best_units` | `integer` | Number of TASVEG 5.0 communities where this EFG is the single highest-ranked ("best") candidate (`0` indicates a secondary/minor EFG). |
+| `min_prop_memb` / `max_prop_memb` | `numeric` | Minimum and maximum non-zero `prop_memb` values across contributing TASVEG units. |
+| `max_supporting` | `integer` | Maximum number of interpreters assigning $>0$ membership to this EFG across its contributing TASVEG units (`1` to ``r n_interp``). |
+| `mapped_pixels_90m` | `integer` | Count of 90 m grid cells with `prop_memb > 0`. |
+| `unweighted_area_km2` | `numeric` | Total unweighted area ($\text{km}^2$) of all 90 m cells where `prop_memb > 0`. |
+| `sum_pixel_memb` | `numeric` | Sum of `prop_memb` across all 90 m grid cells in the raster. |
+| `weighted_area_km2` | `numeric` | Membership-weighted area ($\text{km}^2$), equal to `sum_pixel_memb * 0.0081`. |
+
+---
+
+## 6. How to Use This Dataset
+
+### In R (`terra`)
+
+```r
+library(terra)
+library(readr)
+
+# 1. Load summary table and stack all 31 EFG membership rasters
+summary_tbl <- read_csv("TASVEG-xref-EFG-membership-summary.csv")
+efg_stack   <- rast(summary_tbl$file_name)
+names(efg_stack) <- summary_tbl$EFG
+
+# 2. Plot membership for a single EFG (e.g. T2.5 Temperate pyric humid forests)
+plot(efg_stack[["T2.5"]], main = "T2.5 Membership Proportion (90 m)")
+
+# 3. Verify total membership per pixel or compute maximum membership across all EFGs
+max_memb <- app(efg_stack, fun = "max", na.rm = TRUE)
+```
+
+### Reproducing the Outputs from Source
+
+```bash
+# 1. Run the per-EFG 90m membership raster script
+R --vanilla < inc/EFG-membership-raster.R > reproducibility-notes/EFG-membership-raster-out.txt
+
+# 2. Render README.md with updated statistics
+quarto render outputs/efg-membership-rasters/README.qmd --to gfm
+```
+
+---
+
+## 7. Licensing, Attribution & Acknowledgements
+
+- **Dataset & Documentation:** Licensed under **Creative Commons Attribution 4.0 International ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/))**.
+- **Source Spatial Data Attribution:** TASVEG 5.0 is supplied under the **Creative Commons Attribution 3.0 Australia ([CC BY 3.0 AU](http://creativecommons.org/licenses/by/3.0/au/))** licence. Attribution must be provided as: `"TASVEG 5.0 from www.theLIST.tas.gov.au ©State of Tasmania"`.
+- **Scripts/Code:** Licensed under the **MIT License** (see [`LICENSE`](LICENSE)).
+- **Funding:** Supported by the ARC Industry Laureate Fellowship Project *"Foundations for leading the nature positive ecosystem conservation agenda"* (`IL240100030`), ARC Linkage Project (`LP170101143`), and the Australian Research Data Commons (ARDC) *Ecosystem Indicators Workflows* (`PLT019`, DOI: `10.3565/j5sq-a757`) co-investment project enabled by NCRIS.
+
+---
+
+## 8. References
+
+- **IUCN (2025).** *Standards, methods and guidelines for cross-referencing ecosystem classifications and maps to the IUCN Global Ecosystem Typology*. Version 1.0. Gland, Switzerland: IUCN. <https://doi.org/10.2305/CPPC6126>
+- **Keith, D. A., Ferrer-Paris, J. R., Nicholson, E., et al. (2022).** A function-based typology for Earth's ecosystems. *Nature*, 610(7932), 513–518. <https://doi.org/10.1038/s41586-022-05318-4>
+- **Kitchener, A. & Harris, S. (2013).** *From Forest to Fjaeldmark: Descriptions of Tasmania's Vegetation*. Edition 2. Department of Primary Industries, Parks, Water and Environment, Tasmania.
+- **Tasmanian Vegetation Monitoring and Mapping Program (2025).** *TASVEG 5.0* (Released November 2025). Department of Natural Resources and Environment, Tasmania. <https://www.theLIST.tas.gov.au>

@@ -1,0 +1,75 @@
+digraph G {
+  compound=true;
+  subgraph cluster_elicitation {
+    style=filled;
+    color=lightgrey;
+    node [style=filled,color=white];
+    a1 a2 a3 a4 a0;#a1 -> a0;
+    #a2 -> a0; 
+    #a3 -> a0;
+    #a4 -> a0;
+    label = "expert elicitation";
+  }
+
+  subgraph cluster_membtables {
+      fillcolor=cyan color=cyan style=filled;
+    node [style=filled];
+    b0; b1; b2; b3; b4
+    label = "membership tables";
+  }
+  subgraph cluster_matrix {
+    node [fillcolor=pink style=filled];
+    c0; c1; c2; c3; c4
+    label = "membership matrices";
+  }
+  TV -> mapunits 
+  TV -> eligible;
+  subgraph cluster_components {
+      rank="same" rankdir = "TB";
+    mapunits[label="Spatial data\n(vector)"]
+    eligible [label="Vegetation\ncommunity\ndescriptions"]
+    #mapunits -> eligible [rank=same label="1:1" arrowhead=none]
+  }
+  #mapunits -> vector;
+  #vector -> raster
+  #mapunits -> raster
+  #mapunits -> spatial [style=invis]
+  #eligible -> spatial;
+  eligible -> a0 [lhead=cluster_elicitation];
+  #eligible -> a1;
+  #eligible -> a2;
+  #eligible -> a3;
+  #eligible -> a4;
+  subgraph cluster_outputs {
+    rank="same" label="State level outputs";
+    output1 [label="Output 1:\nBundle of vector data\nand cross-ref matrices" fillcolor=pink style=filled]
+    output3 [label="Output 3:\nRaster layers for\nbest candidate, membership\n and support" fillcolor=cyan style=filled]
+    output2 [label="Output 2:\nRaster layers for\nmembership per EFG"]
+  }
+  subgraph cluster_derived {
+    rank="same" label="National level outputs";
+    output31 [label="Raster layers for\nbest candidate, membership\n and support" fillcolor=blue fillcolor=cyan style=dashed]
+    output21 [label="Raster layers for\nmembership per EFG"]
+  }
+  output11 [label="Collection of\nstate level data\nwith cross-ref matrices" color=red fillcolor=pink style=dashed]
+    
+  a0 -> b0 -> c0;
+  a1 -> b1 -> c1;
+  a2 -> b2 -> c2;
+  a3 -> b3 -> c3;
+  a4 -> b4 -> c4;
+  mapunits -> output1 [lhead=cluster_outputs label="as vector\nor rasterized"]
+  b0 -> sum_memb [label=aggregation ltail=cluster_membtables];
+  c0 -> output1 [ltail=cluster_matrix];
+  #raster -> output2
+  #raster -> output3 
+  #output2 -> output3 [label="aggregate\nwhich max\nmembership"]
+  sum_memb -> output2 [label="keep\nall candidates"]
+  sum_memb -> output3 [label="filter\nbest candidate"]
+  output1 -> output11 [label="Different formats\nand interpreters"]
+  output3 -> output31 [label="Combine (mosaic)\nwith other states"]
+  output2 -> output21 [label="Combine (mosaic)\nwith other states"]
+
+  TV [shape=Mdiamond label="TASVEG\n5.0"];
+  sum_memb [shape=Mrectangle label="Summary\nmembership\ntable" fillcolor=cyan style=filled];
+}

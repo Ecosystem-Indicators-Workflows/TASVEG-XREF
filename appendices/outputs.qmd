@@ -1,8 +1,26 @@
-# Outputs
+# Overview of workflow outputs
 
-Outputs from this workflow are uploaded to zenodo.org.
+```{dot}
+//| file: ../fig/TASVEG-outputs.dot
+//| fig-height: 7
+//| fig-width: 7
+```
 
-## Best-Candidate Spatial Synthesis
+The main outputs from this workflow are uploaded to *zenodo.org*:
+
+|Output|Reference|DOI|
+|---|---|---|
+|1||
+|2||
+|3 Best Candidate |[@OUTPUT1_best_candidate]|[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24034201.svg)](https://doi.org/10.5281/zenodo.24034201)|
+
+
+## Spatial data + membership matrices
+
+## EFG membership layers
+
+## Best-Candidate spatial synthesis
+
 
 The code for *Cross-referencing Tasmanian Terrestrial Ecosystems (TASVEG 5.0) to the IUCN Global Ecosystem Typology: 90m Best-Candidate Spatial Synthesis* [@OUTPUT1_best_candidate] is available here:
 
@@ -21,6 +39,12 @@ A quarto file for generating and updating the README is available here:
 #| eval: false
 #| code-fold: true
 #| code-summary: "README for the deposition"
-#| file: ../output-best-candidate/README.qmd
+#| file: ../outputs/best-candidate/README.qmd
 ```
 
+
+## Derived outputs
+
+Other outputs derived from the main outputs will also be listed here.
+
+### TF1.7 *Boreal and temperate fens* of Tasmania
