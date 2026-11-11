@@ -1,0 +1,45 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: >-
+  Cross-referencing Tasmanian Terrestrial Ecosystems (TASVEG 5.0)
+  to the IUCN Global Ecosystem Typology
+message: >-
+  If you use this dataset and workflow, please cite it using
+  the metadata from this file.
+type: dataset
+authors:
+  - given-names: José R.
+    family-names: Ferrer-Paris
+    email: j.ferrer@unsw.edu.au
+    affiliation: UNSW Sydney
+    orcid: 'https://orcid.org/0000-0002-9554-3395'
+  - given-names: David A.
+    family-names: Keith
+    affiliation: UNSW Sydney; IUCN Commission on Ecosystem Management
+  - given-names: Mark G.
+    family-names: Tozer
+    affiliation: UNSW Sydney
+    orcid: 'https://orcid.org/0000-0002-7373-0077'
+  - given-names: Elliot
+    family-names: Gould
+    affiliation: UNSW Sydney
+    orcid: 'https://orcid.org/0000-0002-6585-538X'
+  - given-names: Abhimanyu Raj
+    family-names: Singh
+    affiliation: QCIF and UNSW Sydney
+    orcid: 'https://orcid.org/0000-0002-2279-7060'
+  - given-names: Jayne
+    family-names: Balmer
+    affiliation: Department of Natural Resources and Environment Tasmania
+  - given-names: Anne
+    family-names: Kitchener
+    affiliation: Department of Natural Resources and Environment Tasmania
+  - given-names: Adelina
+    family-names: Latinovic
+    affiliation: Department of Natural Resources and Environment Tasmania
+repository-code: >-
+  https://github.com/Ecosystem-Indicators-Workflows/TASVEG-XREF
+license: CC-BY-4.0
+version: 0.0.1
