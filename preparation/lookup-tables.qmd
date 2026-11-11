@@ -21,6 +21,15 @@ library(ecoSynthesis)
 output_dir <- here::here("outputs/XREFs")
 ```
 
+Make sure to download the data first, see this script for instructions:
+```{r}
+#| filename: "inc/TASVEG-data-download.R"
+#| eval: false
+#| code-fold: true
+#| code-summary: "Download source data / TASVEG 5.0"
+#| file: ../inc/TASVEG-data-download.R
+```
+
 :::
 
 ```{r}
