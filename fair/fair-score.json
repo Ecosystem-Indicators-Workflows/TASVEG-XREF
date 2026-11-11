@@ -1,12 +1,12 @@
 {
   "repository": "Ecosystem-Indicators-Workflows/TASVEG-XREF",
-  "commit": "23c2f04",
-  "date": "2026-11-07",
+  "commit": "8f123d7",
+  "date": "2026-11-11",
   "checklist": "ARDC FAIR Software Checklist v0.2",
-  "ardc_url": "https://fairsoftwarechecklist.net/v0.2?f=21&a=30110&i=30000&r=010",
-  "total": 12,
+  "ardc_url": "https://fairsoftwarechecklist.net/v0.2?f=21&a=30112&i=31000&r=023",
+  "total": 19,
   "total_max": 33,
-  "questions_met": 5,
+  "questions_met": 7,
   "all_met": false,
   "principles": [
     {
@@ -19,26 +19,26 @@
     },
     {
       "principle": "Accessible",
-      "current": 5,
+      "current": 7,
       "target": 10,
       "max": 10,
-      "pct": 50,
+      "pct": 70,
       "_row": "Accessible"
     },
     {
       "principle": "Interoperable",
-      "current": 3,
+      "current": 4,
       "target": 12,
       "max": 12,
-      "pct": 25,
+      "pct": 33,
       "_row": "Interoperable"
     },
     {
       "principle": "Reusable",
-      "current": 1,
+      "current": 5,
       "target": 6,
       "max": 7,
-      "pct": 14,
+      "pct": 71,
       "_row": "Reusable"
     }
   ],
@@ -106,12 +106,12 @@
     {
       "id": "a:q4",
       "label": "Identifier in metadata",
-      "current": 0,
+      "current": 2,
       "target": 3,
       "max": 3,
       "met": false,
-      "has": "",
-      "needs": "No workflow name or ID in metadata (no CITATION.cff)"
+      "has": "Metadata has the repository URL",
+      "needs": "No DOI in CITATION.cff"
     },
     {
       "id": "i:q0",
@@ -126,12 +126,12 @@
     {
       "id": "i:q1",
       "label": "Versioning scheme",
-      "current": 0,
+      "current": 1,
       "target": 2,
       "max": 2,
       "met": false,
-      "has": "",
-      "needs": "No git tags or version numbers"
+      "has": "Versions are identified",
+      "needs": "Versions do not follow vX.Y.Z"
     },
     {
       "id": "i:q2",
@@ -170,28 +170,28 @@
       "target": 1,
       "max": 1,
       "met": false,
-      "has": "",
-      "needs": "Missing: README run steps, pinned dependencies, input data"
+      "has": "Has README run steps",
+      "needs": "Missing: pinned dependencies, input data"
     },
     {
       "id": "r:q1",
       "label": "Source + documentation",
-      "current": 1,
+      "current": 2,
       "target": 2,
       "max": 3,
-      "met": false,
-      "has": "Source code available",
-      "needs": "README too short to document the workflow"
+      "met": true,
+      "has": "Source code + README",
+      "needs": ""
     },
     {
       "id": "r:q2",
       "label": "Licence",
-      "current": 0,
+      "current": 3,
       "target": 3,
       "max": 3,
-      "met": false,
-      "has": "",
-      "needs": "No LICENSE file"
+      "met": true,
+      "has": "MIT LICENSE + SPDX id in metadata",
+      "needs": ""
     }
   ]
 }
