@@ -1,0 +1,177 @@
+# Synthesis overview {#sec-synthesis}
+
+The objective of the synthesis step is to consolidate information from different interpreters on how each source unit is aligned with one or more target units. 
+
+We use the membership table as the key data source, and we can aggregate this data in multiple dimensions, but here we are interested in the following:
+
+- Select the round with the latest review of assessments: if there have been multiple rounds, and interpreters have interacted with each other, we assume the latest round has the best estimates from each interpreter.
+- Aggregate by source unit: the focus is on finding the best answer for each source.
+- Decide to keep or aggregate multiple interpreters: keep each assessment as provided by interpreter or aggregate multiple interpreters into one value.   
+- Decide which metric of aggregation is used: how to aggregate data from multiple interpreters.
+- Decide which candidates to keep: for some applications there is a need to select only one target unit per source unit, for other applications there is need for keeping a maximum number of candidates (e.g. the best three candidates), or all non-zero candidates.
+- Decide on weighting/ranking rule: if not all non-zero candidates are kept, which criteria are used to support the selection of one or multiple candidates.
+- Report level of support: report the level of support for the targets selected.
+- Report weight of candidate: report the weight attached to each target selected.
+
+
+## Types of summaries for membership tables
+
+The shape and form of the summary table for the synthesis step will depend on the combination of the previous decisions. In this document we consider four combinations:
+
+|Interpreters|Aggregation metric|Keep|Ranking rule|Weighting rule|
+|---|---|---|---|---|
+|All|None|All candidates|None|Membership values|
+|Aggregate|Proportion of total membership votes|Best candidate|Proportion of total membership votes|No weights ("winner takes it all")|
+|Aggregate|Proportion of total membership votes|All candidates|None|Proportion of total membership votes|
+|All|None|Best candidate|Highest membership|No weights ("winner takes it all")|
+
+
+###  Keep all records
+
+:::{.aside}
+
+Our setup for this R session is: 
+```{r}
+#| warnings: false
+#| message: false
+library(sf)
+library(ecoSynthesis)
+library(dplyr)
+library(units)
+library(ggplot2)
+here::i_am("synthesis/index.qmd")
+output_dir <- here::here("../results/XREFs")
+load(here::here(output_dir, "memb-tables.rda"))
+```
+
+:::
+
+The first option is simply a filtered membership table, where each sources unit will keep all valid records from the selected round:
+
+```{r}
+TASVEG_revised <- TASVEG_clean |>
+  filter(round == 2) |>
+  group_by(VEGCODE, expert) |>
+  mutate(
+    total_memb = sum(memb),
+    best = memb == max(memb),
+    supporting = 1,
+    total_interp = 1
+  ) |>
+  ungroup()
+```
+
+For example, for the source unit `AAP`:
+
+```{r}
+TASVEG_revised |>
+  filter(VEGCODE == "AAP")
+```
+
+
+### Aggregate by interpreter, keep all candidates
+
+For some applications we want to summmarise across interpreters, and consider all potential target units:
+
+```{r}
+TASVEG_summary <-
+  TASVEG_clean |>
+  summarise_membership(keep_all = TRUE, which_round = 2) |>
+  mutate(
+    best = prop_memb == max(prop_memb),
+    .by = (VEGCODE)
+  )
+```
+
+
+This method reduced the number of records for this source units to three candidate targets, with two of them having low values of the proportion of votes of membership values:
+
+```{r}
+TASVEG_summary |>
+  filter(VEGCODE == "AAP")
+```
+
+Notice, that this is not the same as the mean membership value, since the membership table ignores the zero-membership values:
+
+```{r}
+TASVEG_revised |>
+  filter(VEGCODE == "AAP") |>
+  summarise(
+    mean_memb = mean(memb),
+    nr_interpreters = n_distinct(expert),
+    .by = all_of(c("EFG"))
+  )
+```
+
+:::{.callout-note}
+
+This could be calculated using a `membership_matrix`. 
+
+:::
+
+### Keep best candidate per interpreter 
+
+Alternatively, we can keep one record per interpreter and source unit, keeping the one with the largest membership value (or the first if there is more than one with same membership value):
+
+```{r}
+TASVEG_best_revised <-
+  TASVEG_revised |>
+  slice_max(memb, by = c(VEGCODE, expert), with_ties = FALSE, n = 1) |>
+  mutate(keep = "best")
+```
+
+In this case, all interpreters agree on the target unit, but propose different levels of membership:
+
+```{r}
+TASVEG_best_revised |>
+  filter(VEGCODE == "AAP")
+```
+
+
+### Keep best candidate from summary
+
+Finally, we can keep the best candidate from the previous method:
+```{r}
+TASVEG_best_summary <-
+  summarise_membership(TASVEG_clean, keep_all = FALSE, which_round = 2)
+```
+
+The result is similar to the mean values of the membership values of the best candidates, provided that the membership values are balanced among interpreters (all membership values of each interpreter sum to one).
+
+```{r}
+TASVEG_best_summary |>
+  filter(VEGCODE == "AAP")
+```
+
+
+```{r}
+TASVEG_best_summary |>
+  mutate(memb = round(prop_memb, 1)) |>
+  group_by(EFG, memb) |>
+  summarise(n = n_distinct(VEGCODE), .groups = "drop")
+```
+
+:::{.aside}
+
+We save both these four summary tables in a file that we can load in later steps of the workflow:
+
+```{r}
+save(
+  TASVEG_revised,
+  TASVEG_summary,
+  file = here::here(output_dir, "memb-summaries.rda")
+)
+```
+
+:::
+## Outputs
+
+The summary of the membership table produces an intermediate output that might still require further steps of transformation. 
+
+This is the case for spatial analysis, where we need to merge the membership summary with tables of attributes of the spatial objects in order to get the desired output (a spatial summary or a spatial object for plotting target units or membership values).
+
+In this cases the type of output will constrain the amount of information that can be kept. 
+
+We will show two examples in the next two chapters: area summaries in @sec-areas; and different types of raster maps in @sec-maps.
+
+

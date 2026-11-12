@@ -1,7 +1,7 @@
 input-XREFs/
 processed_xrefs/
-outputs/*/*
-!outputs/*/README.qmd
+results/*/*
+!results/*/README.qmd
 gisdata/
 gisout/
 .venv

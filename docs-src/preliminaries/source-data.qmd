@@ -1,0 +1,35 @@
+# Source classification: TASVEG {#sec-source}
+
+In this document we are focusing on TASVEG, a comprehensive digital map of Tasmania's vegetation, including sub-Antarctic Macquarie Island [@TASVEG_3;@TASVEG_5]. 
+
+The TASVEG dataset includes ecological and spatial information, and for the purposes of this document we will differentiate between mapping units and vegetation communities. 
+
+The majority of the mapping units represent vegetation communities, including coastal heathlands, eucalypt forest and alpine communities. The technical manual [@KitchenerHarris_2013] includes description for each of the 159 mapping units, most of them ecological vegetation communities. The format of these descriptions is consistent, descriptive and cross-referenced with relevant literature and other processes. 
+
+## Components of TASVEG
+
+TASVEG has several components and we are going to use them in different steps of the process. 
+
+- The *Technical manual* [@KitchenerHarris_2013] has important information for @sec-alignment and was used by all interpreters as the main source of ecological information 
+- TASVEG 5.0 from <https://www.theLIST.tas.gov.au> ©State of Tasmania, is a dataset including:
+    - spatial data in mapinfo and shapefile formats (used in @sec-synthesis),
+    - metadata in PDF format,
+    - fire attributes in DBF format (used in @sec-alignment).
+
+## Data download
+
+TASVEG data is supplied under Creative Commons Attribution 3.0 Australia (CC BY 3.0 AU) Licence http://creativecommons.org/licenses/by/3.0/au/ 
+
+The Department Natural Resources and Environment Tasmania requests attribution be provided in the following manner: “TASVEG 5.0 from www.theLIST.tas.gov.au ©State of Tasmania” 
+
+Expand this section to explore the script for data download. 
+
+```{r}
+#| filename: "scripts/TASVEG-data-download.R"
+#| eval: false
+#| code-fold: true
+#| code-summary: "Script to download TASVEG 5.0 data"
+#| file: ../../scripts/TASVEG-data-download.R
+```
+
+Benchmarking information for this script is available in @sec-reproducibility.

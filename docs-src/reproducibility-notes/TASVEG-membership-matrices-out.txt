@@ -1,0 +1,135 @@
+
+R version 4.5.2 (2025-10-31) -- "[Not] Part in a Rumble"
+Copyright (C) 2025 The R Foundation for Statistical Computing
+Platform: aarch64-apple-darwin20
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> ## The purpose of this script is to create a bundle of spatial vector
+> ## (GeoPackage) and membership matrices for each source to target units
+> ## including all TASVEG 5.0 polygons.
+> ##
+> ## Source classification and spatial data (units):
+> ## > TASVEG 5.0 (vegetation communities)
+> ## Target classification (unit):
+> ## > IUCN Global Ecosystem Typology Level 3
+> ## Output format:
+> ## > GeoPackage (`TASVEG-xref-IUCN-GET.gpkg`) in `results/TASVEG-vector-bundle/`
+> ## > with multiple attribute tables (one for each interpreter),
+> ## > plus companion membership matrices in csv format:
+> ## > (`TASVEG-xref-IUCN-GET-{initials}.csv`)
+> ##
+> ## Recommended usage:
+> ## R --vanilla --file="scripts/TASVEG-membership-matrices.R" > docs-src/reproducibility-notes/TASVEG-membership-matrices-out.txt
+> 
+> ## Step 0: Setup
+> 
+> ### Benchmarking
+> start_time <- Sys.time()
+> date()
+[1] "Thu Nov 12 12:50:18 2026"
+> 
+> ### Libraries
+> library(ecoSynthesis)
+> library(geco)
+> library(sf)
+> library(dplyr)
+> library(tidyr)
+> library(readr)
+> library(XML)
+> 
+> 
+> ### Paths
+> here::i_am("scripts/TASVEG-membership-matrices.R")
+> load(here::here("results/XREFs/lookup-tables.rda"))
+> load(here::here("results/XREFs/memb-tables.rda"))
+> 
+> out_dir <- here::here("results", "TASVEG-vector-bundle/")
+> if (!dir.exists(out_dir)) {
++   dir.create(out_dir, recursive = TRUE)
++ }
+> 
+> ### Custom functions
+> source(here::here("scripts", "functions.R"))
+> 
+> ## Step 1: Prepare aggregated memberships for each source
+> ## Aggregated summary for each VEGCODE from Round 2 (best candidate EFG)
+> TASVEG_summary <-
++   TASVEG_clean |>
++   summarise_membership(keep_all = FALSE, which_round = 2)
+> 
+> 
+> ## Step 2: Prepare membership matrices per individual interpreter
+> 
+> expert_initials <- c(
++   "Anne Kitchener" = "memb_AK",
++   "Adelina_Latinovic" = "memb_AL",
++   "David_Keith" = "memb_DAK",
++   "Jayne_Balmer" = "memb_JB",
++   "Mark_Tozer" = "memb_MGT"
++ )
+> 
+> # ## Individual interpreter memberships for those VEGCODEs in Round 2
+> TASVEG_revised <- TASVEG_clean |>
++   filter(round == 2)
+> 
+> TASVEG_matrix <- membership_matrix(TASVEG_revised)
+> 
+> # print(efg_table)
+> 
+> ## Step 3:  join TASVEG 5.0  EFG attributes
+> 
+> TASVEG_xy <- read_sf(here::here(
++   "gisdata/LIST_TASVEG_50_STATEWIDE",
++   "TASVEG_5_0.shp"
++ ))
+> 
+> TASVEG_union <- TASVEG_xy |>
++   summarise(
++     geometry = st_union(geometry),
++     .by = c(VEG_GROUP, VEGCODE, VEGCODE_D)
++   )
+> 
+> TASVEG_best_candidate <- TASVEG_union |>
++   select(VEG_GROUP, VEGCODE, VEGCODE_D) |>
++   left_join(
++     TASVEG_summary,
++     by = "VEGCODE",
++     relationship = "one-to-one"
++   ) |>
++   mutate(SHAPE_AREA = st_area(geometry))
+> 
+> 
+> ## Step 3: Export outputs
+> 
+> ## 3a) Export GeoPackage vector
+> 
+> out_gpkg <- here::here(out_dir, "TASVEG-xref-IUCN-GET-best.gpkg")
+> write_sf(
++   TASVEG_best_candidate,
++   dsn = out_gpkg,
++   layer = "EFG_best_candidate",
++   delete_dsn = TRUE
++ )
+> 
+> 
+> TASVEG_best_candidate <- TASVEG_union |>
++   select(VEG_GROUP, VEGCODE, VEGCODE_D) |>
++   left_join(
++     TASVEG_selected,
++     by = "VEGCODE",
++     relationship = "one-to-one"
++   ) |>
++   mutate(SHAPE_AREA = st_area(geometry))

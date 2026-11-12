@@ -1,0 +1,109 @@
+# Between rounds {#sec-between-rounds}
+
+:::{.aside}
+
+Our setup for this R session is: 
+```{r}
+#| warnings: false
+#| message: false
+library(readr)
+library(dplyr)
+library(ecoSynthesis)
+library(ggplot2)
+here::i_am("analysis/round-1.qmd")
+output_dir <- here::here("../results/XREFs")
+source(here::here("../scripts/setup.R"))
+source(here::here("../scripts/functions.R"))
+load(here::here(output_dir, "lookup-tables.rda"))
+load(here::here(output_dir, "memb-tables.rda"))
+```
+
+:::
+
+## Pairwise dissimilarity
+
+Calculate pairwise dissimilarities
+
+```{r}
+TASVEG_first <- filter(TASVEG_clean, round == 1)
+TASVEG_revised <- filter(TASVEG_clean, round == 2)
+pd1 <- pairwise_dissimilarity(TASVEG_first)
+pd2 <- pairwise_dissimilarity(TASVEG_revised)
+```
+
+## Pairwise expert distances for each unit.
+```{r}
+#| eval: true
+
+dis1 <- summary_disagreement(pd1)
+dis2 <- summary_disagreement(pd2)
+```
+
+
+## Visualising
+
+This source unit had the highest dissimilarity:
+
+
+```{r}
+#| eval: true
+dis_both <- dis1 |>
+  left_join(dis2, by = "VEGCODE") |>
+  mutate(oo = rank(mean_dissimilarity.x + mean_dissimilarity.y))
+ggplot(dis_both) +
+  geom_point(aes(
+    x = mean_dissimilarity.x,
+    y = mean_dissimilarity.y,
+    size = (n_pairs.x + n_pairs.y) / 2
+  )) +
+  theme_wp3()
+```
+
+
+```{r}
+#| eval: true
+
+ggplot(dis_both) +
+  geom_point(
+    aes(
+      x = oo,
+      y = mean_dissimilarity.x,
+      colour = "First"
+    )
+  ) +
+  geom_smooth(
+    aes(
+      x = oo,
+      y = mean_dissimilarity.x
+    ),
+    formula = 'y ~ x',
+    method = "loess",
+    span = 0.75,
+    se = TRUE,
+    col = "cyan"
+  ) +
+  geom_point(
+    aes(
+      x = oo,
+      y = mean_dissimilarity.y,
+      colour = "Revised"
+    )
+  ) +
+  geom_smooth(
+    aes(
+      x = oo,
+      y = mean_dissimilarity.y
+    ),
+    formula = 'y ~ x',
+    method = "loess",
+    span = 0.75,
+    se = TRUE,
+    col = "pink"
+  ) +
+  labs(x = "Combined dissimilarity rank", y = "Mean dissimilarity per round") +
+  scale_colour_manual(
+    name = "Round",
+    values = c(First = "slateblue4", Revised = "maroon")
+  ) +
+  theme_wp3()
+```

@@ -1,0 +1,122 @@
+
+R version 4.5.2 (2025-10-31) -- "[Not] Part in a Rumble"
+Copyright (C) 2025 The R Foundation for Statistical Computing
+Platform: aarch64-apple-darwin20
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> #  R --vanilla < scripts/benchmark-fasterize.R > docs-src/reproducibility-notes/benchmark-fasterize-out.txt
+> library(ecoSynthesis)
+> library(sf)
+> library(terra)
+> library(fasterize)
+> library(dplyr)
+> 
+> date()
+[1] "Sun Nov  8 11:47:08 2026"
+> 
+> here::i_am("scripts/benchmark-fasterize.R")
+> load(here::here("results/XREFs/memb-summaries.rda"))
+> 
+> TASVEG <- read_sf(here::here(
++   "../gisdata/LIST_TASVEG_50_STATEWIDE",
++   "TASVEG_5_0.shp"
++ ))
+> 
+> TASVEG_k <- TASVEG |>
++   left_join(TASVEG_summary, by = "VEGCODE", relationship = "many-to-many") |>
++   filter(EFG == "TF1.3")
+> 
+> for (rez in c(10000, 1000, 100, 90)) {
++   print(rez)
++   TASVEG_rast <- rast(TASVEG, rez)
++   TASVEG_raster <- raster(TASVEG, res = rez)
++   bench <- microbenchmark::microbenchmark(
++     terrarize = k_rast <- rasterize(
++       TASVEG_k,
++       TASVEG_rast,
++       field = "prop_memb",
++       fun = "sum"
++     ),
++     fasterize = k_raster <- fasterize(
++       TASVEG_k,
++       TASVEG_raster,
++       field = "prop_memb",
++       fun = "sum"
++     ),
++     unit = "ms",
++     times = 10L
++   )
++   print(bench, digits = 3)
++ }
+[1] 10000
+Unit: milliseconds
+      expr   min    lq   mean median     uq    max neval
+ terrarize 985.8 994.7 1018.1 1014.6 1043.9 1059.1    10
+ fasterize  60.2  62.4   66.4   63.6   64.9   82.4    10
+[1] 1000
+Unit: milliseconds
+      expr   min    lq mean median    uq max neval
+ terrarize 926.9 935.9  955  957.3 969.7 989    10
+ fasterize  56.8  58.8   60   60.1  61.2  63    10
+[1] 100
+Unit: milliseconds
+      expr   min  lq mean median  uq max neval
+ terrarize 945.2 952  958    955 966 971    10
+ fasterize  99.5 102  104    103 106 117    10
+[1] 90
+Unit: milliseconds
+      expr min  lq mean median  uq max neval
+ terrarize 901 906  927    924 949 956    10
+ fasterize 110 121  140    139 147 182    10
+> sessionInfo()
+R version 4.5.2 (2025-10-31)
+Platform: aarch64-apple-darwin20
+Running under: macOS Tahoe 26.7.2
+
+Matrix products: default
+BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib 
+LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
+
+locale:
+[1] en_AU.UTF-8/en_AU.UTF-8/en_AU.UTF-8/C/en_AU.UTF-8/en_AU.UTF-8
+
+time zone: Australia/Sydney
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] dplyr_1.2.1             fasterize_1.1.0.9001    terra_1.9-50           
+[4] sf_1.1-0                ecoSynthesis_0.0.0.9002
+
+loaded via a namespace (and not attached):
+ [1] generics_0.1.4       tidyr_1.3.2          class_7.3-23        
+ [4] KernSmooth_2.23-26   stringi_1.8.9        lattice_0.22-9      
+ [7] magrittr_2.0.5       grid_4.5.2           RColorBrewer_1.1-3  
+[10] rprojroot_2.1.1      e1071_1.7-17         backports_1.5.1     
+[13] DBI_1.3.0            purrr_1.2.2          scales_1.4.0        
+[16] microbenchmark_1.5.0 codetools_0.2-20     cli_3.6.6           
+[19] rlang_1.3.0          units_1.0-1          otel_0.2.0          
+[22] tools_4.5.2          raster_3.6-32        checkmate_2.3.4     
+[25] ggplot2_4.0.3        here_1.0.2           vctrs_0.7.3         
+[28] R6_2.6.1             proxy_0.4-29         lifecycle_1.0.5     
+[31] classInt_0.4-11      stringr_1.6.0        pkgconfig_2.0.3     
+[34] pillar_1.11.1        gtable_0.3.6         glue_1.8.1          
+[37] Rcpp_1.1.2           tibble_3.3.1         tidyselect_1.2.1    
+[40] dichromat_2.0-0.1    farver_2.1.2         wk_0.9.5            
+[43] compiler_4.5.2       S7_0.2.2             sp_2.2-4            
+> 
