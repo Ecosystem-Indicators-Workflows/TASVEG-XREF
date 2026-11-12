@@ -18,37 +18,37 @@ library(tidyr)
 library(knitr)
 library(jsonlite)
 
-here::i_am("outputs/efg-TF1.7-vector/README.qmd")
-out_dir <- here::here("outputs", "efg-TF1.7-vector")
+here::i_am("results/efg-TF1.7-vector/README.qmd")
+out_dir <- here::here("results", "efg-TF1.7-vector")
 
-zenodo_meta  <- fromJSON(file.path(out_dir, ".zenodo.json"))
+zenodo_meta <- fromJSON(file.path(out_dir, ".zenodo.json"))
 unit_summary <- read_csv(
-  file.path(out_dir, "TASVEG-xref-TF1.7-unit-summary.csv"),
-  show_col_types = FALSE
+    file.path(out_dir, "TASVEG-xref-TF1.7-unit-summary.csv"),
+    show_col_types = FALSE
 )
 
 gpkg_path <- file.path(out_dir, "TASVEG-xref-TF1.7-memb.gpkg")
-tf17_sf   <- read_sf(gpkg_path)
+tf17_sf <- read_sf(gpkg_path)
 
-crs_obj   <- st_crs(tf17_sf)
+crs_obj <- st_crs(tf17_sf)
 crs_label <- sprintf("%s (%s)", crs_obj$Name, crs_obj$input)
-bbox_vec  <- as.numeric(st_bbox(tf17_sf)) # xmin, ymin, xmax, ymax
+bbox_vec <- as.numeric(st_bbox(tf17_sf)) # xmin, ymin, xmax, ymax
 geom_type <- as.character(unique(st_geometry_type(tf17_sf)))[1]
 
-n_polygons       <- nrow(tf17_sf)
-n_units          <- nrow(unit_summary)
-n_best_units     <- sum(unit_summary$best)
-best_unit_code   <- unit_summary$VEGCODE[unit_summary$best][1]
-round_nr         <- unit_summary$round[1]
-n_interp         <- max(unit_summary$total_interp)
+n_polygons <- nrow(tf17_sf)
+n_units <- nrow(unit_summary)
+n_best_units <- sum(unit_summary$best)
+best_unit_code <- unit_summary$VEGCODE[unit_summary$best][1]
+round_nr <- unit_summary$round[1]
+n_interp <- max(unit_summary$total_interp)
 
 total_unweighted_km2 <- sum(unit_summary$unweighted_area_km2)
-total_weighted_prop  <- sum(unit_summary$weighted_area_prop_km2)
-total_weighted_AK    <- sum(unit_summary$weighted_area_AK_km2)
-total_weighted_AL    <- sum(unit_summary$weighted_area_AL_km2)
-total_weighted_DAK   <- sum(unit_summary$weighted_area_DAK_km2)
-total_weighted_JB    <- sum(unit_summary$weighted_area_JB_km2)
-total_weighted_MGT   <- sum(unit_summary$weighted_area_MGT_km2)
+total_weighted_prop <- sum(unit_summary$weighted_area_prop_km2)
+total_weighted_AK <- sum(unit_summary$weighted_area_AK_km2)
+total_weighted_AL <- sum(unit_summary$weighted_area_AL_km2)
+total_weighted_DAK <- sum(unit_summary$weighted_area_DAK_km2)
+total_weighted_JB <- sum(unit_summary$weighted_area_JB_km2)
+total_weighted_MGT <- sum(unit_summary$weighted_area_MGT_km2)
 ```
 
 # `r zenodo_meta$title`
@@ -59,7 +59,7 @@ total_weighted_MGT   <- sum(unit_summary$weighted_area_MGT_km2)
 **Code License:** MIT  
 **Workflow Repository:** <https://github.com/Ecosystem-Indicators-Workflows/TASVEG-XREF>
 
-> *Note: This `README.md` is dynamically generated from [`README.qmd`](README.qmd) by inspecting `TASVEG-xref-TF1.7-memb.gpkg` and `TASVEG-xref-TF1.7-unit-summary.csv`. To update all statistics after regenerating the data, run `quarto render outputs/efg-TF1.7-vector/README.qmd --to gfm`.*
+> *Note: This `README.md` is dynamically generated from [`README.qmd`](README.qmd) by inspecting `TASVEG-xref-TF1.7-memb.gpkg` and `TASVEG-xref-TF1.7-unit-summary.csv`. To update all statistics after regenerating the data, run `quarto render results/efg-TF1.7-vector/README.qmd --to gfm`.*
 
 ---
 
@@ -70,13 +70,13 @@ total_weighted_MGT   <- sum(unit_summary$weighted_area_MGT_km2)
 #| label: creators-list
 #| results: asis
 for (i in seq_len(nrow(zenodo_meta$creators))) {
-  cr <- zenodo_meta$creators[i, ]
-  orcid_str <- if (!is.null(cr$orcid) && !is.na(cr$orcid) && nzchar(cr$orcid)) {
-    sprintf(" (ORCID: [%s](https://orcid.org/%s))", cr$orcid, cr$orcid)
-  } else {
-    ""
-  }
-  cat(sprintf("- **%s**%s — *%s*\n", cr$name, orcid_str, cr$affiliation))
+    cr <- zenodo_meta$creators[i, ]
+    orcid_str <- if (!is.null(cr$orcid) && !is.na(cr$orcid) && nzchar(cr$orcid)) {
+        sprintf(" (ORCID: [%s](https://orcid.org/%s))", cr$orcid, cr$orcid)
+    } else {
+        ""
+    }
+    cat(sprintf("- **%s**%s — *%s*\n", cr$name, orcid_str, cr$affiliation))
 }
 ```
 
@@ -85,13 +85,13 @@ for (i in seq_len(nrow(zenodo_meta$creators))) {
 #| label: contributors-list
 #| results: asis
 for (i in seq_len(nrow(zenodo_meta$contributors))) {
-  ct <- zenodo_meta$contributors[i, ]
-  orcid_str <- if (!is.null(ct$orcid) && !is.na(ct$orcid) && nzchar(ct$orcid)) {
-    sprintf(" (ORCID: [%s](https://orcid.org/%s))", ct$orcid, ct$orcid)
-  } else {
-    ""
-  }
-  cat(sprintf("- **%s**%s (%s) — *%s*\n", ct$name, orcid_str, ct$type, ct$affiliation))
+    ct <- zenodo_meta$contributors[i, ]
+    orcid_str <- if (!is.null(ct$orcid) && !is.na(ct$orcid) && nzchar(ct$orcid)) {
+        sprintf(" (ORCID: [%s](https://orcid.org/%s))", ct$orcid, ct$orcid)
+    } else {
+        ""
+    }
+    cat(sprintf("- **%s**%s (%s) — *%s*\n", ct$name, orcid_str, ct$type, ct$affiliation))
 }
 ```
 
@@ -153,42 +153,42 @@ This dataset provides a **polygon vector layer (`TASVEG-xref-TF1.7-memb.gpkg`)**
 #| label: tf17-unit-table
 #| results: asis
 tbl_units <- unit_summary |>
-  transmute(
-    `VEGCODE` = sprintf("**`%s`**", VEGCODE),
-    `TASVEG 5.0 Community Description` = VEGCODE_D,
-    `memb_AK` = sprintf("%.2f", memb_AK),
-    `memb_AL` = sprintf("%.2f", memb_AL),
-    `memb_DAK` = sprintf("%.2f", memb_DAK),
-    `memb_JB` = sprintf("%.2f", memb_JB),
-    `memb_MGT` = sprintf("%.2f", memb_MGT),
-    `prop_memb` = sprintf("**%.2f**", prop_memb),
-    `Supporting` = sprintf("%d/%d", supporting, total_interp),
-    `Best?` = ifelse(best, "`TRUE`", "`FALSE`"),
-    `Polygons` = format(n_polygons, big.mark = ","),
-    `Unweighted Area (km²)` = format(round(unweighted_area_km2, 2), big.mark = ",", nsmall = 2),
-    `Weighted Area (km²)` = format(round(weighted_area_prop_km2, 2), big.mark = ",", nsmall = 2)
-  )
+    transmute(
+        `VEGCODE` = sprintf("**`%s`**", VEGCODE),
+        `TASVEG 5.0 Community Description` = VEGCODE_D,
+        `memb_AK` = sprintf("%.2f", memb_AK),
+        `memb_AL` = sprintf("%.2f", memb_AL),
+        `memb_DAK` = sprintf("%.2f", memb_DAK),
+        `memb_JB` = sprintf("%.2f", memb_JB),
+        `memb_MGT` = sprintf("%.2f", memb_MGT),
+        `prop_memb` = sprintf("**%.2f**", prop_memb),
+        `Supporting` = sprintf("%d/%d", supporting, total_interp),
+        `Best?` = ifelse(best, "`TRUE`", "`FALSE`"),
+        `Polygons` = format(n_polygons, big.mark = ","),
+        `Unweighted Area (km²)` = format(round(unweighted_area_km2, 2), big.mark = ",", nsmall = 2),
+        `Weighted Area (km²)` = format(round(weighted_area_prop_km2, 2), big.mark = ",", nsmall = 2)
+    )
 
 total_row <- tibble(
-  `VEGCODE` = "**Total**",
-  `TASVEG 5.0 Community Description` = sprintf("**%d TASVEG 5.0 Communities**", n_units),
-  `memb_AK` = sprintf("*%.2f km²*", total_weighted_AK),
-  `memb_AL` = sprintf("*%.2f km²*", total_weighted_AL),
-  `memb_DAK` = sprintf("*%.2f km²*", total_weighted_DAK),
-  `memb_JB` = sprintf("*%.2f km²*", total_weighted_JB),
-  `memb_MGT` = sprintf("*%.2f km²*", total_weighted_MGT),
-  `prop_memb` = "—",
-  `Supporting` = "—",
-  `Best?` = sprintf("**%d best**", n_best_units),
-  `Polygons` = sprintf("**%s**", format(n_polygons, big.mark = ",")),
-  `Unweighted Area (km²)` = sprintf("**%s**", format(round(total_unweighted_km2, 2), big.mark = ",", nsmall = 2)),
-  `Weighted Area (km²)` = sprintf("**%s**", format(round(total_weighted_prop, 2), big.mark = ",", nsmall = 2))
+    `VEGCODE` = "**Total**",
+    `TASVEG 5.0 Community Description` = sprintf("**%d TASVEG 5.0 Communities**", n_units),
+    `memb_AK` = sprintf("*%.2f km²*", total_weighted_AK),
+    `memb_AL` = sprintf("*%.2f km²*", total_weighted_AL),
+    `memb_DAK` = sprintf("*%.2f km²*", total_weighted_DAK),
+    `memb_JB` = sprintf("*%.2f km²*", total_weighted_JB),
+    `memb_MGT` = sprintf("*%.2f km²*", total_weighted_MGT),
+    `prop_memb` = "—",
+    `Supporting` = "—",
+    `Best?` = sprintf("**%d best**", n_best_units),
+    `Polygons` = sprintf("**%s**", format(n_polygons, big.mark = ",")),
+    `Unweighted Area (km²)` = sprintf("**%s**", format(round(total_unweighted_km2, 2), big.mark = ",", nsmall = 2)),
+    `Weighted Area (km²)` = sprintf("**%s**", format(round(total_weighted_prop, 2), big.mark = ",", nsmall = 2))
 )
 
 kable(
-  bind_rows(tbl_units, total_row),
-  format = "pipe",
-  align = c("l", "l", "r", "r", "r", "r", "r", "r", "c", "c", "r", "r", "r")
+    bind_rows(tbl_units, total_row),
+    format = "pipe",
+    align = c("l", "l", "r", "r", "r", "r", "r", "r", "c", "c", "r", "r", "r")
 )
 ```
 
@@ -261,10 +261,10 @@ print(gdf.groupby(["VEGCODE", "prop_memb", "supporting", "best"])["weighted_area
 
 ```bash
 # 1. Run the TF1.7 vector extraction and synthesis script
-R --vanilla < inc/TF1.7-membership-vector.R > reproducibility-notes/TF1.7-membership-vector-out.txt
+R --vanilla < scripts/TF1.7-membership-vector.R > docs-src/reproducibility-notes/TF1.7-membership-vector-out.txt
 
 # 2. Render README.md with updated statistics
-quarto render outputs/efg-TF1.7-vector/README.qmd --to gfm
+quarto render results/efg-TF1.7-vector/README.qmd --to gfm
 ```
 
 ---

@@ -29,7 +29,7 @@ The code for *Cross-referencing Tasmanian Terrestrial Ecosystems (TASVEG 5.0) to
 #| eval: false
 #| code-fold: true
 #| code-summary: "Workflow for raster outputs (best candidate)"
-#| file: ../inc/TASVEG-xref-IUCNGET-output-best-90m.R
+#| file: ../../scripts/TASVEG-xref-IUCNGET-output-best-90m.R
 ```
 
 A quarto file for generating and updating the README is available here:
@@ -39,7 +39,7 @@ A quarto file for generating and updating the README is available here:
 #| eval: false
 #| code-fold: true
 #| code-summary: "README for the deposition"
-#| file: ../outputs/best-candidate/README.qmd
+#| file: ../../results/best-candidate/README.qmd
 ```
 
 

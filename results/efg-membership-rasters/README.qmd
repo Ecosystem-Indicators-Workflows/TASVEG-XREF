@@ -18,8 +18,8 @@ library(tidyr)
 library(knitr)
 library(jsonlite)
 
-here::i_am("outputs/efg-membership-rasters/README.qmd")
-out_dir <- here::here("outputs", "efg-membership-rasters")
+here::i_am("results/efg-membership-rasters/README.qmd")
+out_dir <- here::here("results", "efg-membership-rasters")
 
 zenodo_meta <- fromJSON(file.path(out_dir, ".zenodo.json"))
 summary_tbl <- read_csv(
@@ -58,7 +58,7 @@ total_weighted_km2 <- sum(summary_tbl$weighted_area_km2, na.rm = TRUE)
 **Code License:** MIT  
 **Workflow Repository:** <https://github.com/Ecosystem-Indicators-Workflows/TASVEG-XREF>
 
-> *Note: This `README.md` is dynamically generated from [`README.qmd`](README.qmd) by inspecting the output GeoTIFF rasters and summary CSV table. To update all statistics after regenerating the data, run `quarto render outputs/efg-membership-rasters/README.qmd --to gfm`.*
+> *Note: This `README.md` is dynamically generated from [`README.qmd`](README.qmd) by inspecting the output GeoTIFF rasters and summary CSV table. To update all statistics after regenerating the data, run `quarto render results/efg-membership-rasters/README.qmd --to gfm`.*
 
 ---
 
@@ -216,10 +216,10 @@ max_memb <- app(efg_stack, fun = "max", na.rm = TRUE)
 
 ```bash
 # 1. Run the per-EFG 90m membership raster script
-R --vanilla < inc/EFG-membership-raster.R > reproducibility-notes/EFG-membership-raster-out.txt
+R --vanilla < scripts/EFG-membership-raster.R > docs-src/reproducibility-notes/EFG-membership-raster-out.txt
 
 # 2. Render README.md with updated statistics
-quarto render outputs/efg-membership-rasters/README.qmd --to gfm
+quarto render results/efg-membership-rasters/README.qmd --to gfm
 ```
 
 ---
