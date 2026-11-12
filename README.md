@@ -205,5 +205,5 @@ How it works:
 
 ![FAIR scores per question](fair/fair-scores.png)
 
-<sub>Updated 2026-11-11 from commit `31fa705` by `.fair/fair_check.R`. Edit `.fair/fair-checklist.yml`, not this block.</sub>
+<sub>Updated 2026-11-12 from commit `34ded9c` by `.fair/fair_check.R`. Edit `.fair/fair-checklist.yml`, not this block.</sub>
 <!-- FAIR:END -->
