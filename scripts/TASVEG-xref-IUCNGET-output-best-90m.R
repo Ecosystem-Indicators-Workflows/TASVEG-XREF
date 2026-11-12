@@ -55,7 +55,7 @@ if (!dir.exists(out_dir)) {
 }
 
 ### Custom functions
-source(here::here("inc", "functions.R"))
+source(here::here("scripts", "functions.R"))
 
 ## Step 1: data preparation
 
@@ -170,9 +170,20 @@ xref_best_tbl <- TASVEG |>
   left_join(TASVEG_best_summary, by = "VEGCODE") |>
   left_join(efg_info, by = "EFG") |>
   select(
-    VEG_GROUP, VEGCODE, VEGCODE_D, eligible,
-    EFG, efg_name, efg_pixel_value, efg_hex_code, efg_rgb_code,
-    round, prop_memb, total_memb, supporting, total_interp
+    VEG_GROUP,
+    VEGCODE,
+    VEGCODE_D,
+    eligible,
+    EFG,
+    efg_name,
+    efg_pixel_value,
+    efg_hex_code,
+    efg_rgb_code,
+    round,
+    prop_memb,
+    total_memb,
+    supporting,
+    total_interp
   )
 
 write_csv(
@@ -192,9 +203,16 @@ efg_lookup_tbl <- xref_best_tbl |>
     by = c("EFG" = "efg_id")
   ) |>
   select(
-    efg_pixel_value, EFG, efg_name,
-    realm_id, realm_name, biome_id, biome_name,
-    efg_hex_code, efg_rgb_code, n_tasveg_units
+    efg_pixel_value,
+    EFG,
+    efg_name,
+    realm_id,
+    realm_name,
+    biome_id,
+    biome_name,
+    efg_hex_code,
+    efg_rgb_code,
+    n_tasveg_units
   ) |>
   arrange(efg_pixel_value)
 
@@ -206,7 +224,15 @@ write_csv(
 clr_lines <- efg_lookup_tbl |>
   tidyr::separate(efg_rgb_code, into = c("R", "G", "B"), sep = ",") |>
   transmute(
-    line = sprintf("%d %s %s %s 255 %s %s", efg_pixel_value, R, G, B, EFG, efg_name)
+    line = sprintf(
+      "%d %s %s %s 255 %s %s",
+      efg_pixel_value,
+      R,
+      G,
+      B,
+      EFG,
+      efg_name
+    )
   ) |>
   pull(line)
 

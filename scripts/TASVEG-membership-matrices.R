@@ -42,7 +42,7 @@ if (!dir.exists(out_dir)) {
 }
 
 ### Custom functions
-source(here::here("inc", "functions.R"))
+source(here::here("scripts", "functions.R"))
 
 ## Step 1: Prepare aggregated memberships for each source
 ## Aggregated summary for each VEGCODE from Round 2 (best candidate EFG)
