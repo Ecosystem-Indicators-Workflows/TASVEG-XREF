@@ -7,13 +7,13 @@
 ## Target classification (unit):
 ## > IUCN Global Ecosystem Typology Level 3
 ## Output format:
-## > GeoPackage (`TASVEG-xref-IUCN-GET.gpkg`) in `outputs/TASVEG-vector-bundle/`
+## > GeoPackage (`TASVEG-xref-IUCN-GET.gpkg`) in `results/TASVEG-vector-bundle/`
 ## > with multiple attribute tables (one for each interpreter),
 ## > plus companion membership matrices in csv format:
 ## > (`TASVEG-xref-IUCN-GET-{initials}.csv`)
 ##
 ## Recommended usage:
-## R --vanilla --file="inc/TASVEG-membership-matrices.R" > reproducibility-notes/TASVEG-membership-matrices-out.txt
+## R --vanilla --file="scripts/TASVEG-membership-matrices.R" > docs-src/reproducibility-notes/TASVEG-membership-matrices-out.txt
 
 ## Step 0: Setup
 
@@ -32,11 +32,11 @@ library(XML)
 
 
 ### Paths
-here::i_am("inc/TASVEG-membership-matrices.R")
-load(here::here("outputs/XREFs/lookup-tables.rda"))
-load(here::here("outputs/XREFs/memb-tables.rda"))
+here::i_am("scripts/TASVEG-membership-matrices.R")
+load(here::here("results/XREFs/lookup-tables.rda"))
+load(here::here("results/XREFs/memb-tables.rda"))
 
-out_dir <- here::here("outputs", "TASVEG-vector-bundle/")
+out_dir <- here::here("results", "TASVEG-vector-bundle/")
 if (!dir.exists(out_dir)) {
   dir.create(out_dir, recursive = TRUE)
 }

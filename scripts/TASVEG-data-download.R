@@ -6,8 +6,8 @@
 ## > Data is supplied under Creative Commons Attribution 3.0 Australia (CC BY 3.0 AU) Licence http://creativecommons.org/licenses/by/3.0/au/
 
 ## Recommended usage:
-## R --vanilla < inc/TASVEG-data-download.R \
-##  > reproducibility-notes/TASVEG-data-download-out.txt
+## R --vanilla < scripts/TASVEG-data-download.R \
+##  > docs-src/reproducibility-notes/TASVEG-data-download-out.txt
 
 ## Summary of steps from data source to prepared data:
 ## 1. Check if data is already present
@@ -24,7 +24,7 @@
 ### No special libraries needed
 
 ### Paths
-here::i_am("inc/TASVEG-data-download.R")
+here::i_am("scripts/TASVEG-data-download.R")
 gisdata <- here::here("gisdata")
 if (!dir.exists(gisdata)) {
   dir.create(gisdata)

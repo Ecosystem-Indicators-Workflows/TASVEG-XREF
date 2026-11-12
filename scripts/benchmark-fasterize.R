@@ -1,4 +1,4 @@
-#  R --vanilla < inc/benchmark-fasterize.R > reproducibility-notes/benchmark-fasterize-out.txt
+#  R --vanilla < scripts/benchmark-fasterize.R > docs-src/reproducibility-notes/benchmark-fasterize-out.txt
 library(ecoSynthesis)
 library(sf)
 library(terra)
@@ -7,8 +7,8 @@ library(dplyr)
 
 date()
 
-here::i_am("inc/benchmark-fasterize.R")
-load(here::here("outputs/XREFs/memb-summaries.rda"))
+here::i_am("scripts/benchmark-fasterize.R")
+load(here::here("results/XREFs/memb-summaries.rda"))
 
 TASVEG <- read_sf(here::here(
   "../gisdata/LIST_TASVEG_50_STATEWIDE",

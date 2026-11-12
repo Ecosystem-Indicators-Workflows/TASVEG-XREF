@@ -18,8 +18,8 @@
 ## 4) Outputs in preferred format
 
 ## Recommended usage:
-## R --vanilla < inc/TASVEG-xref-IUCNGET-output-best-90m.R >\
-##  reproducibility-notes/TASVEG-xref-IUCNGET-output-best-90m-out.txt
+## R --vanilla < scripts/TASVEG-xref-IUCNGET-output-best-90m.R >\
+##  docs-src/reproducibility-notes/TASVEG-xref-IUCNGET-output-best-90m-out.txt
 
 ## Step O: Setup
 
@@ -47,9 +47,9 @@ library(ecoSynthesis)
 library(geco)
 
 ### Paths
-here::i_am("inc/TASVEG-xref-IUCNGET-output-best-90m.R")
+here::i_am("scripts/TASVEG-xref-IUCNGET-output-best-90m.R")
 
-out_dir <- here::here("outputs", "best-candidate")
+out_dir <- here::here("results", "best-candidate")
 if (!dir.exists(out_dir)) {
   dir.create(out_dir, recursive = TRUE)
 }

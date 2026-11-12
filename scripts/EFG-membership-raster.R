@@ -7,12 +7,12 @@
 ## Target classification (units):
 ## > IUCN Global Ecosystem Typology Level 3 (Ecosystem Functional Groups, EFGs)
 ## Output format:
-## > 31 GeoTIFF files (`TASVEG-xref-{EFG}-memb-90m.tiff`) in `outputs/efg-membership-rasters/`
+## > 31 GeoTIFF files (`TASVEG-xref-{EFG}-memb-90m.tiff`) in `results/efg-membership-rasters/`
 ## > plus a companion summary table (`TASVEG-xref-EFG-membership-summary.csv`)
 ##
 ## Recommended usage:
-## R --vanilla < inc/EFG-membership-raster.R >\
-##  reproducibility-notes/EFG-membership-raster-out.txt
+## R --vanilla < scripts/EFG-membership-raster.R >\
+##  docs-src/reproducibility-notes/EFG-membership-raster-out.txt
 
 ## Step 0: Setup
 
@@ -30,11 +30,11 @@ library(dplyr)
 library(readr)
 
 ### Paths
-here::i_am("inc/EFG-membership-raster.R")
-load(here::here("outputs/XREFs/lookup-tables.rda"))
-load(here::here("outputs/XREFs/memb-summaries.rda"))
+here::i_am("scripts/EFG-membership-raster.R")
+load(here::here("results/XREFs/lookup-tables.rda"))
+load(here::here("results/XREFs/memb-summaries.rda"))
 
-out_dir <- here::here("outputs", "efg-membership-rasters")
+out_dir <- here::here("results", "efg-membership-rasters")
 if (!dir.exists(out_dir)) {
   dir.create(out_dir, recursive = TRUE)
 }
@@ -87,7 +87,9 @@ for (tid in IUCN_GET_LUT$efg_id) {
         TITLE = sprintf("Aggregated membership for %s (%s)", tid, efg_name_str),
         DESCRIPTION = sprintf(
           "Proportion of total Round 2 membership votes (prop_memb) from TASVEG 5.0 to IUCN GET %s (%s) at %sm resolution",
-          tid, efg_name_str, rez
+          tid,
+          efg_name_str,
+          rez
         ),
         EFG_CODE = tid,
         EFG_NAME = efg_name_str
@@ -137,12 +139,27 @@ efg_summary_csv <- TASVEG_summary |>
   left_join(efg_info, by = "EFG") |>
   left_join(bind_rows(efg_stats_list), by = "EFG") |>
   select(
-    file_name, EFG, efg_name, efg_pixel_value,
-    realm_id, realm_name, biome_id, biome_name,
-    efg_hex_code, efg_rgb_code,
-    round, total_interp, n_tasveg_units, n_best_units,
-    min_prop_memb, max_prop_memb, max_supporting,
-    mapped_pixels_90m, unweighted_area_km2, sum_pixel_memb, weighted_area_km2
+    file_name,
+    EFG,
+    efg_name,
+    efg_pixel_value,
+    realm_id,
+    realm_name,
+    biome_id,
+    biome_name,
+    efg_hex_code,
+    efg_rgb_code,
+    round,
+    total_interp,
+    n_tasveg_units,
+    n_best_units,
+    min_prop_memb,
+    max_prop_memb,
+    max_supporting,
+    mapped_pixels_90m,
+    unweighted_area_km2,
+    sum_pixel_memb,
+    weighted_area_km2
   ) |>
   arrange(EFG)
 

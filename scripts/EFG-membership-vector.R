@@ -7,11 +7,11 @@
 ## Target classification (unit):
 ## > IUCN Global Ecosystem Typology Level 3: provide EFG code, see example
 ## Output format:
-## > GeoPackage (`TASVEG-xref-{EFG code}-memb.gpkg`) in `outputs/efg-{EFG code}-vector/`
+## > GeoPackage (`TASVEG-xref-{EFG code}-memb.gpkg`) in `results/efg-{EFG code}-vector/`
 ## > plus a companion unit-level summary table (`TASVEG-xref-{EFG code}-unit-summary.csv`)
 ##
 ## Recommended usage (example  TF1.7 Boreal and temperate fens):
-## R --vanilla --file="inc/EFG-membership-vector.R" --args TF1.7 > reproducibility-notes/TF1.7-membership-vector-out.txt
+## R --vanilla --file="inc/EFG-membership-vector.R" --args TF1.7 > docs-src/reproducibility-notes/TF1.7-membership-vector-out.txt
 
 ## Step 0: Setup
 
@@ -35,11 +35,11 @@ if (length(args) == 0) {
 target_efg <- args[1]
 
 ### Paths
-here::i_am("inc/EFG-membership-vector.R")
-load(here::here("outputs/XREFs/lookup-tables.rda"))
-load(here::here("outputs/XREFs/memb-summaries.rda"))
+here::i_am("scripts/EFG-membership-vector.R")
+load(here::here("results/XREFs/lookup-tables.rda"))
+load(here::here("results/XREFs/memb-summaries.rda"))
 
-out_dir <- here::here("outputs", sprintf("efg-%s-vector", target_efg))
+out_dir <- here::here("results", sprintf("efg-%s-vector", target_efg))
 if (!dir.exists(out_dir)) {
   dir.create(out_dir, recursive = TRUE)
 }
