@@ -1,0 +1,58 @@
+# Assess alignment between classifications {#sec-alignment}
+
+Conceptual alignment is the first principle for cross-referencing classifications. Units in both the source and target classification should be based on similar concepts. 
+
+Cross-referencing aims to elucidate relationships between units of classifications that represent similar types of entities. To be cross-referenced to the IUCN Global Ecosystem Typology (IUCN GET), it follows that the units of the source classification must be aligned with the ecosystem concept. 
+
+Based on the definition agreed upon by @UNCBD_1992, following @Tansley_1935 original concept, an ecosystem is:
+
+> “a dynamic complex of plant, animal and micro-organism communities and their non-living environment interacting as a functional unit”. 
+
+Qualitatively different kinds of entities should not be compared to the IUCN GET. In some cases partial relationships or conceptual overlaps may arise, and these warrant rigorous evaluation in cross-referencing to determine eligibility. For example land use and land cover classes or types are sometimes used as proxies of structural features of ecosystems, but they lack information on compositional and functional features.
+
+```{mermaid}
+flowchart LR
+    subgraph Inputs
+        direction LR
+        DD[(Technical<br>manual)]:::ddata
+        XR[(Membership<br>table)]:::xref
+        GET[(Global<br>Ecosystem<br>Typology)]:::get
+    end
+    subgraph Crossreference
+        direction TB
+        RE1(Vegetation community 1):::ddata
+        RE2(Vegetation community 2):::ddata
+        RE3(Other map units):::ddata
+        RE1 --> XR1{X-ref}:::xref
+        RE2 --> XR2{X-ref}:::xref
+        RE3 --> XR3((...)):::not
+        XR1 -->|0.7| EFG1[EFG 1]:::get
+        XR1 -->|0.3| EFG2[EFG 2]
+        XR2 -->|1.0| EFG2:::get
+        XR3 --> EFG3[not eligible]:::not
+    end
+    Inputs --> Crossreference
+    classDef ddata fill:#dfc27d,stroke:#333,color:white,stroke-width:2px;
+    classDef xref fill:#80cdc1,stroke:#333,color:white,stroke-width:2px;
+    classDef not fill:#808d81,stroke:#333,color:white,stroke-width:2px;
+    classDef get fill:#018571,stroke:#fff,color:#fff,stroke-width:3px;
+    linkStyle default stroke:#000,stroke-width:2px,color:black;
+    style Inputs fill:none,color:black,stroke:#333,stroke-width:1px;
+    style Crossreference fill:none,color:black,stroke:#333,stroke-width:1px,stroke-dasharray: 1 1;
+```
+
+## Eligibility of units
+
+Most units in the TASVEG dataset represent vegetation communities and can be considered eligible for crossreferencing to the IUCN GET. 
+
+However, there are three mapping units in the group 'Other natural environments' that require more scrutiny: Lichen lithosere (ORO), Sand, mud (OSM), and Water, sea (OAQ).
+
+According to the technical manual [@KitchenerHarris_2013]:
+
+> Lichen lithosere (ORO) is important for undisturbed cryptogamic communities, such as on blockstreams, cliffs, talus and scree slopes and exposed bedrock on mountain tops and ridges. 
+
+> Sand, mud (OSM) is bare of vegetation, has been used for mapping beaches, sand dune systems, and mobile sand sheets such as those at Waterhouse in north-east Tasmania or at Sandy Cape on the west coast. 
+
+> Water, sea (OAQ) has been used to designate areas of sea, artificial impoundments such as Lake Gordon, Lake Saint Clair and Lake Pedder, as well as deep water in natural lakes.
+
+The units OAQ and OSM are mapping units combining multiple types of ecosystems 

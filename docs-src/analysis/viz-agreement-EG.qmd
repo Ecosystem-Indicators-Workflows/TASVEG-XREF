@@ -1,0 +1,244 @@
+---
+title: "Visualising Agreement"
+format: html
+author: Elliot Gould
+date: today
+description: "This notebook is a companion to the `visualise-agreement.ipynb` notebook, which contains the code used to generate the data for these visualisations."
+execute:
+  eval: false
+---
+
+# Problem Framing
+
+Our goal is to provide visualisations of disagreement among experts in the XREF process which can highlight areas of uncertainty or inconsistency in the elicited probabilities. The visualisations should help guide discussion to:
+
+- resolve any differences caused by sources of reducible uncertainty, e.g. by linguistic uncertainty in the definitions of vegetation types may lead to different interpretations of the definitions of vegetation types.
+- highlight conceptual disagreement, e.g. where experts fundamentally disagree on the definition of a vegetation type and/or its relationship to other types.
+- We can help facilitate discussion to draw out differences in mental models and assumptions.
+
+For a given Source-to-Target vegetation type cross-reference, we can visualise the following aspects of expert disagreement:
+
+- Experts - WHO disagrees?
+- Target vegetation types (EFG) - which EFGs are considered for that vegetation type?
+- Membership probabilities - how much do experts agree on the membership of that vegetation type to a given EFG?
+
+To get at 'why' experts disagree, we can also visualise the following aspects of expert disagreement:
+
+- Context - how does the context of the disagreement affect the experts' views? How might the experts' other assignments for a given EFG influence their views on the membership of a given vegetation type to that EFG?
+- Reasoning - what are the underlying reasons for the disagreement? We don't have access to this information for this dataset, since the reasoning was not captured during elicitation. But our visualisations can at least help facilitate discussion to draw out differences in mental models and assumptions.
+
+# Visualisation Mockups
+
+```{r}
+#| label: load-libraries-data
+library(readr)
+library(readxl)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(ggplot2)
+library(purrr)
+library(tibble)
+library(RColorBrewer)
+library(ggsankeyfier)
+load(here::here("processed_xrefs/visualise-agreement-ipynb.RData")) #run visualise-agreement.ipynb to generate this file
+```
+
+## One Source Vegetation Type
+
+Let's start with a simple case, filtering for the `"AAP"` `VEGCODE` where there is mostly agreement between experts. We can deal with more complex cases later, e.g. where there are low levels of agreement between experts and many EFGs under consideration for a given vegetation type.
+
+```{r}
+xref_source_AAP <- xref_table_experts %>%
+  filter(VEGCODE == "AAP") |>
+  complete(
+    #make explicit by filling in missing combinations
+    VEGCODE,
+    efg,
+    expert,
+    explicit = TRUE,
+    #fill = list(memb = 0)
+  )
+```
+
+Raw data for the `"AAP"` vegetation type, showing the EFGs under consideration and the membership probabilities assigned by each expert:
+
+### Tile Map
+
+```{r}
+
+tile_plot <- function(data) {
+  textcol <- "grey40"
+  label_VEGCODE <- data |> pluck("VEGCODE", unique)
+  data |>
+    ggplot(aes(y = expert, x = efg, fill = memb, fill_alpha = 0.4)) +
+    geom_tile(colour = "white", lwd = 1.5, show.legend = T, linetype = 1) +
+    # scale_fill_binned(
+    #   #direction = -1,
+    #   na.value = "white",
+    #   limits = c(0,1),
+    #   breaks = seq(0,1,by=0.2),
+    #   labels = scales::percent_format(accuracy=1)) +
+    scale_colour_continuous(
+      name = waiver(),
+      guide = "colourbar",
+      aesthetics = "fill",
+      na.value = "grey50",
+    ) +
+    #remove axis labels, add title
+    labs(
+      x = "EFG",
+      y = "Expert",
+      title = "Round 1 Xref",
+      subtitle = glue::glue("Vegetation Type: {label_VEGCODE}")
+    ) +
+    geom_label(aes(label = memb), color = "black", size = 4, fill = "white") +
+    # geom_text(aes(label = memb), color = "white", size = 4) +
+    #remove extra space
+    #equal aspect ratio x and y axis
+    coord_fixed() +
+    #set base size for all font elements
+    theme_grey(base_size = 10) +
+    #theme options
+    theme(
+      palette.colour.continuous = "BuPu",
+      #remove legend title
+      legend.title = element_blank(),
+      #remove legend margin
+      legend.spacing = grid::unit(0, "cm"),
+      #change legend text properties
+      legend.text = element_text(colour = textcol, size = 7, face = "bold"),
+      #change legend key height
+      legend.key.height = grid::unit(0.8, "cm"),
+      #set a slim legend
+      legend.key.width = grid::unit(0.2, "cm"),
+      #set x axis text size and colour
+      axis.text.x = element_text(size = 10, colour = textcol),
+      #set y axis text colour and adjust vertical justification
+      axis.text.y = element_text(vjust = 0.2, colour = textcol),
+      #change axis ticks thickness
+      axis.ticks = element_line(size = 0.4),
+      #change title font, size, colour and justification
+      plot.title = element_text(
+        colour = textcol,
+        hjust = 0,
+        size = 14,
+        face = "bold"
+      ),
+      #remove plot background
+      plot.background = element_blank(),
+      panel.grid = element_blank(),
+      panel.background = element_blank(),
+      #remove plot border
+      panel.border = element_blank()
+    )
+}
+
+xref_source_AAP |> tile_plot()
+```
+
+May want to compress plot to remove duplication among experts, e.g. if there are 10 experts and they all have the same membership probability for a given EFG, then we can just show one row for that membership probability.
+
+```{r}
+xref_source_AAP |>
+  summarise(expert = paste(expert, collapse = ", "), .by = c(efg, memb)) |>
+  tile_plot()
+```
+
+### Sankey Diagram
+
+What values to use for the Sankey diagram? We can use the membership probabilities as the values for the Sankey diagram, but we need to summarise the data first. Let's calculate the mean and geometric mean of the membership probabilities for each EFG. Other summary stats could be used, like counts of experts agreeing on cross-reference, but these two capture the membership values themselves. Fuzzy transformations of the membership values could also be used, but let's keep it simple for now.
+
+Add geometric mean function and summarise data.
+
+```{r}
+geom_mean <- function(x) {
+  exp(mean(log(x), na.rm = TRUE))
+} # but can load EnvStats for NA/error handling later if needed
+
+AAP_summarised <- xref_source_AAP |>
+  drop_na() |>
+  summarise(
+    memb_mean = mean(memb),
+    memb_geom_mean = geom_mean(memb),
+    N = n(),
+    .by = c(VEGCODE, efg, memb)
+  ) |>
+  mutate(expert = "expert")
+```
+
+
+Prepare data for plotting (translating example data req's to our data):
+
+- [x] x = stage = xref_type = "source"/"target" (will need to create)
+- [x] y = RCSES = memb_mean
+- [x] connector = connector = variable containing "source"/"target" or "from" "to"(will need to create)
+- [x] group = node = efg/vegcode = values (names of the nodes, e.g. "AAP", "TF1.7", etc.)
+- [x] edge_id = edge_id = unique identifier for each edge (will need to create)
+
+```{r}
+sankey_geom_mean <- AAP_summarised |>
+  mutate(edge_id = row_number()) |>
+  rowwise() |>
+  pivot_longer(
+    cols = c("VEGCODE", "efg"),
+    names_to = "connector",
+    values_to = "node"
+  ) |>
+  mutate(
+    stage = case_when(connector == "VEGCODE" ~ "source", TRUE ~ "target"),
+    connector = case_when(connector == "VEGCODE" ~ "from", TRUE ~ "to")
+  ) |>
+  ungroup()
+```
+
+```{r}
+ggplot(
+  sankey_geom_mean,
+  aes(
+    x = stage,
+    y = memb_geom_mean,
+    group = node,
+    connector = connector,
+    edge_id = edge_id
+  )
+) +
+  geom_sankeyedge(v_space = "auto") +
+  geom_sankeynode(v_space = "auto")
+```
+
+
+### Contextualising the Disagreement - (other vegetation types considered for target EFGs)
+
+Which EFGs are considered for the `"AAP"` vegetation type?
+
+```{r}
+#| echo: true
+AAP_efg <- xref_source_AAP |> pluck("efg", unique)
+```
+
+What other vegetation types are considered for the EFGs that are considered for the `"AAP"` vegetation type?
+
+For `AAP_efg`, we can filter the `xref_table_experts` table to find all unique `VEGCODE` values that are associated with those EFGs. This will give us a sense of the other vegetation types that are being considered for the same EFGs as `"AAP"`. It may help contextualise the disagreement among experts for the `"AAP"` vegetation type. 
+
+```{r}
+AAP_efg_VEGCODE_experts <- xref_table_experts |> filter(efg %in% AAP_efg)
+```
+
+Given there the EFGs are a higher level hierarchical conceptualisation of vegetation types, there are many vegetation types that are considered for the same EFGs as `"AAP"`. A fully sankey diagram for all these relationships would be quite complex. There are 
+
+r AAP_efg_VEGCODE_experts |> distinct(VEGCODE, efg) |> nrow()
+
+ instances where the EFGs under consideration for "AAP" are also considered for other vegetation types in the cross-reference.
+
+Let's rule a full sankey diagram out for a single source, then. But it may be helpful to provide this information in a table format, so that the user can see which vegetation types are being considered for the same EFGs as `"AAP"`. Experts may want to click on an efg and see a list of other vegetation types under consideration.
+
+```{r}
+AAP_efg_VEGCODE <- AAP_efg_VEGCODE_experts |>
+  distinct(VEGCODE, efg) |>
+  group_by(efg) |>
+  summarise(VEGCODEs = list(VEGCODE))
+# Get vector of VEGCODEs for a specific EFG under consideration for AAP, e.g. "TF1.7"
+AAP_efg_VEGCODE |> pull(VEGCODEs, name = "efg") |> pluck("TF1.7")
+```
+
