@@ -30,13 +30,19 @@ We also want to declare the relative path using the package `here`:
 ```{r}
 #| vscode: {languageId: r}
 here::i_am("preparation/input-memb-tables.qmd")
+csv_folder <- here::here("..", "xrefdata")
+output_dir <-
+    here::here("../results/XREFs")
+if (!dir.exists(output_dir)) {
+    dir.create(output_dir, recursive = TRUE)
+}
 ```
 
 And import custom functions:
 
 ```{r}
 #| vscode: {languageId: r}
-source(here::here("inc", "functions.R"))
+source(here::here("..", "scripts", "functions.R"))
 ```
 
 :::
@@ -49,7 +55,7 @@ Most of the files will have a paired-column format with each pair indicating the
 
 ```{r}
 #| vscode: {languageId: r}
-file_path <- here::here("xrefdata/AL_V1_100626_TASVEG_5_0.csv")
+file_path <- here::here(csv_folder, "/AL_V1_100626_TASVEG_5_0.csv")
 lines <- readLines(file_path, n = 15)
 cat(lines, sep = "\n")
 ```
@@ -66,7 +72,7 @@ Two files have a matrix format with echo column indicating a different target un
 
 ```{r}
 #| vscode: {languageId: r}
-file_path <- here::here("xrefdata/AK_V1_050726_TASVEG_5_0.csv")
+file_path <- here::here(csv_folder, "AK_V1_050726_TASVEG_5_0.csv")
 lines <- readLines(file_path, n = 15)
 cat(lines, sep = "\n")
 ```
@@ -86,11 +92,11 @@ We use the following code to run through the list of files, read metadata and da
 ```{r}
 #| vscode: {languageId: r}
 
-memb_data <- foreach(j = dir(here::here("xrefdata")), .combine = bind_rows) %do% {
-    metadata <- read_csv(here::here("xrefdata", j),
+memb_data <- foreach(j = dir(csv_folder), .combine = bind_rows) %do% {
+    metadata <- read_csv(here::here(csv_folder, j),
         col_names = c("name", "value"), n_max = 11, show_col_types = F
     )[, 1:2]
-    data <- read_csv(here::here("xrefdata", j), skip = 12, show_col_types = F)
+    data <- read_csv(here::here(csv_folder, j), skip = 12, show_col_types = F)
 
     cat(sprintf("Read %s, interpreter %s\n%s\n", j, metadata[1, 2], metadata[11, 2]))
 
@@ -116,7 +122,7 @@ memb_data <- foreach(j = dir(here::here("xrefdata")), .combine = bind_rows) %do%
 ```
 
 ```{r}
-#| vscode: {languageId: r}
+#| label: correct round nr.
 memb_data <- memb_data |>
     mutate(round = if_else(expert == "Anne Kitchener", 2, round))
 ```
@@ -145,7 +151,7 @@ slice_sample(memb_data, n = 5)
 We can summarise the data, excluding all `NA` values:
 
 ```{r}
-#| vscode: {languageId: r}
+#| label: summary memb data
 memb_data |>
     filter(!is.na(memb), memb > 0) |>
     group_by(expert, round) |>
@@ -156,12 +162,7 @@ memb_data |>
 We save the membership table in a file that we can load in later steps of the workflow:
 
 ```{r}
-#| vscode: {languageId: r}
-output_dir <-
-    here::here("outputs/XREFs")
-if (!dir.exists(output_dir)) {
-    dir.create(output_dir)
-}
+#| label: "save output"
 
 TASVEG_xref <- memb_data |>
     filter(

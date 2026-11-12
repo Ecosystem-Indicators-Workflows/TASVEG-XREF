@@ -90,7 +90,7 @@ Type 'q()' to quit R.
 > ## Step 3:  join TASVEG 5.0  EFG attributes
 > 
 > TASVEG_xy <- read_sf(here::here(
-+   "gisdata/LIST_TASVEG_50_STATEWIDE",
++   "../gisdata/LIST_TASVEG_50_STATEWIDE",
 +   "TASVEG_5_0.shp"
 + ))
 > 

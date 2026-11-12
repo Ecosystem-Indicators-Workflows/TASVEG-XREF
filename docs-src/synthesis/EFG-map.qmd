@@ -15,7 +15,7 @@ library(geco)
 library(fasterize)
 
 here::i_am("synthesis/EFG-map.qmd")
-output_dir <- here::here("outputs/XREFs")
+output_dir <- here::here("../results/XREFs")
 load(here::here(output_dir, "memb-tables.rda"))
 out_dir <- here::here("gisout")
 if (!dir.exists(out_dir)) {
@@ -33,7 +33,7 @@ In order to create spatial outputs from the synthesis of membership values, we n
 The spatial attribute table attached to the spatial dataset (in Shapefile format) contains one entry per polygon, and hundred of thousands of polygons.
 
 ```{r}
-TASVEG_xy <- read_sf(here::here("gisdata", "LIST_TASVEG_50_STATEWIDE", "TASVEG_5_0.shp"))
+TASVEG_xy <- read_sf(here::here("..","gisdata", "LIST_TASVEG_50_STATEWIDE", "TASVEG_5_0.shp"))
 
 TASVEG_xy |>
     st_drop_geometry()

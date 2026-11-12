@@ -40,7 +40,7 @@ library(dplyr)
 library(units)
 library(ggplot2)
 here::i_am("synthesis/index.qmd")
-output_dir <- here::here("outputs/XREFs")
+output_dir <- here::here("../results/XREFs")
 load(here::here(output_dir, "memb-tables.rda"))
 ```
 

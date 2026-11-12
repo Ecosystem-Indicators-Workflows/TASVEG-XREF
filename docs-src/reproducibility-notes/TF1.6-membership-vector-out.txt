@@ -133,7 +133,7 @@ Type 'q()' to quit R.
 > ## Step 2: Filter TASVEG 5.0 polygons and join EFG attributes
 > 
 > TASVEG_xy <- read_sf(here::here(
-+   "gisdata/LIST_TASVEG_50_STATEWIDE",
++   "../gisdata/LIST_TASVEG_50_STATEWIDE",
 +   "TASVEG_5_0.shp"
 + ))
 > 

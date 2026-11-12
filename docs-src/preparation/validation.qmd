@@ -11,9 +11,9 @@ library(dplyr)
 library(ecoSynthesis)
 library(ggplot2)
 here::i_am("preparation/validation.qmd")
-output_dir <- here::here("outputs/XREFs")
-source(here::here("inc/setup.R"))
-source(here::here("inc/functions.R"))
+output_dir <- here::here("../results/XREFs")
+source(here::here("../scripts/setup.R"))
+source(here::here("../scripts/functions.R"))
 load(here::here(output_dir, "lookup-tables.rda"))
 load(here::here(output_dir, "memb-tables.rda"))
 ```
@@ -25,12 +25,12 @@ Read data directly from the data frame and coerce it to a `membership_tbl` objec
 
 ```{r}
 TASVEG_memb <- read_membership_tbl(
-  TASVEG_xref,
-  source_id = "VEGCODE",
-  target_id = "EFG",
-  membership = "memb",
-  interpreter = "expert",
-  round = "round"
+    TASVEG_xref,
+    source_id = "VEGCODE",
+    target_id = "EFG",
+    membership = "memb",
+    interpreter = "expert",
+    round = "round"
 )
 
 TASVEG_memb
@@ -66,9 +66,9 @@ We save both the raw and the cleaned membership tables in a file that we can loa
 
 ```{r}
 save(
-  TASVEG_xref,
-  TASVEG_clean,
-  file = here::here(output_dir, "memb-tables.rda")
+    TASVEG_xref,
+    TASVEG_clean,
+    file = here::here(output_dir, "memb-tables.rda")
 )
 ```
 

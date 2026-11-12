@@ -25,11 +25,11 @@ The Department Natural Resources and Environment Tasmania requests attribution b
 Expand this section to explore the script for data download. 
 
 ```{r}
-#| filename: "inc/TASVEG-data-download.R"
+#| filename: "scripts/TASVEG-data-download.R"
 #| eval: false
 #| code-fold: true
 #| code-summary: "Script to download TASVEG 5.0 data"
-#| file: ../inc/TASVEG-data-download.R
+#| file: ../../scripts/TASVEG-data-download.R
 ```
 
 Benchmarking information for this script is available in @sec-reproducibility.

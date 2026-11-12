@@ -18,8 +18,8 @@ library(tidyr)
 
 ```{r}
 here::i_am("synthesis/EFG-map.qmd")
-output_dir <- here::here("outputs/XREFs")
-source(here::here("inc/setup.R"))
+output_dir <- here::here("../results/XREFs")
+source(here::here("../scripts/setup.R"))
 load(here::here(output_dir, "lookup-tables.rda"))
 load(here::here(output_dir, "memb-summaries.rda"))
 ```
@@ -33,7 +33,7 @@ We read the spatial data from the TASVEG dataset using `read_sf` from the `sf` p
 We then use the `st_area` to calculate the spatial extent of each spatial feature.For the next calculation we don't need to keep the spatial information, so we use  but we drop the geometry column to speed up other calculations.  
 
 ```{r}
-TASVEG_xy <- read_sf(here::here("gisdata", "LIST_TASVEG_50_STATEWIDE", "TASVEG_5_0.shp")) |>
+TASVEG_xy <- read_sf(here::here("..", "gisdata", "LIST_TASVEG_50_STATEWIDE", "TASVEG_5_0.shp")) |>
     select(VEG_GROUP, VEGCODE, VEGCODE_D)
 TASVEG_areas <- TASVEG_xy |>
     mutate(area = st_area(geometry)) |>

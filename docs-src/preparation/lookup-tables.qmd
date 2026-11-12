@@ -18,7 +18,7 @@ library(foreign)
 library(dplyr)
 library(readr)
 library(ecoSynthesis)
-output_dir <- here::here("outputs/XREFs")
+output_dir <- here::here("..", "results", "XREFs")
 ```
 
 Make sure to download the data first, see this script for instructions:
@@ -27,7 +27,7 @@ Make sure to download the data first, see this script for instructions:
 #| eval: false
 #| code-fold: true
 #| code-summary: "Download source data / TASVEG 5.0"
-#| file: ../inc/TASVEG-data-download.R
+#| file: ../../scripts/TASVEG-data-download.R
 ```
 
 :::
@@ -35,7 +35,7 @@ Make sure to download the data first, see this script for instructions:
 ```{r}
 TASVEG_DBF <-
     read.dbf(
-        here::here("gisdata", "LIST_TASVEG_50_STATEWIDE", "TASVEG_5_0_Fire_Attributes_LUT.dbf"),
+        here::here("..", "gisdata", "LIST_TASVEG_50_STATEWIDE", "TASVEG_5_0_Fire_Attributes_LUT.dbf"),
         as.is = TRUE
     )
 ```
