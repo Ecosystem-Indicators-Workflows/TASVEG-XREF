@@ -37,8 +37,8 @@ Type 'q()' to quit R.
 > ## 4) Outputs in preferred format
 > 
 > ## Recommended usage:
-> ## R --vanilla < inc/TASVEG-xref-IUCNGET-output-best-90m.R >\
-> ##  reproducibility-notes/TASVEG-xref-IUCNGET-output-best-90m-out.txt
+> ## R --vanilla < scripts/TASVEG-xref-IUCNGET-output-best-90m.R >\
+> ##  docs-src/reproducibility-notes/TASVEG-xref-IUCNGET-output-best-90m-out.txt
 > 
 > ## Step O: Setup
 > 
@@ -66,9 +66,9 @@ Type 'q()' to quit R.
 > library(geco)
 > 
 > ### Paths
-> here::i_am("inc/TASVEG-xref-IUCNGET-output-best-90m.R")
+> here::i_am("scripts/TASVEG-xref-IUCNGET-output-best-90m.R")
 > 
-> out_dir <- here::here("outputs", "best-candidate")
+> out_dir <- here::here("results", "best-candidate")
 > if (!dir.exists(out_dir)) {
 +   dir.create(out_dir, recursive = TRUE)
 + }
@@ -81,7 +81,7 @@ Type 'q()' to quit R.
 > ### Lookup table source classification
 > 
 > TASVEG_xy <- read_sf(here::here(
-+   "../gisdata/LIST_TASVEG_50_STATEWIDE/",
++   "gisdata/LIST_TASVEG_50_STATEWIDE/",
 +   "TASVEG_5_0.shp"
 + ))
 > 
@@ -207,9 +207,20 @@ Revised cross-references following discussions with David Keith, Anne Kitchener,
 +   left_join(TASVEG_best_summary, by = "VEGCODE") |>
 +   left_join(efg_info, by = "EFG") |>
 +   select(
-+     VEG_GROUP, VEGCODE, VEGCODE_D, eligible,
-+     EFG, efg_name, efg_pixel_value, efg_hex_code, efg_rgb_code,
-+     round, prop_memb, total_memb, supporting, total_interp
++     VEG_GROUP,
++     VEGCODE,
++     VEGCODE_D,
++     eligible,
++     EFG,
++     efg_name,
++     efg_pixel_value,
++     efg_hex_code,
++     efg_rgb_code,
++     round,
++     prop_memb,
++     total_memb,
++     supporting,
++     total_interp
 +   )
 > 
 > write_csv(
@@ -229,9 +240,16 @@ Revised cross-references following discussions with David Keith, Anne Kitchener,
 +     by = c("EFG" = "efg_id")
 +   ) |>
 +   select(
-+     efg_pixel_value, EFG, efg_name,
-+     realm_id, realm_name, biome_id, biome_name,
-+     efg_hex_code, efg_rgb_code, n_tasveg_units
++     efg_pixel_value,
++     EFG,
++     efg_name,
++     realm_id,
++     realm_name,
++     biome_id,
++     biome_name,
++     efg_hex_code,
++     efg_rgb_code,
++     n_tasveg_units
 +   ) |>
 +   arrange(efg_pixel_value)
 > 
@@ -243,7 +261,15 @@ Revised cross-references following discussions with David Keith, Anne Kitchener,
 > clr_lines <- efg_lookup_tbl |>
 +   tidyr::separate(efg_rgb_code, into = c("R", "G", "B"), sep = ",") |>
 +   transmute(
-+     line = sprintf("%d %s %s %s 255 %s %s", efg_pixel_value, R, G, B, EFG, efg_name)
++     line = sprintf(
++       "%d %s %s %s 255 %s %s",
++       efg_pixel_value,
++       R,
++       G,
++       B,
++       EFG,
++       efg_name
++     )
 +   ) |>
 +   pull(line)
 > 
@@ -333,7 +359,7 @@ Revised cross-references following discussions with David Keith, Anne Kitchener,
 > 
 > end_time <- Sys.time()
 > end_time - start_time
-Time difference of 2.192891 mins
+Time difference of 1.990877 mins
 > 
 > sessionInfo()
 R version 4.5.2 (2025-10-31)

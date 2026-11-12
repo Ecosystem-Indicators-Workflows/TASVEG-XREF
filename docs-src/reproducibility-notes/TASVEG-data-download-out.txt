@@ -25,12 +25,13 @@ Type 'q()' to quit R.
 > ## > Data is supplied under Creative Commons Attribution 3.0 Australia (CC BY 3.0 AU) Licence http://creativecommons.org/licenses/by/3.0/au/
 > 
 > ## Recommended usage:
-> ## R --vanilla < inc/TASVEG-data-download.R \
-> ##  > reproducibility-notes/TASVEG-data-download-out.txt
+> ## R --vanilla < scripts/TASVEG-data-download.R \
+> ##  > docs-src/reproducibility-notes/TASVEG-data-download-out.txt
 > 
 > ## Summary of steps from data source to prepared data:
-> ## 1. Obtaining the original data from www.theLIST.tas.gov.au
-> ## 2. Extract target file from downloaded zip archive
+> ## 1. Check if data is already present
+> ## 2. Obtaining the original data from www.theLIST.tas.gov.au
+> ## 3. Extract target file from downloaded zip archive
 > 
 > ## Time for action:
 > 
@@ -38,12 +39,12 @@ Type 'q()' to quit R.
 > 
 > ### Benchmarking
 > (start_time <- Sys.time())
-[1] "2026-11-07 18:03:38 AEDT"
+[1] "2026-11-12 12:34:37 AEDT"
 > 
 > ### No special libraries needed
 > 
 > ### Paths
-> here::i_am("inc/TASVEG-data-download.R")
+> here::i_am("scripts/TASVEG-data-download.R")
 > gisdata <- here::here("gisdata")
 > if (!dir.exists(gisdata)) {
 +   dir.create(gisdata)
@@ -56,39 +57,68 @@ Type 'q()' to quit R.
 > # For Windows users: Please refer to the wget documentation for installation instructions at:
 > # https://eternallybored.org/misc/wget/
 > 
-> ## 1. Obtaining the original data from www.theLIST.tas.gov.au
+> ## 1. Check if data is already present, and if data is complete:
 > 
-> ## This is the source URL at theLIST repository
-> data_url <- 'https://listdata.thelist.tas.gov.au/opendata/data/LIST_TASVEG_50_STATEWIDE.zip'
+> completed <- FALSE
 > 
-> ## Download to a tempfile
-> temp_zip <- tempfile(fileext = ".zip")
+> if ("LIST_TASVEG_50_STATEWIDE" %in% list.files(gisdata)) {
++   cat("The folder is already present, ")
++   all_files <- list.files(
++     here::here(gisdata, "LIST_TASVEG_50_STATEWIDE"),
++     recursive = TRUE
++   )
++   how_many <- length(all_files)
++   cat(sprintf("there are %s files in there, ", how_many))
++   if (how_many == 71) {
++     cat("that sounds about right!, nothing else to do.\n")
++     ## if present there is nothing to do,
++     completed <- TRUE
++   } else {
++     if (how_many < 71) {
++       cat("files missing?, will proceed to download again.\n")
++       completed <- FALSE
++     } else {
++       cat("that's too many, please check!.\n")
++       completed <- TRUE
++     }
++   }
++ }
+The folder is already present, there are 71 files in there, that sounds about right!, nothing else to do.
 > 
-> ## very large file (1.7GB) will require sometime to download
-> options(timeout = max(300, getOption("timeout")))
-> 
-> ## Download with wget seems to be more stable
-> download.file(
-+   data_url,
-+   destfile = temp_zip,
-+   mode = "wb",
-+   method = "wget",
-+   extra = c("-c")
-+ )
-> 
-> ## 2. Extract all files from downloaded zip archive
-> 
-> ## Unzip the selected file
-> unzip(
-+   temp_zip,
-+   exdir = gisdata
-+ )
-> 
+> if (!completed) {
++   ## 2. Obtaining the original data from www.theLIST.tas.gov.au
++ 
++   ## This is the source URL at theLIST repository
++   data_url <- 'https://listdata.thelist.tas.gov.au/opendata/data/LIST_TASVEG_50_STATEWIDE.zip'
++ 
++   ## Download to a tempfile
++   temp_zip <- tempfile(fileext = ".zip")
++ 
++   ## very large file (1.7GB) will require sometime to download
++   options(timeout = max(300, getOption("timeout")))
++ 
++   ## Download with wget seems to be more stable
++   download.file(
++     data_url,
++     destfile = temp_zip,
++     mode = "wb",
++     method = "wget",
++     extra = c("-c")
++   )
++ 
++   ## 3. Extract all files from downloaded zip archive
++ 
++   ## Unzip the selected file
++   unzip(
++     temp_zip,
++     exdir = gisdata
++   )
++ }
 > ## Step X: Benchmarking and session info
 > 
 > end_time <- Sys.time()
 > end_time - start_time
-Time difference of 7.805333 mins
+Time difference of 0.01719594 secs
 > 
 > sessionInfo()
 R version 4.5.2 (2025-10-31)

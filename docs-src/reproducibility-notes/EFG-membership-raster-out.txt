@@ -26,19 +26,19 @@ Type 'q()' to quit R.
 > ## Target classification (units):
 > ## > IUCN Global Ecosystem Typology Level 3 (Ecosystem Functional Groups, EFGs)
 > ## Output format:
-> ## > 31 GeoTIFF files (`TASVEG-xref-{EFG}-memb-90m.tiff`) in `outputs/efg-membership-rasters/`
+> ## > 31 GeoTIFF files (`TASVEG-xref-{EFG}-memb-90m.tiff`) in `results/efg-membership-rasters/`
 > ## > plus a companion summary table (`TASVEG-xref-EFG-membership-summary.csv`)
 > ##
 > ## Recommended usage:
-> ## R --vanilla < inc/EFG-membership-raster.R >\
-> ##  reproducibility-notes/EFG-membership-raster-out.txt
+> ## R --vanilla < scripts/EFG-membership-raster.R >\
+> ##  docs-src/reproducibility-notes/EFG-membership-raster-out.txt
 > 
 > ## Step 0: Setup
 > 
 > ### Benchmarking
 > start_time <- Sys.time()
 > date()
-[1] "Sun Nov  8 11:44:30 2026"
+[1] "Thu Nov 12 12:50:13 2026"
 > 
 > ### Libraries
 > library(ecoSynthesis)
@@ -50,11 +50,11 @@ Type 'q()' to quit R.
 > library(readr)
 > 
 > ### Paths
-> here::i_am("inc/EFG-membership-raster.R")
-> load(here::here("outputs/XREFs/lookup-tables.rda"))
-> load(here::here("outputs/XREFs/memb-summaries.rda"))
+> here::i_am("scripts/EFG-membership-raster.R")
+> load(here::here("results/XREFs/lookup-tables.rda"))
+> load(here::here("results/XREFs/memb-summaries.rda"))
 > 
-> out_dir <- here::here("outputs", "efg-membership-rasters")
+> out_dir <- here::here("results", "efg-membership-rasters")
 > if (!dir.exists(out_dir)) {
 +   dir.create(out_dir, recursive = TRUE)
 + }
@@ -64,7 +64,7 @@ Type 'q()' to quit R.
 > rez <- 90
 > 
 > TASVEG_xy <- read_sf(here::here(
-+   "../gisdata/LIST_TASVEG_50_STATEWIDE",
++   "gisdata/LIST_TASVEG_50_STATEWIDE",
 +   "TASVEG_5_0.shp"
 + ))
 > 
@@ -107,7 +107,9 @@ Type 'q()' to quit R.
 +         TITLE = sprintf("Aggregated membership for %s (%s)", tid, efg_name_str),
 +         DESCRIPTION = sprintf(
 +           "Proportion of total Round 2 membership votes (prop_memb) from TASVEG 5.0 to IUCN GET %s (%s) at %sm resolution",
-+           tid, efg_name_str, rez
++           tid,
++           efg_name_str,
++           rez
 +         ),
 +         EFG_CODE = tid,
 +         EFG_NAME = efg_name_str
@@ -135,146 +137,146 @@ Type 'q()' to quit R.
 +     cat(sprintf("%s not found\n", tid))
 +   }
 + }
-Starting F1.1: Sun Nov  8 11:45:32 2026 // F1.1 not found
-Starting F1.2: Sun Nov  8 11:45:32 2026 // F1.2 not found
-Starting F1.3: Sun Nov  8 11:45:32 2026 // F1.3 not found
-Starting F1.4: Sun Nov  8 11:45:32 2026 // F1.4 not found
-Starting F1.5: Sun Nov  8 11:45:32 2026 // F1.5 not found
-Starting F1.6: Sun Nov  8 11:45:32 2026 // F1.6 not found
-Starting F1.7: Sun Nov  8 11:45:32 2026 // F1.7 not found
-Starting F2.1: Sun Nov  8 11:45:32 2026 // F2.1 not found
-Starting F2.10: Sun Nov  8 11:45:32 2026 // F2.10 not found
-Starting F2.2: Sun Nov  8 11:45:32 2026 // TASVEG-xref-F2.2-memb-90m.tiff already exists, loading for summary
+Starting F1.1: Thu Nov 12 12:51:42 2026 // F1.1 not found
+Starting F1.2: Thu Nov 12 12:51:42 2026 // F1.2 not found
+Starting F1.3: Thu Nov 12 12:51:42 2026 // F1.3 not found
+Starting F1.4: Thu Nov 12 12:51:42 2026 // F1.4 not found
+Starting F1.5: Thu Nov 12 12:51:42 2026 // F1.5 not found
+Starting F1.6: Thu Nov 12 12:51:42 2026 // F1.6 not found
+Starting F1.7: Thu Nov 12 12:51:42 2026 // F1.7 not found
+Starting F2.1: Thu Nov 12 12:51:42 2026 // F2.1 not found
+Starting F2.10: Thu Nov 12 12:51:42 2026 // F2.10 not found
+Starting F2.2: Thu Nov 12 12:51:42 2026 // TASVEG-xref-F2.2-memb-90m.tiff already exists, loading for summary
 [1] 3491.323
-Starting F2.3: Sun Nov  8 11:45:33 2026 // TASVEG-xref-F2.3-memb-90m.tiff already exists, loading for summary
+Starting F2.3: Thu Nov 12 12:51:42 2026 // TASVEG-xref-F2.3-memb-90m.tiff already exists, loading for summary
 [1] 4592.213
-Starting F2.4: Sun Nov  8 11:45:33 2026 // TASVEG-xref-F2.4-memb-90m.tiff already exists, loading for summary
+Starting F2.4: Thu Nov 12 12:51:43 2026 // TASVEG-xref-F2.4-memb-90m.tiff already exists, loading for summary
 [1] 703.46
-Starting F2.5: Sun Nov  8 11:45:33 2026 // F2.5 not found
-Starting F2.6: Sun Nov  8 11:45:33 2026 // F2.6 not found
-Starting F2.7: Sun Nov  8 11:45:33 2026 // F2.7 not found
-Starting F2.8: Sun Nov  8 11:45:33 2026 // TASVEG-xref-F2.8-memb-90m.tiff already exists, loading for summary
+Starting F2.5: Thu Nov 12 12:51:43 2026 // F2.5 not found
+Starting F2.6: Thu Nov 12 12:51:43 2026 // F2.6 not found
+Starting F2.7: Thu Nov 12 12:51:43 2026 // F2.7 not found
+Starting F2.8: Thu Nov 12 12:51:43 2026 // TASVEG-xref-F2.8-memb-90m.tiff already exists, loading for summary
 [1] 4.32
-Starting F2.9: Sun Nov  8 11:45:34 2026 // F2.9 not found
-Starting F3.1: Sun Nov  8 11:45:34 2026 // TASVEG-xref-F3.1-memb-90m.tiff already exists, loading for summary
+Starting F2.9: Thu Nov 12 12:51:44 2026 // F2.9 not found
+Starting F3.1: Thu Nov 12 12:51:44 2026 // TASVEG-xref-F3.1-memb-90m.tiff already exists, loading for summary
 [1] 192.22
-Starting F3.2: Sun Nov  8 11:45:34 2026 // F3.2 not found
-Starting F3.3: Sun Nov  8 11:45:34 2026 // TASVEG-xref-F3.3-memb-90m.tiff already exists, loading for summary
+Starting F3.2: Thu Nov 12 12:51:45 2026 // F3.2 not found
+Starting F3.3: Thu Nov 12 12:51:45 2026 // TASVEG-xref-F3.3-memb-90m.tiff already exists, loading for summary
 [1] 419.76
-Starting F3.4: Sun Nov  8 11:45:35 2026 // F3.4 not found
-Starting F3.5: Sun Nov  8 11:45:35 2026 // F3.5 not found
-Starting FM1.1: Sun Nov  8 11:45:35 2026 // FM1.1 not found
-Starting FM1.2: Sun Nov  8 11:45:35 2026 // FM1.2 not found
-Starting FM1.3: Sun Nov  8 11:45:35 2026 // FM1.3 not found
-Starting M1.1: Sun Nov  8 11:45:35 2026 // M1.1 not found
-Starting M1.10: Sun Nov  8 11:45:35 2026 // M1.10 not found
-Starting M1.2: Sun Nov  8 11:45:35 2026 // M1.2 not found
-Starting M1.3: Sun Nov  8 11:45:35 2026 // M1.3 not found
-Starting M1.4: Sun Nov  8 11:45:35 2026 // M1.4 not found
-Starting M1.5: Sun Nov  8 11:45:35 2026 // M1.5 not found
-Starting M1.6: Sun Nov  8 11:45:35 2026 // M1.6 not found
-Starting M1.7: Sun Nov  8 11:45:35 2026 // M1.7 not found
-Starting M1.8: Sun Nov  8 11:45:35 2026 // M1.8 not found
-Starting M1.9: Sun Nov  8 11:45:35 2026 // M1.9 not found
-Starting M2.1: Sun Nov  8 11:45:35 2026 // M2.1 not found
-Starting M2.2: Sun Nov  8 11:45:35 2026 // M2.2 not found
-Starting M2.3: Sun Nov  8 11:45:35 2026 // M2.3 not found
-Starting M2.4: Sun Nov  8 11:45:35 2026 // M2.4 not found
-Starting M2.5: Sun Nov  8 11:45:35 2026 // M2.5 not found
-Starting M3.1: Sun Nov  8 11:45:35 2026 // M3.1 not found
-Starting M3.2: Sun Nov  8 11:45:35 2026 // M3.2 not found
-Starting M3.3: Sun Nov  8 11:45:35 2026 // M3.3 not found
-Starting M3.4: Sun Nov  8 11:45:35 2026 // M3.4 not found
-Starting M3.5: Sun Nov  8 11:45:35 2026 // M3.5 not found
-Starting M3.6: Sun Nov  8 11:45:35 2026 // M3.6 not found
-Starting M3.7: Sun Nov  8 11:45:35 2026 // M3.7 not found
-Starting M4.1: Sun Nov  8 11:45:35 2026 // M4.1 not found
-Starting M4.2: Sun Nov  8 11:45:35 2026 // M4.2 not found
-Starting MFT1.1: Sun Nov  8 11:45:35 2026 // MFT1.1 not found
-Starting MFT1.2: Sun Nov  8 11:45:35 2026 // MFT1.2 not found
-Starting MFT1.3: Sun Nov  8 11:45:35 2026 // TASVEG-xref-MFT1.3-memb-90m.tiff already exists, loading for summary
+Starting F3.4: Thu Nov 12 12:51:45 2026 // F3.4 not found
+Starting F3.5: Thu Nov 12 12:51:45 2026 // F3.5 not found
+Starting FM1.1: Thu Nov 12 12:51:45 2026 // FM1.1 not found
+Starting FM1.2: Thu Nov 12 12:51:45 2026 // FM1.2 not found
+Starting FM1.3: Thu Nov 12 12:51:45 2026 // FM1.3 not found
+Starting M1.1: Thu Nov 12 12:51:45 2026 // M1.1 not found
+Starting M1.10: Thu Nov 12 12:51:45 2026 // M1.10 not found
+Starting M1.2: Thu Nov 12 12:51:45 2026 // M1.2 not found
+Starting M1.3: Thu Nov 12 12:51:45 2026 // M1.3 not found
+Starting M1.4: Thu Nov 12 12:51:45 2026 // M1.4 not found
+Starting M1.5: Thu Nov 12 12:51:45 2026 // M1.5 not found
+Starting M1.6: Thu Nov 12 12:51:45 2026 // M1.6 not found
+Starting M1.7: Thu Nov 12 12:51:45 2026 // M1.7 not found
+Starting M1.8: Thu Nov 12 12:51:45 2026 // M1.8 not found
+Starting M1.9: Thu Nov 12 12:51:45 2026 // M1.9 not found
+Starting M2.1: Thu Nov 12 12:51:45 2026 // M2.1 not found
+Starting M2.2: Thu Nov 12 12:51:45 2026 // M2.2 not found
+Starting M2.3: Thu Nov 12 12:51:45 2026 // M2.3 not found
+Starting M2.4: Thu Nov 12 12:51:45 2026 // M2.4 not found
+Starting M2.5: Thu Nov 12 12:51:45 2026 // M2.5 not found
+Starting M3.1: Thu Nov 12 12:51:45 2026 // M3.1 not found
+Starting M3.2: Thu Nov 12 12:51:45 2026 // M3.2 not found
+Starting M3.3: Thu Nov 12 12:51:45 2026 // M3.3 not found
+Starting M3.4: Thu Nov 12 12:51:45 2026 // M3.4 not found
+Starting M3.5: Thu Nov 12 12:51:45 2026 // M3.5 not found
+Starting M3.6: Thu Nov 12 12:51:45 2026 // M3.6 not found
+Starting M3.7: Thu Nov 12 12:51:45 2026 // M3.7 not found
+Starting M4.1: Thu Nov 12 12:51:45 2026 // M4.1 not found
+Starting M4.2: Thu Nov 12 12:51:45 2026 // M4.2 not found
+Starting MFT1.1: Thu Nov 12 12:51:45 2026 // MFT1.1 not found
+Starting MFT1.2: Thu Nov 12 12:51:45 2026 // MFT1.2 not found
+Starting MFT1.3: Thu Nov 12 12:51:45 2026 // TASVEG-xref-MFT1.3-memb-90m.tiff already exists, loading for summary
 [1] 9740.42
-Starting MT1.1: Sun Nov  8 11:45:35 2026 // MT1.1 not found
-Starting MT1.2: Sun Nov  8 11:45:35 2026 // MT1.2 not found
-Starting MT1.3: Sun Nov  8 11:45:35 2026 // MT1.3 not found
-Starting MT1.4: Sun Nov  8 11:45:35 2026 // MT1.4 not found
-Starting MT2.1: Sun Nov  8 11:45:35 2026 // TASVEG-xref-MT2.1-memb-90m.tiff already exists, loading for summary
+Starting MT1.1: Thu Nov 12 12:51:46 2026 // MT1.1 not found
+Starting MT1.2: Thu Nov 12 12:51:46 2026 // MT1.2 not found
+Starting MT1.3: Thu Nov 12 12:51:46 2026 // MT1.3 not found
+Starting MT1.4: Thu Nov 12 12:51:46 2026 // MT1.4 not found
+Starting MT2.1: Thu Nov 12 12:51:46 2026 // TASVEG-xref-MT2.1-memb-90m.tiff already exists, loading for summary
 [1] 103588.8
-Starting MT2.2: Sun Nov  8 11:45:35 2026 // TASVEG-xref-MT2.2-memb-90m.tiff already exists, loading for summary
+Starting MT2.2: Thu Nov 12 12:51:46 2026 // TASVEG-xref-MT2.2-memb-90m.tiff already exists, loading for summary
 [1] 1031.32
-Starting MT3.1: Sun Nov  8 11:45:35 2026 // TASVEG-xref-MT3.1-memb-90m.tiff already exists, loading for summary
+Starting MT3.1: Thu Nov 12 12:51:46 2026 // TASVEG-xref-MT3.1-memb-90m.tiff already exists, loading for summary
 [1] 88.06
-Starting S1.1: Sun Nov  8 11:45:36 2026 // S1.1 not found
-Starting S1.2: Sun Nov  8 11:45:36 2026 // S1.2 not found
-Starting S2.1: Sun Nov  8 11:45:36 2026 // S2.1 not found
-Starting SF1.1: Sun Nov  8 11:45:36 2026 // SF1.1 not found
-Starting SF1.2: Sun Nov  8 11:45:36 2026 // SF1.2 not found
-Starting SF2.1: Sun Nov  8 11:45:36 2026 // SF2.1 not found
-Starting SF2.2: Sun Nov  8 11:45:36 2026 // SF2.2 not found
-Starting SM1.1: Sun Nov  8 11:45:36 2026 // SM1.1 not found
-Starting SM1.2: Sun Nov  8 11:45:36 2026 // SM1.2 not found
-Starting SM1.3: Sun Nov  8 11:45:36 2026 // SM1.3 not found
-Starting T1.1: Sun Nov  8 11:45:36 2026 // T1.1 not found
-Starting T1.2: Sun Nov  8 11:45:36 2026 // T1.2 not found
-Starting T1.3: Sun Nov  8 11:45:36 2026 // T1.3 not found
-Starting T1.4: Sun Nov  8 11:45:36 2026 // T1.4 not found
-Starting T2.1: Sun Nov  8 11:45:36 2026 // T2.1 not found
-Starting T2.2: Sun Nov  8 11:45:36 2026 // T2.2 not found
-Starting T2.3: Sun Nov  8 11:45:36 2026 // TASVEG-xref-T2.3-memb-90m.tiff already exists, loading for summary
+Starting S1.1: Thu Nov 12 12:51:47 2026 // S1.1 not found
+Starting S1.2: Thu Nov 12 12:51:47 2026 // S1.2 not found
+Starting S2.1: Thu Nov 12 12:51:47 2026 // S2.1 not found
+Starting SF1.1: Thu Nov 12 12:51:47 2026 // SF1.1 not found
+Starting SF1.2: Thu Nov 12 12:51:47 2026 // SF1.2 not found
+Starting SF2.1: Thu Nov 12 12:51:47 2026 // SF2.1 not found
+Starting SF2.2: Thu Nov 12 12:51:47 2026 // SF2.2 not found
+Starting SM1.1: Thu Nov 12 12:51:47 2026 // SM1.1 not found
+Starting SM1.2: Thu Nov 12 12:51:47 2026 // SM1.2 not found
+Starting SM1.3: Thu Nov 12 12:51:47 2026 // SM1.3 not found
+Starting T1.1: Thu Nov 12 12:51:47 2026 // T1.1 not found
+Starting T1.2: Thu Nov 12 12:51:47 2026 // T1.2 not found
+Starting T1.3: Thu Nov 12 12:51:47 2026 // T1.3 not found
+Starting T1.4: Thu Nov 12 12:51:47 2026 // T1.4 not found
+Starting T2.1: Thu Nov 12 12:51:47 2026 // T2.1 not found
+Starting T2.2: Thu Nov 12 12:51:47 2026 // T2.2 not found
+Starting T2.3: Thu Nov 12 12:51:47 2026 // TASVEG-xref-T2.3-memb-90m.tiff already exists, loading for summary
 [1] 995223.3
-Starting T2.4: Sun Nov  8 11:45:36 2026 // TASVEG-xref-T2.4-memb-90m.tiff already exists, loading for summary
+Starting T2.4: Thu Nov 12 12:51:47 2026 // TASVEG-xref-T2.4-memb-90m.tiff already exists, loading for summary
 [1] 15123.82
-Starting T2.5: Sun Nov  8 11:45:36 2026 // TASVEG-xref-T2.5-memb-90m.tiff already exists, loading for summary
+Starting T2.5: Thu Nov 12 12:51:48 2026 // TASVEG-xref-T2.5-memb-90m.tiff already exists, loading for summary
 [1] 1540520
-Starting T2.6: Sun Nov  8 11:45:37 2026 // TASVEG-xref-T2.6-memb-90m.tiff already exists, loading for summary
+Starting T2.6: Thu Nov 12 12:51:49 2026 // TASVEG-xref-T2.6-memb-90m.tiff already exists, loading for summary
 [1] 1687098
-Starting T3.1: Sun Nov  8 11:45:41 2026 // T3.1 not found
-Starting T3.2: Sun Nov  8 11:45:41 2026 // TASVEG-xref-T3.2-memb-90m.tiff already exists, loading for summary
+Starting T3.1: Thu Nov 12 12:52:01 2026 // T3.1 not found
+Starting T3.2: Thu Nov 12 12:52:01 2026 // TASVEG-xref-T3.2-memb-90m.tiff already exists, loading for summary
 [1] 184947
-Starting T3.3: Sun Nov  8 11:45:41 2026 // T3.3 not found
-Starting T3.4: Sun Nov  8 11:45:41 2026 // TASVEG-xref-T3.4-memb-90m.tiff already exists, loading for summary
+Starting T3.3: Thu Nov 12 12:52:01 2026 // T3.3 not found
+Starting T3.4: Thu Nov 12 12:52:01 2026 // TASVEG-xref-T3.4-memb-90m.tiff already exists, loading for summary
 [1] 1740.96
-Starting T4.1: Sun Nov  8 11:45:41 2026 // T4.1 not found
-Starting T4.2: Sun Nov  8 11:45:41 2026 // T4.2 not found
-Starting T4.3: Sun Nov  8 11:45:41 2026 // T4.3 not found
-Starting T4.4: Sun Nov  8 11:45:41 2026 // TASVEG-xref-T4.4-memb-90m.tiff already exists, loading for summary
+Starting T4.1: Thu Nov 12 12:52:02 2026 // T4.1 not found
+Starting T4.2: Thu Nov 12 12:52:02 2026 // T4.2 not found
+Starting T4.3: Thu Nov 12 12:52:02 2026 // T4.3 not found
+Starting T4.4: Thu Nov 12 12:52:02 2026 // TASVEG-xref-T4.4-memb-90m.tiff already exists, loading for summary
 [1] 282605.3
-Starting T4.5: Sun Nov  8 11:45:42 2026 // TASVEG-xref-T4.5-memb-90m.tiff already exists, loading for summary
+Starting T4.5: Thu Nov 12 12:52:02 2026 // TASVEG-xref-T4.5-memb-90m.tiff already exists, loading for summary
 [1] 117791.2
-Starting T5.1: Sun Nov  8 11:45:42 2026 // T5.1 not found
-Starting T5.2: Sun Nov  8 11:45:42 2026 // T5.2 not found
-Starting T5.3: Sun Nov  8 11:45:42 2026 // T5.3 not found
-Starting T5.4: Sun Nov  8 11:45:42 2026 // T5.4 not found
-Starting T5.5: Sun Nov  8 11:45:42 2026 // T5.5 not found
-Starting T6.1: Sun Nov  8 11:45:42 2026 // T6.1 not found
-Starting T6.2: Sun Nov  8 11:45:42 2026 // T6.2 not found
-Starting T6.3: Sun Nov  8 11:45:42 2026 // T6.3 not found
-Starting T6.4: Sun Nov  8 11:45:42 2026 // TASVEG-xref-T6.4-memb-90m.tiff already exists, loading for summary
+Starting T5.1: Thu Nov 12 12:52:02 2026 // T5.1 not found
+Starting T5.2: Thu Nov 12 12:52:02 2026 // T5.2 not found
+Starting T5.3: Thu Nov 12 12:52:02 2026 // T5.3 not found
+Starting T5.4: Thu Nov 12 12:52:02 2026 // T5.4 not found
+Starting T5.5: Thu Nov 12 12:52:02 2026 // T5.5 not found
+Starting T6.1: Thu Nov 12 12:52:02 2026 // T6.1 not found
+Starting T6.2: Thu Nov 12 12:52:02 2026 // T6.2 not found
+Starting T6.3: Thu Nov 12 12:52:02 2026 // T6.3 not found
+Starting T6.4: Thu Nov 12 12:52:02 2026 // TASVEG-xref-T6.4-memb-90m.tiff already exists, loading for summary
 [1] 162763.5
-Starting T6.5: Sun Nov  8 11:45:42 2026 // T6.5 not found
-Starting T7.1: Sun Nov  8 11:45:42 2026 // TASVEG-xref-T7.1-memb-90m.tiff already exists, loading for summary
+Starting T6.5: Thu Nov 12 12:52:03 2026 // T6.5 not found
+Starting T7.1: Thu Nov 12 12:52:03 2026 // TASVEG-xref-T7.1-memb-90m.tiff already exists, loading for summary
 [1] 557272.6
-Starting T7.2: Sun Nov  8 11:45:42 2026 // TASVEG-xref-T7.2-memb-90m.tiff already exists, loading for summary
+Starting T7.2: Thu Nov 12 12:52:03 2026 // TASVEG-xref-T7.2-memb-90m.tiff already exists, loading for summary
 [1] 882819.7
-Starting T7.3: Sun Nov  8 11:45:43 2026 // TASVEG-xref-T7.3-memb-90m.tiff already exists, loading for summary
+Starting T7.3: Thu Nov 12 12:52:03 2026 // TASVEG-xref-T7.3-memb-90m.tiff already exists, loading for summary
 [1] 401134.2
-Starting T7.4: Sun Nov  8 11:45:43 2026 // TASVEG-xref-T7.4-memb-90m.tiff already exists, loading for summary
+Starting T7.4: Thu Nov 12 12:52:03 2026 // TASVEG-xref-T7.4-memb-90m.tiff already exists, loading for summary
 [1] 101029.1
-Starting T7.5: Sun Nov  8 11:45:43 2026 // TASVEG-xref-T7.5-memb-90m.tiff already exists, loading for summary
+Starting T7.5: Thu Nov 12 12:52:04 2026 // TASVEG-xref-T7.5-memb-90m.tiff already exists, loading for summary
 [1] 116019.8
-Starting TF1.1: Sun Nov  8 11:45:43 2026 // TASVEG-xref-TF1.1-memb-90m.tiff already exists, loading for summary
+Starting TF1.1: Thu Nov 12 12:52:04 2026 // TASVEG-xref-TF1.1-memb-90m.tiff already exists, loading for summary
 [1] 329.82
-Starting TF1.2: Sun Nov  8 11:45:44 2026 // TASVEG-xref-TF1.2-memb-90m.tiff already exists, loading for summary
+Starting TF1.2: Thu Nov 12 12:52:04 2026 // TASVEG-xref-TF1.2-memb-90m.tiff already exists, loading for summary
 [1] 87633.11
-Starting TF1.3: Sun Nov  8 11:45:44 2026 // TASVEG-xref-TF1.3-memb-90m.tiff already exists, loading for summary
+Starting TF1.3: Thu Nov 12 12:52:04 2026 // TASVEG-xref-TF1.3-memb-90m.tiff already exists, loading for summary
 [1] 17092.94
-Starting TF1.4: Sun Nov  8 11:45:44 2026 // TASVEG-xref-TF1.4-memb-90m.tiff already exists, loading for summary
+Starting TF1.4: Thu Nov 12 12:52:05 2026 // TASVEG-xref-TF1.4-memb-90m.tiff already exists, loading for summary
 [1] 1509.218
-Starting TF1.5: Sun Nov  8 11:45:44 2026 // TASVEG-xref-TF1.5-memb-90m.tiff already exists, loading for summary
+Starting TF1.5: Thu Nov 12 12:52:05 2026 // TASVEG-xref-TF1.5-memb-90m.tiff already exists, loading for summary
 [1] 39.07
-Starting TF1.6: Sun Nov  8 11:45:45 2026 // TASVEG-xref-TF1.6-memb-90m.tiff already exists, loading for summary
+Starting TF1.6: Thu Nov 12 12:52:05 2026 // TASVEG-xref-TF1.6-memb-90m.tiff already exists, loading for summary
 [1] 896255.7
-Starting TF1.7: Sun Nov  8 11:45:45 2026 // TASVEG-xref-TF1.7-memb-90m.tiff already exists, loading for summary
+Starting TF1.7: Thu Nov 12 12:52:06 2026 // TASVEG-xref-TF1.7-memb-90m.tiff already exists, loading for summary
 [1] 3455.59
 > 
 > ## Step 3: Export companion EFG membership summary CSV
@@ -298,12 +300,27 @@ Starting TF1.7: Sun Nov  8 11:45:45 2026 // TASVEG-xref-TF1.7-memb-90m.tiff alre
 +   left_join(efg_info, by = "EFG") |>
 +   left_join(bind_rows(efg_stats_list), by = "EFG") |>
 +   select(
-+     file_name, EFG, efg_name, efg_pixel_value,
-+     realm_id, realm_name, biome_id, biome_name,
-+     efg_hex_code, efg_rgb_code,
-+     round, total_interp, n_tasveg_units, n_best_units,
-+     min_prop_memb, max_prop_memb, max_supporting,
-+     mapped_pixels_90m, unweighted_area_km2, sum_pixel_memb, weighted_area_km2
++     file_name,
++     EFG,
++     efg_name,
++     efg_pixel_value,
++     realm_id,
++     realm_name,
++     biome_id,
++     biome_name,
++     efg_hex_code,
++     efg_rgb_code,
++     round,
++     total_interp,
++     n_tasveg_units,
++     n_best_units,
++     min_prop_memb,
++     max_prop_memb,
++     max_supporting,
++     mapped_pixels_90m,
++     unweighted_area_km2,
++     sum_pixel_memb,
++     weighted_area_km2
 +   ) |>
 +   arrange(EFG)
 > 
@@ -316,7 +333,7 @@ Starting TF1.7: Sun Nov  8 11:45:45 2026 // TASVEG-xref-TF1.7-memb-90m.tiff alre
 > 
 > end_time <- Sys.time()
 > end_time - start_time
-Time difference of 1.251563 mins
+Time difference of 1.886897 mins
 > 
 > sessionInfo()
 R version 4.5.2 (2025-10-31)
