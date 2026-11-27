@@ -1,42 +1,45 @@
----
-title: "Stepwise cross-referencing process"
----
+# Stepwise cross-referencing process {#sec-process}
 
-The need to cross-reference different classification systems arises frequently in ecology and conservation applications. The conceptual foundations for cross-referencing classifications are discussed in @IUCN_2025.
+The need to cross-reference different ecosystem classification systems arises frequently in ecological research, national ecosystem accounting, Red List of Ecosystems assessments, and conservation reporting. The conceptual foundations, standards, and diagnostic methods for cross-referencing classifications to the IUCN Global Ecosystem Typology (IUCN GET; @Keith_2022) are established in @IUCN_2025.
 
-Here we try to apply consistent methods and standards for cross-referencing in order to make the relationships between units more explicit and enhance the reproducibility of the process. This will enable efficient update when more information becomes available, and minimise divergent or erroneous interpretations of relationships between classifications. 
+Here we apply consistent standards and reproducible computational methods so that relationships between classification units are explicit, auditable, and straightforward to update whenever new ecological evidence or updated spatial maps become available. Formalising the cross-referencing pipeline also minimises undocumented or divergent interpretations when local vegetation typologies are translated into global reporting frameworks [@DeCaceres_2012; @IUCN_2025].
 
-The process of cross-reference involves a source classification and  a target classification, where the target classification might have a broader scope than the source. Elements in the source classification  can be interpreted as directly related to one or more elements in the  target classification. This relationship can be quantified as membership values, where the source element has memberships between 0 and 100% to each element of the target classification. 
+Cross-referencing links a **source classification** to a **target classification**, where the target classification typically has a broader thematic or geographic scope than the source. Each unit in the source classification can relate directly to one or more units in the target classification. Following fuzzy set theory [@Zadeh_1965] and the IUCN guidelines [@IUCN_2025], this relationship is quantified using **fuzzy membership values** between 0 (0%, excluded) and 1 (100%, unambiguous assignment), summing to 1 across all assigned target units for a given source unit and interpreter.
 
-Membership estimates from multiple interpreters can be combined to produce more robust cross-referencing relationships. Uncertainty due to disagreements between interpreters can be quantified and documented for maximum transparency.
+Combining independent membership assessments from multiple domain experts—structured across iterative elicitation rounds with facilitated discussion between rounds—reduces linguistic ambiguity, guards against individual cognitive biases, and yields robust, transparent estimates of both consensus and residual thematic uncertainty [@Martin_2012; @Hemming_2018].
 
-## Overview of stepwise cross-referencing process
+## Overview of the stepwise cross-referencing process
 
-A stepwise diagnostic process ensures that the cross-referencing exercise aligns with four key principles: alignment of classifications, membership based on entity properties, using weight of evidence, and transparent representation of uncertainty [@IUCN_2025].
+A five-step diagnostic process ensures that the cross-referencing exercise upholds four core principles: (1) conceptual alignment of classifications, (2) membership estimation based on entity properties, (3) weight of evidence, and (4) transparent representation of uncertainty [@IUCN_2025].
 
-![Structure of the stepwise cross-referencing process.](../fig/stepwise-xref-2026-10-23-182804.png){label=fig-process}
+![Structure of the stepwise cross-referencing process adapted from IUCN (2025).](../fig/stepwise-xref-2026-10-23-182804.png){#fig-process}
 
-Steps 1 and 2 are essential steps for preparation of the information and decisions that will shape the cross-referencing process. Multiple interpreters might be involved in steps 3 and 4. An additional round of expert elicitation is recommended to try to reduce disagreement. 
+- **Steps 1 and 2** establish conceptual eligibility and assemble the ecological and spatial reference information that underpins all subsequent decisions.
+- **Steps 3 and 4** involve multiple domain experts independently eliminating implausible target units and estimating non-zero fuzzy memberships. Conducting a second round of elicitation after structured group discussion (analogous to the Investigate–Discuss–Estimate–Aggregate, or IDEA, protocol; @Hemming_2018) typically involves:
+  - gathering independent first-round expert contributions,
+  - analysing inter-interpreter discrepancies, target usage, and uncertainty to guide structured discussion, and
+  - collecting revised second-round contributions from each interpreter.
+- **Step 5** synthesises the validated multi-interpreter membership tables into summary tables, spatial area estimates, and geospatial outputs, while documenting remaining sources of uncertainty.
 
-The process of expert elicitation usually involves:
+## Reproducible computational workflow
 
-- gathering individual experts contributions,
-- analysis of discrepancy and agreement: discussion,
-- and revised individuals contributions. 
+This repository assists in the translation of parts of the conceptual process in @fig-process into a reproducible computational workflow. 
 
-In step 5 we are interested in compiling membership matrix from multiple interpreters after the elicitation process, linking back to spatial data for visualisation, and documenting and analysing sources of uncertainties.
+:::{.aside}
+While the computation workflow is reproducible for correctly formatted input data, we stress that these steps cannot be decoupled from the expert elicitation process. Ultimately all inputs and outputs have to be checked and reviewed by the human expert with the ecosystem specific knowledge to make correct decisions and interpretations.
+:::
 
-## Reproducible workflow for cross-referencing
+The workflow takes raw interpreter spreadsheets (`xrefdata/`) and authoritative TASVEG 5.0 spatial data (`gisdata/`), executes validation and analysis steps transparently in R, and produces versioned, FAIR-aligned data products [@Wilkinson_2016; @Barker_2022].
 
-In this document we want to translate the cross-referencing process into a reproducible computation workflow. This computation workflow will take inputs from the interpreters, and describe all steps of data preparation and analysis that lead to specific outputs. The purpose of the workflow is to increase reproducibility of this process that will allow streamlined updates of outputs everytime the input data is updated.
+We build on the [`ecoSynthesis`](https://github.com/Ecosystem-Indicators-Workflows/ecoSynthesis) R package [@ecoSynthesis_pkg]—currently under active development—together with repository-specific helper functions in `scripts/functions.R` and standard spatial/tidyverse packages. Throughout this book, explicit call-out notes highlight where package functions and repository helpers overlap or differ, explaining which implementation is preferred at each step.
 
-For this process we lean on the R package `ecoSynthesis` currently under development, as well as on custom scripts and functions, and additional R packages.
+To keep documentation rendering fast and modular, the **analytical Quarto workflow** (`docs-src/`) is kept separate from the **standalone output-generation scripts** (`scripts/`), which perform computationally heavier tasks such as 90 m rasterisation (`fasterize`) and statewide GeoPackage assembly (see @sec-outputs).
 
-For this workflow we distinguish two main stages of the cross-referencing process. The first is dedicated to data preparation, validation and exploration. The second is dedicated to analysis and synthesis. See @fig-userjourney for an overview.
+Within the analytical workflow, we distinguish two main computational stages: (1) **Data preparation, validation, and exploration**, and (2) **Analysis and synthesis** (see @fig-userjourney).
 
 ```{mermaid}
 %%| label: fig-userjourney
-%%| fig-cap: "Steps of the user journey."
+%%| fig-cap: "Computational stages of the cross-referencing workflow from data preparation to analysis and synthesis."
 flowchart TB
     PREP["Data Preparation:<br/>importing, joining, filtering, modifying datasets "]:::Tasks
     VALID{"Data<br/>Validation"}:::Tasks
@@ -45,34 +48,31 @@ flowchart TB
 
     ELI1[Within round<br/>agreement & entropy]:::Tasks
     ELI2[Within round<br/>agreement & entropy]:::Tasks
-    ELI3["Between rounds<br/>entropy metrics"]:::Tasks
+    ELI3["Between rounds<br/>agreement & entropy metrics"]:::Tasks
     SYNT[Synthesis & outputs]:::Tasks
 
     subgraph FIRST["Data preparation and exploration"]
         direction LR
         PREP --> VALID
         VALID -->|no| PREP
-        VALID -->|yes| EXP 
+        VALID -->|yes| EXP
     end
     FIRST:::Steps --> SECOND:::Steps
     subgraph SECOND["Analysis and synthesis"]
         direction LR
-        NINT -->|"Round 1"| ELI1 --> ELI3 
-        NINT -->|"Round 2"| ELI2 --> ELI3 
+        NINT -->|"Round 1"| ELI1 --> ELI3
+        NINT -->|"Round 2"| ELI2 --> ELI3
         ELI2 --> SYNT
     end
-    
-    classDef Tasks fill:#fff,stroke:#90853E,color:#53E908,stroke-width:2px
+
+    classDef Tasks fill:#fff,stroke:#90853E,color:#2d5a27,stroke-width:2px
     classDef Steps fill:#fff,stroke:#853E90,color:#853E90,stroke-width:1px
 ```
 
 ## Structure of this document
 
-We address the source classification in @sec-source and the alignment to the target classification in @sec-alignment.
-
-We then document the different tasks of data preparation in @sec-lookup and @sec-input-memb; data validation in @sec-valid; and data exploration in @sec-exploration. 
-
-We then document the analysis stage in three separate tasks: analysis of the first round in @sec-round-one; analysis of the second round in @sec-round-two; and the comparison between rounds in @sec-inter-round.
-
-Finally we summarise the synthesis and outputs in @sec-synthesis, @sec-areas and @sec-maps.
-
+- **Preliminaries**: Source classification overview (@sec-source) and conceptual alignment to IUCN GET (@sec-alignment).
+- **Part I — Preparation**: Lookup tables (@sec-lookup), reading heterogeneous membership tables (@sec-input-memb), validation and cleaning (@sec-valid), and initial data exploration (@sec-exploration).
+- **Part II — Analysis**: Within-round agreement, target usage, and Shannon's entropy for Round 1 (@sec-round-one) and Round 2 (@sec-round-two), followed by between-round comparisons (@sec-between-rounds).
+- **Part III — Synthesis**: Membership synthesis strategies (@sec-synthesis), unweighted and weighted area summaries (@sec-areas), and spatial output concepts (@sec-maps).
+- **Appendices**: Glossary, membership table formats (@sec-formats), R reproducibility and benchmarking notes (@sec-reproducibility), and the status overview of all repository outputs (@sec-outputs).
