@@ -41,5 +41,6 @@ authors:
     affiliation: Department of Natural Resources and Environment Tasmania
 repository-code: >-
   https://github.com/Ecosystem-Indicators-Workflows/TASVEG-XREF
+commit: dacf8e675a2c1d3cb7961d6994e42432089182c7
 license: CC-BY-4.0
-version: 0.0.1
+version: 0.1.0
