@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>15&nbsp; Membership tables – Cross-referencing Tasmanian Terrestrial Ecosystems</title>
+<title>15&nbsp; Membership data formats – Cross-referencing Tasmanian Terrestrial Ecosystems</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -20,7 +20,27 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-</style>
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
 <script src="../site_libs/quarto-nav/quarto-nav.js"></script>
@@ -315,8 +335,8 @@ window.Quarto = {
   <ul>
   <li><a href="#membership-matrix" id="toc-membership-matrix" class="nav-link active" data-scroll-target="#membership-matrix"><span class="header-section-number">15.1</span> Membership matrix</a></li>
   <li><a href="#long-format-table" id="toc-long-format-table" class="nav-link" data-scroll-target="#long-format-table"><span class="header-section-number">15.2</span> Long-format table</a></li>
-  <li><a href="#wide-format-table" id="toc-wide-format-table" class="nav-link" data-scroll-target="#wide-format-table"><span class="header-section-number">15.3</span> Wide-format table</a></li>
-  <li><a href="#multiple-interpreters" id="toc-multiple-interpreters" class="nav-link" data-scroll-target="#multiple-interpreters"><span class="header-section-number">15.4</span> Multiple interpreters</a></li>
+  <li><a href="#paired-column-wide-format" id="toc-paired-column-wide-format" class="nav-link" data-scroll-target="#paired-column-wide-format"><span class="header-section-number">15.3</span> Paired-column (wide) format</a></li>
+  <li><a href="#incorporating-multiple-interpreters-and-rounds" id="toc-incorporating-multiple-interpreters-and-rounds" class="nav-link" data-scroll-target="#incorporating-multiple-interpreters-and-rounds"><span class="header-section-number">15.4</span> Incorporating multiple interpreters and rounds</a></li>
   </ul>
 </nav>
     </div>
@@ -325,7 +345,7 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../glossary.html">Appendices</a></li><li class="breadcrumb-item"><a href="../appendices/membership-tables.html"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Membership data formats</span></a></li></ol></nav>
 <div class="quarto-title">
-<h1 class="title"><span id="sec-formats" class="quarto-section-identifier"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Membership tables</span></span></h1>
+<h1 class="title"><span id="sec-formats" class="quarto-section-identifier"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Membership data formats</span></span></h1>
 </div>
 
 
@@ -342,7 +362,7 @@ window.Quarto = {
 </header>
 
 
-<p>The following diagram illustrates a minimal example consisting of two classifications with two concepts each, and lines joining the source and target concepts with membership values.</p>
+<p>The diagram below illustrates a minimal cross-referencing example consisting of two classifications with two concepts each, linked by fuzzy membership values <span class="citation" data-cites="Zadeh_1965 IUCN_2025">(<a href="../references.html#ref-Zadeh_1965" role="doc-biblioref">Zadeh 1965</a>; <a href="../references.html#ref-IUCN_2025" role="doc-biblioref">IUCN 2025</a>)</span>.</p>
 <div class="cell" data-layout-align="default">
 <div class="cell-output-display">
 <div>
@@ -359,13 +379,12 @@ window.Quarto = {
         ECO3(["Concept Z"]):::Ecos
         ECO4(["Concept W"]):::Ecos
     end
-    
-    
+
     ECO1 ==&gt;|100%| ECO3
     ECO1 -.-&gt;|0%| ECO4
-    ECO2 --&gt;|60%| ECO3 
+    ECO2 --&gt;|60%| ECO3
     ECO2 --&gt;|40%| ECO4
-    
+
     classDef Ecos fill:#dfd,stroke:#040,color:#040, stroke-width:2px
     classDef Clas fill:#fff,stroke:#040,color:#040, stroke-width:2px
 </pre>
@@ -374,10 +393,10 @@ window.Quarto = {
 </div>
 </div>
 </div>
-<p>These relationships can be represented in different tabular formats:</p>
+<p>These relationships can be represented in three main tabular formats, each suited to a different stage of data entry or computation.</p>
 <section id="membership-matrix" class="level2" data-number="15.1">
 <h2 data-number="15.1" class="anchored" data-anchor-id="membership-matrix"><span class="header-section-number">15.1</span> Membership matrix</h2>
-<p>A membership matrix will have rows for the source classificaton and columns for the target classification:</p>
+<p>A membership matrix places source concepts in rows and target concepts in columns:</p>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -399,12 +418,11 @@ window.Quarto = {
 </tr>
 </tbody>
 </table>
-<p>The size of the matrix will increase with the number of concepts in each classification (<em>n</em> rows for the source and <em>m</em> columns for the target).</p>
-<p>These matrices will expose the information transparently, and can be useful for data entry purposes, but they can become very clunky when the number of concepts is both classifications is large, and are not optimal to store multiple interpretations (see next section).</p>
+<p>The dimensions grow with the product of both classifications (<span class="math inline">\(n\)</span> rows for the source and <span class="math inline">\(m\)</span> columns for the target). Matrices expose zero and non-zero memberships transparently and are convenient for spreadsheet entry (used by <code>AK_V1</code> and <code>AL_V2</code> in <a href="../preparation/input-memb-tables.html" class="quarto-xref"><span>Chapter 5</span></a>) and numerical distance calculations—in <code>ecoSynthesis</code>, <code>membership_matrix()</code> builds a 3D <code>[source, target, interpreter]</code> array directly from a long-format <code>membership_tbl</code> for <code>calc_agreement()</code>. However, 2D matrices become unwieldy for storing multi-round metadata and sparse large classifications.</p>
 </section>
 <section id="long-format-table" class="level2" data-number="15.2">
 <h2 data-number="15.2" class="anchored" data-anchor-id="long-format-table"><span class="header-section-number">15.2</span> Long-format table</h2>
-<p>An alternative representation of this information is a membership table in “long” format:</p>
+<p>A long-format membership table stores one <code>(source, target, membership)</code> link per row:</p>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -431,11 +449,11 @@ window.Quarto = {
 </tr>
 </tbody>
 </table>
-<p>The size of the table will increase with the number of links between classifications (<span class="math inline">\(n \times m\)</span> rows, but only three columns). If we ignore or filter out the zero membership values, then the size can be reduced considerably.</p>
+<p>The table has only three core columns (plus interpreter/round metadata) and shrinks substantially when zero-membership rows are omitted. This is the canonical analytical format used by <code>ecoSynthesis::membership_tbl()</code> and all downstream validation, entropy, plotting, and synthesis functions in this workflow.</p>
 </section>
-<section id="wide-format-table" class="level2" data-number="15.3">
-<h2 data-number="15.3" class="anchored" data-anchor-id="wide-format-table"><span class="header-section-number">15.3</span> Wide-format table</h2>
-<p>A membership table can also be represented in wide format if we can assume that each source concept matches maximum of <em>q</em> target concepts:</p>
+<section id="paired-column-wide-format" class="level2" data-number="15.3">
+<h2 data-number="15.3" class="anchored" data-anchor-id="paired-column-wide-format"><span class="header-section-number">15.3</span> Paired-column (wide) format</h2>
+<p>A paired-column table stores up to <span class="math inline">\(q\)</span> target–membership pairs per source row:</p>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 20%">
@@ -470,13 +488,11 @@ window.Quarto = {
 </tr>
 </tbody>
 </table>
-<p>This table will have <span class="math inline">\(n\)</span> rows for all source concept, but a fixed numner of columns (<span class="math inline">\(1 + (q \times 2)\)</span>)</p>
+<p>This format has <span class="math inline">\(n\)</span> rows and a fixed number of columns (<span class="math inline">\(1 + 2q\)</span>). It is compact for manual expert elicitation (used by seven of the nine CSV files in <code>xrefdata/</code>) and can be standardised with <code>ecoSynthesis::standardise_xref_pairs()</code> and reshaped to long format via <code>ecoSynthesis::import_paired_membership()</code> or <code>scripts/functions.R::pivot_wide_membership_table()</code> (see <a href="../preparation/input-memb-tables.html" class="quarto-xref"><span>Chapter 5</span></a>).</p>
 </section>
-<section id="multiple-interpreters" class="level2" data-number="15.4">
-<h2 data-number="15.4" class="anchored" data-anchor-id="multiple-interpreters"><span class="header-section-number">15.4</span> Multiple interpreters</h2>
-<p>Tables in long and wide formats can incorportate multiple interpreters by adding columns to identify the interpreter.</p>
-<p>For maximum transparency, these tables could also include columns for date of interpretation and for documentation of methods. This would allow better filtering and comparison of multiple interpretations.</p>
-<p>An example with a long format table:</p>
+<section id="incorporating-multiple-interpreters-and-rounds" class="level2" data-number="15.4">
+<h2 data-number="15.4" class="anchored" data-anchor-id="incorporating-multiple-interpreters-and-rounds"><span class="header-section-number">15.4</span> Incorporating multiple interpreters and rounds</h2>
+<p>Long-format tables scale naturally to multiple interpreters, elicitation rounds, dates, and methods by adding metadata columns:</p>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 16%">
@@ -581,6 +597,14 @@ window.Quarto = {
 </table>
 
 
+<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list" style="display: none">
+<div id="ref-IUCN_2025" class="csl-entry" role="listitem">
+IUCN. 2025. <em>Standards, Methods and Guidelines for Cross-Referencing Ecosystem Classifications and Maps to the IUCN Global Ecosystem Typology</em> (version Version 1.0). Edited by D. A. Keith, A. Dayaram, A. Driver, J. R. Ferrer-Paris, R. Francis, S. Hay, N. J. Murray, et al. Gland, Switzerland: IUCN. <a href="https://doi.org/10.2305/CPPC6126">https://doi.org/10.2305/CPPC6126</a>.
+</div>
+<div id="ref-Zadeh_1965" class="csl-entry" role="listitem">
+Zadeh, Lotfi A. 1965. <span>“Fuzzy Sets.”</span> <em>Information and Control</em> 8 (3): 338–53. <a href="https://doi.org/10.1016/S0019-9958(65)90241-X">https://doi.org/10.1016/S0019-9958(65)90241-X</a>.
+</div>
+</div>
 </section>
 
 </main> <!-- /main -->

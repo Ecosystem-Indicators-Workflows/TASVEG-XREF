@@ -55,7 +55,27 @@ div.sourceCode
 @media screen {
 pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
-</style>
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
 <script src="../site_libs/quarto-nav/quarto-nav.js"></script>
@@ -106,6 +126,35 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   }
 }</script>
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 <link rel="stylesheet" href="../styles.css">
 </head>
@@ -316,14 +365,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#types-of-summaries-for-membership-tables" id="toc-types-of-summaries-for-membership-tables" class="nav-link active" data-scroll-target="#types-of-summaries-for-membership-tables"><span class="header-section-number">11.1</span> Types of summaries for membership tables</a>
+  <li><a href="#four-synthesis-table-variants" id="toc-four-synthesis-table-variants" class="nav-link active" data-scroll-target="#four-synthesis-table-variants"><span class="header-section-number">11.1</span> Four synthesis table variants</a>
   <ul class="collapse">
-  <li><a href="#keep-all-records" id="toc-keep-all-records" class="nav-link" data-scroll-target="#keep-all-records"><span class="header-section-number">11.1.1</span> Keep all records</a></li>
-  <li><a href="#aggregate-by-interpreter-keep-all-candidates" id="toc-aggregate-by-interpreter-keep-all-candidates" class="nav-link" data-scroll-target="#aggregate-by-interpreter-keep-all-candidates"><span class="header-section-number">11.1.2</span> Aggregate by interpreter, keep all candidates</a></li>
-  <li><a href="#keep-best-candidate-per-interpreter" id="toc-keep-best-candidate-per-interpreter" class="nav-link" data-scroll-target="#keep-best-candidate-per-interpreter"><span class="header-section-number">11.1.3</span> Keep best candidate per interpreter</a></li>
-  <li><a href="#keep-best-candidate-from-summary" id="toc-keep-best-candidate-from-summary" class="nav-link" data-scroll-target="#keep-best-candidate-from-summary"><span class="header-section-number">11.1.4</span> Keep best candidate from summary</a></li>
+  <li><a href="#keep-all-individual-round-2-records" id="toc-keep-all-individual-round-2-records" class="nav-link" data-scroll-target="#keep-all-individual-round-2-records"><span class="header-section-number">11.1.1</span> 1. Keep all individual Round 2 records</a></li>
+  <li><a href="#aggregate-across-interpreters-keeping-all-candidates" id="toc-aggregate-across-interpreters-keeping-all-candidates" class="nav-link" data-scroll-target="#aggregate-across-interpreters-keeping-all-candidates"><span class="header-section-number">11.1.2</span> 2. Aggregate across interpreters, keeping all candidates</a></li>
+  <li><a href="#keep-the-best-candidate-per-interpreter" id="toc-keep-the-best-candidate-per-interpreter" class="nav-link" data-scroll-target="#keep-the-best-candidate-per-interpreter"><span class="header-section-number">11.1.3</span> 3. Keep the best candidate per interpreter</a></li>
+  <li><a href="#keep-the-single-best-candidate-from-the-aggregated-summary" id="toc-keep-the-single-best-candidate-from-the-aggregated-summary" class="nav-link" data-scroll-target="#keep-the-single-best-candidate-from-the-aggregated-summary"><span class="header-section-number">11.1.4</span> 4. Keep the single best candidate from the aggregated summary</a></li>
   </ul></li>
-  <li><a href="#outputs" id="toc-outputs" class="nav-link" data-scroll-target="#outputs"><span class="header-section-number">11.2</span> Outputs</a></li>
+  <li><a href="#connecting-tabular-synthesis-to-spatial-outputs" id="toc-connecting-tabular-synthesis-to-spatial-outputs" class="nav-link" data-scroll-target="#connecting-tabular-synthesis-to-spatial-outputs"><span class="header-section-number">11.2</span> Connecting tabular synthesis to spatial outputs</a></li>
   </ul>
 </nav>
     </div>
@@ -349,76 +398,77 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>The objective of the synthesis step is to consolidate information from different interpreters on how each source unit is aligned with one or more target units.</p>
-<p>We use the membership table as the key data source, and we can aggregate this data in multiple dimensions, but here we are interested in the following:</p>
+<p>The objective of the synthesis stage (Step 5 of <a href="../preliminaries/stepwise.html#fig-process" class="quarto-xref">Figure&nbsp;<span>1.1</span></a>; <span class="citation" data-cites="IUCN_2025">IUCN (<a href="../references.html#ref-IUCN_2025" role="doc-biblioref">2025</a>)</span>) is to consolidate validated membership assessments from multiple interpreters into structured summary tables ready for area accounting (<a href="area-summaries.html" class="quarto-xref"><span>Chapter 12</span></a>) and spatial mapping (<a href="EFG-map.html" class="quarto-xref"><span>Chapter 13</span></a> and <a href="../appendices/outputs.html" class="quarto-xref"><span>Chapter 17</span></a>).</p>
+<p>Using the cleaned membership table (<code>TASVEG_clean</code>) as our authoritative input, several explicit design decisions govern how information is aggregated:</p>
 <ul>
-<li>Select the round with the latest review of assessments: if there have been multiple rounds, and interpreters have interacted with each other, we assume the latest round has the best estimates from each interpreter.</li>
-<li>Aggregate by source unit: the focus is on finding the best answer for each source.</li>
-<li>Decide to keep or aggregate multiple interpreters: keep each assessment as provided by interpreter or aggregate multiple interpreters into one value.<br>
-</li>
-<li>Decide which metric of aggregation is used: how to aggregate data from multiple interpreters.</li>
-<li>Decide which candidates to keep: for some applications there is a need to select only one target unit per source unit, for other applications there is need for keeping a maximum number of candidates (e.g.&nbsp;the best three candidates), or all non-zero candidates.</li>
-<li>Decide on weighting/ranking rule: if not all non-zero candidates are kept, which criteria are used to support the selection of one or multiple candidates.</li>
-<li>Report level of support: report the level of support for the targets selected.</li>
-<li>Report weight of candidate: report the weight attached to each target selected.</li>
+<li><strong>Elicitation round</strong>: select the latest post-discussion round (<code>round == 2</code>), which reflects revised judgements and complete coverage across all five interpreters.</li>
+<li><strong>Unit of aggregation</strong>: aggregate by source unit (<code>VEGCODE</code>) to characterise the target relationship(s) of each TASVEG community.</li>
+<li><strong>Interpreter treatment</strong>: retain each interpreter’s profile separately, or aggregate across all interpreters into a single consensus estimate.</li>
+<li><strong>Aggregation metric</strong>: when aggregating across interpreters, compute the <strong>proportion of total membership votes (<code>prop_memb</code>)</strong> assigned to each candidate target EFG <span class="math inline">\(t\)</span> for source unit <span class="math inline">\(s\)</span>: <span class="math display">\[\text{prop\_memb}_{s, t} = \frac{\sum_{i} m_{s, t, i}}{\sum_{k} \sum_{i} m_{s, k, i}}\]</span></li>
+<li><strong>Candidate retention</strong>: keep <strong>all</strong> non-zero candidates (preserving partial/fuzzy relationships) or retain only the single <strong>best candidate</strong> (“winner-takes-all”) for categorical maps.</li>
+<li><strong>Support and weighting metadata</strong>: report both the proportion of membership weight (<code>prop_memb</code>) and the number of interpreters assigning positive membership (<code>supporting</code> out of <code>total_interp</code>) so users can filter or weight downstream outputs by confidence.</li>
 </ul>
-<section id="types-of-summaries-for-membership-tables" class="level2 page-columns page-full" data-number="11.1">
-<h2 data-number="11.1" class="anchored" data-anchor-id="types-of-summaries-for-membership-tables"><span class="header-section-number">11.1</span> Types of summaries for membership tables</h2>
-<p>The shape and form of the summary table for the synthesis step will depend on the combination of the previous decisions. In this document we consider four combinations:</p>
+<section id="four-synthesis-table-variants" class="level2 page-columns page-full" data-number="11.1">
+<h2 data-number="11.1" class="anchored" data-anchor-id="four-synthesis-table-variants"><span class="header-section-number">11.1</span> Four synthesis table variants</h2>
+<p>Combining the interpreter and candidate-retention choices yields four distinct summary structures explored below:</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 20%">
-<col style="width: 20%">
-<col style="width: 20%">
-<col style="width: 20%">
-<col style="width: 20%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
 </colgroup>
 <thead>
 <tr class="header">
+<th>Strategy</th>
 <th>Interpreters</th>
 <th>Aggregation metric</th>
-<th>Keep</th>
+<th>Candidates kept</th>
 <th>Ranking rule</th>
 <th>Weighting rule</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td>All</td>
+<td>1. Full Round 2 records</td>
+<td>All (separate)</td>
 <td>None</td>
-<td>All candidates</td>
-<td>None</td>
-<td>Membership values</td>
+<td>All non-zero candidates</td>
+<td>None (flags <code>best</code>)</td>
+<td>Individual membership (<code>memb</code>)</td>
 </tr>
 <tr class="even">
-<td>Aggregate</td>
-<td>Proportion of total membership votes</td>
-<td>Best candidate</td>
-<td>Proportion of total membership votes</td>
-<td>No weights (“winner takes it all”)</td>
+<td>2. Aggregated, all candidates</td>
+<td>Aggregated</td>
+<td><code>prop_memb</code></td>
+<td>All non-zero candidates</td>
+<td>None (flags <code>best</code>)</td>
+<td><code>prop_memb</code></td>
 </tr>
 <tr class="odd">
-<td>Aggregate</td>
-<td>Proportion of total membership votes</td>
-<td>All candidates</td>
+<td>3. Best candidate per interpreter</td>
+<td>All (separate)</td>
 <td>None</td>
-<td>Proportion of total membership votes</td>
+<td>Single best per interpreter</td>
+<td>Highest <code>memb</code></td>
+<td>None (“winner takes all”)</td>
 </tr>
 <tr class="even">
-<td>All</td>
-<td>None</td>
-<td>Best candidate</td>
-<td>Highest membership</td>
-<td>No weights (“winner takes it all”)</td>
+<td>4. Best candidate from summary</td>
+<td>Aggregated</td>
+<td><code>prop_memb</code></td>
+<td>Single best per <code>VEGCODE</code></td>
+<td>Highest <code>prop_memb</code></td>
+<td>None (“winner takes all”)</td>
 </tr>
 </tbody>
 </table>
-<section id="keep-all-records" class="level3 page-columns page-full" data-number="11.1.1">
-<h3 data-number="11.1.1" class="anchored" data-anchor-id="keep-all-records"><span class="header-section-number">11.1.1</span> Keep all records</h3>
 
 <div class="no-row-height column-margin column-container"><div class="margin-aside">
-<p>Our setup for this R session is:</p>
-<div class="cell" data-warnings="false">
+<p>Our setup for this R session loads <code>ecoSynthesis</code>, <code>dplyr</code>, <code>sf</code>, <code>units</code>, and <code>ggplot2</code>, and reads the validated membership table from <code>results/XREFs/memb-tables.rda</code>:</p>
+<div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(sf)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ecoSynthesis)</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
@@ -428,23 +478,25 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>output_dir <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"../results/XREFs"</span>)</span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">load</span>(here<span class="sc">::</span><span class="fu">here</span>(output_dir, <span class="st">"memb-tables.rda"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-</div></div><p>The first option is simply a filtered membership table, where each sources unit will keep all valid records from the selected round:</p>
+</div></div><section id="keep-all-individual-round-2-records" class="level3" data-number="11.1.1">
+<h3 data-number="11.1.1" class="anchored" data-anchor-id="keep-all-individual-round-2-records"><span class="header-section-number">11.1.1</span> 1. Keep all individual Round 2 records</h3>
+<p>The first option preserves every validated positive record from Round 2 without aggregating across interpreters. Within each <code>(VEGCODE, expert)</code> pair, we compute the interpreter’s total assigned membership (<code>total_memb</code>), flag their highest-scoring candidate (<code>best</code>), and set unit-level support counters (<code>supporting = 1</code>, <code>total_interp = 1</code>) for schema consistency with aggregated tables:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>TASVEG_revised <span class="ot">&lt;-</span> TASVEG_clean <span class="sc">|&gt;</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(round <span class="sc">==</span> <span class="dv">2</span>) <span class="sc">|&gt;</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(VEGCODE, expert) <span class="sc">|&gt;</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">total_memb =</span> <span class="fu">sum</span>(memb),</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">best =</span> memb <span class="sc">==</span> <span class="fu">max</span>(memb),</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">supporting =</span> <span class="dv">1</span>,</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">total_interp =</span> <span class="dv">1</span></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(round <span class="sc">==</span> <span class="dv">2</span>) <span class="sc">|&gt;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(VEGCODE, expert) <span class="sc">|&gt;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>        <span class="at">total_memb =</span> <span class="fu">sum</span>(memb),</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>        <span class="at">best =</span> memb <span class="sc">==</span> <span class="fu">max</span>(memb),</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>        <span class="at">supporting =</span> <span class="dv">1</span>,</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">total_interp =</span> <span class="dv">1</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ungroup</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>For example, for the source unit <code>AAP</code>:</p>
+<p>Inspecting <code>AAP</code> (<em>Alkaline pans</em>) shows all individual Round 2 assignments across the five interpreters:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>TASVEG_revised <span class="sc">|&gt;</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(VEGCODE <span class="sc">==</span> <span class="st">"AAP"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(VEGCODE <span class="sc">==</span> <span class="st">"AAP"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 7 × 9
   VEGCODE EFG    memb expert      round total_memb best  supporting total_interp
@@ -459,25 +511,38 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </section>
-<section id="aggregate-by-interpreter-keep-all-candidates" class="level3" data-number="11.1.2">
-<h3 data-number="11.1.2" class="anchored" data-anchor-id="aggregate-by-interpreter-keep-all-candidates"><span class="header-section-number">11.1.2</span> Aggregate by interpreter, keep all candidates</h3>
-<p>For some applications we want to summmarise across interpreters, and consider all potential target units:</p>
+<section id="aggregate-across-interpreters-keeping-all-candidates" class="level3" data-number="11.1.2">
+<h3 data-number="11.1.2" class="anchored" data-anchor-id="aggregate-across-interpreters-keeping-all-candidates"><span class="header-section-number">11.1.2</span> 2. Aggregate across interpreters, keeping all candidates</h3>
+<p>When a single multi-interpreter consensus profile is needed while still preserving fuzzy secondary relationships (for example, to generate the per-EFG membership rasters in Output 2; <a href="../appendices/outputs.html" class="quarto-xref"><span>Chapter 17</span></a>), we call <code>ecoSynthesis::summarise_membership()</code> with <code>keep_all = TRUE</code> and <code>which_round = 2</code>, then add a <code>best</code> flag identifying each community’s top-ranked EFG:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>TASVEG_summary <span class="ot">&lt;-</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  TASVEG_clean <span class="sc">|&gt;</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise_membership</span>(<span class="at">keep_all =</span> <span class="cn">TRUE</span>, <span class="at">which_round =</span> <span class="dv">2</span>) <span class="sc">|&gt;</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">best =</span> prop_memb <span class="sc">==</span> <span class="fu">max</span>(prop_memb),</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">.by =</span> (VEGCODE)</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    TASVEG_clean <span class="sc">|&gt;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarise_membership</span>(<span class="at">keep_all =</span> <span class="cn">TRUE</span>, <span class="at">which_round =</span> <span class="dv">2</span>) <span class="sc">|&gt;</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>        <span class="at">best =</span> prop_memb <span class="sc">==</span> <span class="fu">max</span>(prop_memb),</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>        <span class="at">.by =</span> VEGCODE</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Round nr. 2 selected.</code></pre>
 </div>
 </div>
-<p>This method reduced the number of records for this source units to three candidate targets, with two of them having low values of the proportion of votes of membership values:</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span><code>ecoSynthesis::summarise_membership()</code> default argument note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>In <code>ecoSynthesis</code> <code>v0.0.0.9005</code>, the function signature defaults to <code>keep_all = TRUE</code>, whereas its documentation text describes <code>keep_all = FALSE</code> as the default. Passing <code>keep_all = TRUE</code> or <code>keep_all = FALSE</code> explicitly avoids ambiguity.</p>
+</div>
+</div>
+<p>For <code>AAP</code>, aggregation reduces the individual records to three candidate EFGs, with <code>TF1.7</code> receiving <code>prop_memb = 0.94</code> from all five interpreters (<code>supporting = 5</code>) and two minor candidates receiving small weights:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>TASVEG_summary <span class="sc">|&gt;</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(VEGCODE <span class="sc">==</span> <span class="st">"AAP"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(VEGCODE <span class="sc">==</span> <span class="st">"AAP"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>── &lt;membership_summary&gt; ────────────────────────────────────────────────────────</code></pre>
 </div>
@@ -487,9 +552,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell-output cell-output-stderr">
 <pre><code>ℹ target_id column: `EFG`</code></pre>
 </div>
+<div class="cell-output cell-output-stderr">
+<pre><code>✔ `summarise_membership(data = TASVEG_clean, keep_all = TRUE, which_round = 2)`</code></pre>
+</div>
 <div class="cell-output cell-output-stdout">
-<pre><code>summarise_membership(data = TASVEG_clean, keep_all = TRUE, which_round = 2)
-# A tibble: 3 × 8
+<pre><code># A tibble: 3 × 8
   VEGCODE EFG   round prop_memb total_memb supporting total_interp best 
   &lt;chr&gt;   &lt;chr&gt; &lt;dbl&gt;     &lt;dbl&gt;      &lt;dbl&gt;      &lt;int&gt;        &lt;int&gt; &lt;lgl&gt;
 1 AAP     TF1.7     2      0.94          5          5            5 TRUE 
@@ -497,51 +564,48 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 3 AAP     TF1.6     2      0.02          5          1            5 FALSE</code></pre>
 </div>
 </div>
-<p>Notice, that this is not the same as the mean membership value, since the membership table ignores the zero-membership values:</p>
+<p>Notice that <code>prop_memb</code> differs from the simple mean of non-zero records in the long-format table, because the long table omits implicit zero memberships from interpreters who did not select a minor candidate:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>TASVEG_revised <span class="sc">|&gt;</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(VEGCODE <span class="sc">==</span> <span class="st">"AAP"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_memb =</span> <span class="fu">mean</span>(memb),</span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">nr_interpreters =</span> <span class="fu">n_distinct</span>(expert),</span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">.by =</span> <span class="fu">all_of</span>(<span class="fu">c</span>(<span class="st">"EFG"</span>))</span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>TASVEG_revised <span class="sc">|&gt;</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(VEGCODE <span class="sc">==</span> <span class="st">"AAP"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarise</span>(</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>        <span class="at">mean_nonzero_memb =</span> <span class="fu">mean</span>(memb),</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>        <span class="at">nr_interpreters =</span> <span class="fu">n_distinct</span>(expert),</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>        <span class="at">.by =</span> <span class="fu">all_of</span>(<span class="st">"EFG"</span>)</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 3 × 3
-  EFG   mean_memb nr_interpreters
-  &lt;chr&gt;     &lt;dbl&gt;           &lt;int&gt;
-1 TF1.7      0.94               5
-2 F2.8       0.2                1
-3 TF1.6      0.1                1</code></pre>
+  EFG   mean_nonzero_memb nr_interpreters
+  &lt;chr&gt;             &lt;dbl&gt;           &lt;int&gt;
+1 TF1.7              0.94               5
+2 F2.8               0.2                1
+3 TF1.6              0.1                1</code></pre>
 </div>
 </div>
-<div class="callout callout-style-default callout-note callout-titled">
-<div class="callout-header d-flex align-content-center">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-Note
-</div>
-</div>
-<div class="callout-body-container callout-body">
-<p>This could be calculated using a <code>membership_matrix</code>.</p>
+<p>Instead, computing row means across interpreters from the 3D <code>ecoSynthesis::membership_matrix()</code>—where unused targets for assessed units are explicitly filled with <code>0</code>—matches <code>prop_memb</code> whenever every interpreter’s profile sums to <code>1.0</code>:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>aap_mat <span class="ot">&lt;-</span> <span class="fu">unclass</span>(<span class="fu">membership_matrix</span>(<span class="fu">filter</span>(TASVEG_clean, round <span class="sc">==</span> <span class="dv">2</span>)))[<span class="st">"AAP"</span>, , ]</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rowMeans</span>(aap_mat, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    (\(x) x[x <span class="sc">&gt;</span> <span class="dv">0</span>])()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> F2.8 TF1.6 TF1.7 
+ 0.04  0.02  0.94 </code></pre>
 </div>
 </div>
 </section>
-<section id="keep-best-candidate-per-interpreter" class="level3" data-number="11.1.3">
-<h3 data-number="11.1.3" class="anchored" data-anchor-id="keep-best-candidate-per-interpreter"><span class="header-section-number">11.1.3</span> Keep best candidate per interpreter</h3>
-<p>Alternatively, we can keep one record per interpreter and source unit, keeping the one with the largest membership value (or the first if there is more than one with same membership value):</p>
+<section id="keep-the-best-candidate-per-interpreter" class="level3" data-number="11.1.3">
+<h3 data-number="11.1.3" class="anchored" data-anchor-id="keep-the-best-candidate-per-interpreter"><span class="header-section-number">11.1.3</span> 3. Keep the best candidate per interpreter</h3>
+<p>A third option retains one categorical “best” EFG per <code>(VEGCODE, expert)</code> combination via <code>slice_max(..., with_ties = FALSE, n = 1)</code>, preserving inter-interpreter variation in categorical assignments while discarding minority fuzzy weights:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>TASVEG_best_revised <span class="ot">&lt;-</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  TASVEG_revised <span class="sc">|&gt;</span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_max</span>(memb, <span class="at">by =</span> <span class="fu">c</span>(VEGCODE, expert), <span class="at">with_ties =</span> <span class="cn">FALSE</span>, <span class="at">n =</span> <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">keep =</span> <span class="st">"best"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>TASVEG_best_revised <span class="ot">&lt;-</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    TASVEG_revised <span class="sc">|&gt;</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">slice_max</span>(memb, <span class="at">by =</span> <span class="fu">c</span>(VEGCODE, expert), <span class="at">with_ties =</span> <span class="cn">FALSE</span>, <span class="at">n =</span> <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">keep =</span> <span class="st">"best"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>In this case, all interpreters agree on the target unit, but propose different levels of membership:</p>
+<p>For <code>AAP</code>, all five interpreters agree on <code>TF1.7</code> as their top candidate, though their individual membership strengths range between <code>0.8</code> and <code>1.0</code>:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>TASVEG_best_revised <span class="sc">|&gt;</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(VEGCODE <span class="sc">==</span> <span class="st">"AAP"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>TASVEG_best_revised <span class="sc">|&gt;</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(VEGCODE <span class="sc">==</span> <span class="st">"AAP"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 5 × 10
   VEGCODE EFG    memb expert      round total_memb best  supporting total_interp
@@ -555,20 +619,20 @@ Note
 </div>
 </div>
 </section>
-<section id="keep-best-candidate-from-summary" class="level3 page-columns page-full" data-number="11.1.4">
-<h3 data-number="11.1.4" class="anchored" data-anchor-id="keep-best-candidate-from-summary"><span class="header-section-number">11.1.4</span> Keep best candidate from summary</h3>
-<p>Finally, we can keep the best candidate from the previous method:</p>
+<section id="keep-the-single-best-candidate-from-the-aggregated-summary" class="level3 page-columns page-full" data-number="11.1.4">
+<h3 data-number="11.1.4" class="anchored" data-anchor-id="keep-the-single-best-candidate-from-the-aggregated-summary"><span class="header-section-number">11.1.4</span> 4. Keep the single best candidate from the aggregated summary</h3>
+<p>Finally, for single-layer categorical maps (such as the 90 m Best-Candidate Spatial Synthesis in Output 3; <a href="../appendices/outputs.html" class="quarto-xref"><span>Chapter 17</span></a>), calling <code>summarise_membership(TASVEG_clean, keep_all = FALSE, which_round = 2)</code> selects the single EFG with the highest <code>prop_memb</code> for each of the 153 eligible TASVEG units:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>TASVEG_best_summary <span class="ot">&lt;-</span></span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise_membership</span>(TASVEG_clean, <span class="at">keep_all =</span> <span class="cn">FALSE</span>, <span class="at">which_round =</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>TASVEG_best_summary <span class="ot">&lt;-</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarise_membership</span>(TASVEG_clean, <span class="at">keep_all =</span> <span class="cn">FALSE</span>, <span class="at">which_round =</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Round nr. 2 selected.</code></pre>
 </div>
 </div>
-<p>The result is similar to the mean values of the membership values of the best candidates, provided that the membership values are balanced among interpreters (all membership values of each interpreter sum to one).</p>
+<p>Inspecting <code>AAP</code> returns a single row (<code>TF1.7</code>, <code>prop_memb = 0.94</code>, <code>supporting = 5</code> of <code>5</code>):</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>TASVEG_best_summary <span class="sc">|&gt;</span></span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(VEGCODE <span class="sc">==</span> <span class="st">"AAP"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>TASVEG_best_summary <span class="sc">|&gt;</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(VEGCODE <span class="sc">==</span> <span class="st">"AAP"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>── &lt;membership_summary&gt; ────────────────────────────────────────────────────────</code></pre>
 </div>
@@ -578,19 +642,22 @@ Note
 <div class="cell-output cell-output-stderr">
 <pre><code>ℹ target_id column: `EFG`</code></pre>
 </div>
+<div class="cell-output cell-output-stderr">
+<pre><code>✔ `summarise_membership(data = TASVEG_clean, keep_all = FALSE, which_round = 2)`</code></pre>
+</div>
 <div class="cell-output cell-output-stdout">
-<pre><code>summarise_membership(data = TASVEG_clean, keep_all = FALSE, which_round = 2)
-# A tibble: 1 × 7
+<pre><code># A tibble: 1 × 7
   VEGCODE EFG   round prop_memb total_memb supporting total_interp
   &lt;chr&gt;   &lt;chr&gt; &lt;dbl&gt;     &lt;dbl&gt;      &lt;dbl&gt;      &lt;int&gt;        &lt;int&gt;
 1 AAP     TF1.7     2      0.94          5          5            5</code></pre>
 </div>
 </div>
+<p>Rounding <code>prop_memb</code> to one decimal place and tallying distinct <code>VEGCODE</code> counts per <code>EFG</code> summarises how strongly supported the best-candidate assignments are across all 21 winning IUCN GET functional groups:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>TASVEG_best_summary <span class="sc">|&gt;</span></span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">memb =</span> <span class="fu">round</span>(prop_memb, <span class="dv">1</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(EFG, memb) <span class="sc">|&gt;</span></span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">n =</span> <span class="fu">n_distinct</span>(VEGCODE), <span class="at">.groups =</span> <span class="st">"drop"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>TASVEG_best_summary <span class="sc">|&gt;</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">memb =</span> <span class="fu">round</span>(prop_memb, <span class="dv">1</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(EFG, memb) <span class="sc">|&gt;</span></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarise</span>(<span class="at">n =</span> <span class="fu">n_distinct</span>(VEGCODE), <span class="at">.groups =</span> <span class="st">"drop"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 59 × 3
    EFG     memb     n
@@ -610,24 +677,28 @@ Note
 </div>
 
 <div class="no-row-height column-margin column-container"><div class="margin-aside">
-<p>We save both these four summary tables in a file that we can load in later steps of the workflow:</p>
+<p>We save all four synthesis tables (<code>TASVEG_revised</code>, <code>TASVEG_summary</code>, <code>TASVEG_best_revised</code>, and <code>TASVEG_best_summary</code>) to <code>results/XREFs/memb-summaries.rda</code> for downstream area calculations (<a href="area-summaries.html" class="quarto-xref"><span>Chapter 12</span></a>) and standalone output scripts (<a href="../appendices/outputs.html" class="quarto-xref"><span>Chapter 17</span></a>):</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">save</span>(</span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>  TASVEG_revised,</span>
-<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>  TASVEG_summary,</span>
-<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">file =</span> here<span class="sc">::</span><span class="fu">here</span>(output_dir, <span class="st">"memb-summaries.rda"</span>)</span>
-<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">save</span>(</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>    TASVEG_revised,</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>    TASVEG_summary,</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>    TASVEG_best_revised,</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>    TASVEG_best_summary,</span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">file =</span> here<span class="sc">::</span><span class="fu">here</span>(output_dir, <span class="st">"memb-summaries.rda"</span>)</span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div></div></section>
 </section>
-<section id="outputs" class="level2" data-number="11.2">
-<h2 data-number="11.2" class="anchored" data-anchor-id="outputs"><span class="header-section-number">11.2</span> Outputs</h2>
-<p>The summary of the membership table produces an intermediate output that might still require further steps of transformation.</p>
-<p>This is the case for spatial analysis, where we need to merge the membership summary with tables of attributes of the spatial objects in order to get the desired output (a spatial summary or a spatial object for plotting target units or membership values).</p>
-<p>In this cases the type of output will constrain the amount of information that can be kept.</p>
-<p>We will show two examples in the next two chapters: area summaries in <span class="quarto-unresolved-ref">?sec-areas</span>; and different types of raster maps in <a href="EFG-map.html" class="quarto-xref"><span>Chapter 13</span></a>.</p>
+<section id="connecting-tabular-synthesis-to-spatial-outputs" class="level2" data-number="11.2">
+<h2 data-number="11.2" class="anchored" data-anchor-id="connecting-tabular-synthesis-to-spatial-outputs"><span class="header-section-number">11.2</span> Connecting tabular synthesis to spatial outputs</h2>
+<p>The tabular summaries above serve as intermediate inputs for spatial operations: joining them back to the attribute table of the TASVEG 5.0 polygons (<code>TASVEG_5_0.shp</code>) enables both <strong>non-spatial area accounting</strong> (<a href="area-summaries.html" class="quarto-xref"><span>Chapter 12</span></a>) and <strong>spatial raster/vector products</strong> (<a href="EFG-map.html" class="quarto-xref"><span>Chapter 13</span></a>). Depending on the output format—a single categorical GeoTIFF, a multi-layer stack of per-EFG membership rasters, or a vector GeoPackage bundle—different amounts of fuzzy and per-interpreter information can be preserved (see <a href="../appendices/outputs.html" class="quarto-xref"><span>Chapter 17</span></a>).</p>
 
 
+<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list" style="display: none">
+<div id="ref-IUCN_2025" class="csl-entry" role="listitem">
+IUCN. 2025. <em>Standards, Methods and Guidelines for Cross-Referencing Ecosystem Classifications and Maps to the IUCN Global Ecosystem Typology</em> (version Version 1.0). Edited by D. A. Keith, A. Dayaram, A. Driver, J. R. Ferrer-Paris, R. Francis, S. Hay, N. J. Murray, et al. Gland, Switzerland: IUCN. <a href="https://doi.org/10.2305/CPPC6126">https://doi.org/10.2305/CPPC6126</a>.
+</div>
+</div>
 </section>
 
 </main> <!-- /main -->

@@ -336,8 +336,8 @@ div.csl-indent {
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#components-of-tasveg" id="toc-components-of-tasveg" class="nav-link active" data-scroll-target="#components-of-tasveg"><span class="header-section-number">2.1</span> Components of TASVEG</a></li>
-  <li><a href="#data-download" id="toc-data-download" class="nav-link" data-scroll-target="#data-download"><span class="header-section-number">2.2</span> Data download</a></li>
+  <li><a href="#components-of-tasveg-used-in-this-workflow" id="toc-components-of-tasveg-used-in-this-workflow" class="nav-link active" data-scroll-target="#components-of-tasveg-used-in-this-workflow"><span class="header-section-number">2.1</span> Components of TASVEG used in this workflow</a></li>
+  <li><a href="#data-download-and-attribution" id="toc-data-download-and-attribution" class="nav-link" data-scroll-target="#data-download-and-attribution"><span class="header-section-number">2.2</span> Data download and attribution</a></li>
   </ul>
 </nav>
     </div>
@@ -363,27 +363,43 @@ div.csl-indent {
 </header>
 
 
-<p>In this document we are focusing on TASVEG, a comprehensive digital map of Tasmania’s vegetation, including sub-Antarctic Macquarie Island <span class="citation" data-cites="TASVEG_3 TASVEG_5">(<a href="../references.html#ref-TASVEG_3" role="doc-biblioref">Tasmanian Vegetation Monitoring and Mapping Program 2013</a>, <a href="../references.html#ref-TASVEG_5" role="doc-biblioref">2025</a>)</span>.</p>
-<p>The TASVEG dataset includes ecological and spatial information, and for the purposes of this document we will differentiate between mapping units and vegetation communities.</p>
-<p>The majority of the mapping units represent vegetation communities, including coastal heathlands, eucalypt forest and alpine communities. The technical manual <span class="citation" data-cites="KitchenerHarris_2013">(<a href="../references.html#ref-KitchenerHarris_2013" role="doc-biblioref">Kitchener and Harris 2013</a>)</span> includes description for each of the 159 mapping units, most of them ecological vegetation communities. The format of these descriptions is consistent, descriptive and cross-referenced with relevant literature and other processes.</p>
-<section id="components-of-tasveg" class="level2" data-number="2.1">
-<h2 data-number="2.1" class="anchored" data-anchor-id="components-of-tasveg"><span class="header-section-number">2.1</span> Components of TASVEG</h2>
-<p>TASVEG has several components and we are going to use them in different steps of the process.</p>
+<p>In this workflow, the source classification is <strong>TASVEG</strong>, the comprehensive digital vegetation map and classification system for Tasmania, including sub-Antarctic Macquarie Island <span class="citation" data-cites="TASVEG_3 TASVEG_5">(<a href="../references.html#ref-TASVEG_3" role="doc-biblioref">Tasmanian Vegetation Monitoring and Mapping Program 2013</a>, <a href="../references.html#ref-TASVEG_5" role="doc-biblioref">2025</a>)</span>.</p>
+<p>The TASVEG dataset combines both ecological descriptions and spatial polygon geometries. For cross-referencing purposes, we distinguish between <strong>mapping units</strong> (polygons coded by <code>VEGCODE</code> on the map) and <strong>vegetation communities</strong> (the ecological entities defined in the classification).</p>
+<p>The majority of TASVEG mapping units represent distinct ecological vegetation communities—spanning coastal heathlands, wet and dry eucalypt forests, temperate rainforests, moorlands, wetlands, and alpine communities. The companion <em>Technical Manual</em> <span class="citation" data-cites="KitchenerHarris_2013">(<a href="../references.html#ref-KitchenerHarris_2013" role="doc-biblioref">Kitchener and Harris 2013</a>)</span> provides structured, literature-referenced ecological descriptions for each of the <strong>159 mapping units</strong> defined in TASVEG, covering floristics, structure, environmental drivers, and disturbance regimes.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>159 lookup codes vs.&nbsp;156 mapped statewide polygon units
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The TASVEG 5.0 Fire Attributes DBF lookup table (<code>TASVEG_5_0_Fire_Attributes_LUT.dbf</code>) and Technical Manual list <strong>159 unique <code>VEGCODE</code> entries</strong>. Three of those codes (<code>FPL</code>, <code>HUE</code>, and <code>SLW</code>) do not occur as polygons in the statewide shapefile (<code>TASVEG_5_0.shp</code>), which contains <strong>156 unique mapped <code>VEGCODE</code> units</strong> (153 eligible vegetation communities plus 3 non-eligible natural mapping units; see <a href="alignment.html" class="quarto-xref"><span>Chapter 3</span></a> and <a href="../preparation/lookup-tables.html" class="quarto-xref"><span>Chapter 4</span></a>).</p>
+</div>
+</div>
+<section id="components-of-tasveg-used-in-this-workflow" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="components-of-tasveg-used-in-this-workflow"><span class="header-section-number">2.1</span> Components of TASVEG used in this workflow</h2>
+<p>TASVEG provides several distinct resources that enter at different stages of the computational pipeline:</p>
 <ul>
-<li>The <em>Technical manual</em> <span class="citation" data-cites="KitchenerHarris_2013">(<a href="../references.html#ref-KitchenerHarris_2013" role="doc-biblioref">Kitchener and Harris 2013</a>)</span> has important information for <a href="alignment.html" class="quarto-xref"><span>Chapter 3</span></a> and was used by all interpreters as the main source of ecological information</li>
-<li>TASVEG 5.0 from <a href="https://www.theLIST.tas.gov.au" class="uri">https://www.theLIST.tas.gov.au</a> ©State of Tasmania, is a dataset including:
+<li><strong>Technical Manual</strong> (<em>From Forest to Fjaeldmark</em>; <span class="citation" data-cites="KitchenerHarris_2013">Kitchener and Harris (<a href="../references.html#ref-KitchenerHarris_2013" role="doc-biblioref">2013</a>)</span>): supplies the diagnostic ecological descriptions used to assess conceptual alignment (<a href="alignment.html" class="quarto-xref"><span>Chapter 3</span></a>) and served as the primary ecological reference for all five expert interpreters during Rounds 1 and 2.</li>
+<li><strong>TASVEG 5.0 statewide spatial release</strong> from <a href="https://www.theLIST.tas.gov.au" class="uri">https://www.theLIST.tas.gov.au</a> ©State of Tasmania <span class="citation" data-cites="TASVEG_5">(<a href="../references.html#ref-TASVEG_5" role="doc-biblioref">Tasmanian Vegetation Monitoring and Mapping Program 2025</a>)</span>:
 <ul>
-<li>spatial data in mapinfo and shapefile formats (used in <a href="../synthesis/index.html" class="quarto-xref"><span>Chapter 11</span></a>),</li>
-<li>metadata in PDF format,</li>
-<li>fire attributes in DBF format (used in <a href="alignment.html" class="quarto-xref"><span>Chapter 3</span></a>).</li>
+<li><strong>Fire attributes lookup table (<code>.dbf</code>)</strong>: used in <a href="../preparation/lookup-tables.html" class="quarto-xref"><span>Chapter 4</span></a> to construct the authoritative source <code>lookup_tbl</code> without needing to load the full polygon geometries first.</li>
+<li><strong>Statewide vector spatial data (<code>.shp</code> and MapInfo formats)</strong>: used in <a href="../synthesis/area-summaries.html" class="quarto-xref"><span>Chapter 12</span></a> and <a href="../synthesis/EFG-map.html" class="quarto-xref"><span>Chapter 13</span></a> (and in the separate output-generation scripts in <a href="../appendices/outputs.html" class="quarto-xref"><span>Chapter 17</span></a>) to compute polygon areas and generate GeoPackage and GeoTIFF outputs.</li>
+<li><strong>Official metadata (<code>.pdf</code>)</strong>: documents attribute definitions, coordinate reference system (<code>GDA94 / MGA zone 55</code>, <code>EPSG:28355</code>), and release notes.</li>
 </ul></li>
 </ul>
 </section>
-<section id="data-download" class="level2" data-number="2.2">
-<h2 data-number="2.2" class="anchored" data-anchor-id="data-download"><span class="header-section-number">2.2</span> Data download</h2>
-<p>TASVEG data is supplied under Creative Commons Attribution 3.0 Australia (CC BY 3.0 AU) Licence http://creativecommons.org/licenses/by/3.0/au/</p>
-<p>The Department Natural Resources and Environment Tasmania requests attribution be provided in the following manner: “TASVEG 5.0 from www.theLIST.tas.gov.au ©State of Tasmania”</p>
-<p>Expand this section to explore the script for data download.</p>
+<section id="data-download-and-attribution" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="data-download-and-attribution"><span class="header-section-number">2.2</span> Data download and attribution</h2>
+<p>TASVEG 5.0 data is supplied under the Creative Commons Attribution 3.0 Australia (<a href="http://creativecommons.org/licenses/by/3.0/au/">CC BY 3.0 AU</a>) licence.</p>
+<p>The Department of Natural Resources and Environment Tasmania requests attribution in the following form:</p>
+<blockquote class="blockquote">
+<p>“TASVEG 5.0 from www.theLIST.tas.gov.au ©State of Tasmania”</p>
+</blockquote>
+<p>Because the statewide shapefile archive is large and redistributed directly by theLIST Open Data, <code>gisdata/</code> is excluded from Git version control. The standalone script below (<code>scripts/TASVEG-data-download.R</code>) checks for the local <code>gisdata/</code> directory, downloads <code>LIST_TASVEG_50_STATEWIDE.zip</code> via <code>wget</code>, and extracts the shapefile and DBF lookup tables into <code>gisdata/LIST_TASVEG_50_STATEWIDE/</code>. Expand the code block to inspect it (not executed during book rendering):</p>
 <div class="cell">
 <div class="code-with-filename">
 <details class="code-fold">
@@ -495,7 +511,7 @@ div.csl-indent {
 </details>
 </div>
 </div>
-<p>Benchmarking information for this script is available in <a href="../reproducibility-notes/reproducibility-R.html" class="quarto-xref"><span>Chapter 16</span></a>.</p>
+<p>Execution time and R session benchmarking details for this download script are recorded in <a href="../reproducibility-notes/reproducibility-R.html" class="quarto-xref"><span>Chapter 16</span></a>.</p>
 
 
 <div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list" style="display: none">

@@ -313,6 +313,7 @@ div.csl-indent {
   <li><a href="#contributions" id="toc-contributions" class="nav-link" data-scroll-target="#contributions">Contributions</a></li>
   <li><a href="#revision-history" id="toc-revision-history" class="nav-link" data-scroll-target="#revision-history">Revision history</a></li>
   <li><a href="#reproducibility-statement" id="toc-reproducibility-statement" class="nav-link" data-scroll-target="#reproducibility-statement">Reproducibility statement</a></li>
+  <li><a href="#statement-on-ai-use" id="toc-statement-on-ai-use" class="nav-link" data-scroll-target="#statement-on-ai-use">Statement on AI use</a></li>
   <li><a href="#acknowledgements" id="toc-acknowledgements" class="nav-link" data-scroll-target="#acknowledgements">Acknowledgements</a></li>
   </ul></li>
   </ul>
@@ -420,11 +421,20 @@ div.csl-indent {
 
 <section id="overview-of-this-document" class="level1 unnumbered">
 <h1 class="unnumbered">Overview of this document</h1>
-<p>This document presents a reproducible computational workflow for the analysis and synthesis of cross-referencing information for Tasmanian terrestrial ecosystems. Cross-referencing aims to elucidate relationships between units of classifications that represent similar types of entities , <span class="quarto-unresolved-ref">?sec-process</span>.</p>
-<p>In this document the source classification is the TASVEG dataset <span class="citation" data-cites="TASVEG_5 KitchenerHarris_2013">(<a href="references.html#ref-TASVEG_5" role="doc-biblioref">Tasmanian Vegetation Monitoring and Mapping Program 2025</a>; <a href="references.html#ref-KitchenerHarris_2013" role="doc-biblioref">Kitchener and Harris 2013</a>)</span> that includes 159 mapping units, most of them representing ecological vegetation communities (see chapter <a href="preliminaries/source-data.html" class="quarto-xref"><span>2&nbsp; Source classification: TASVEG</span></a>). These vegetation communities are aligned with the ecosystem concept of the target classification, the IUCN Global Ecosystem Typology (IUCN GET; <span class="citation" data-cites="Keith_2022">Keith et al. (<a href="references.html#ref-Keith_2022" role="doc-biblioref">2022</a>)</span>; see chapter <a href="preliminaries/alignment.html" class="quarto-xref"><span>3&nbsp; Assess alignment between classifications</span></a>).</p>
-<p>The main body of the document is divided in three parts. The first part includes four chapters dedicated to Data preparation. First, we collect the spatial and ecological information from the source and target classifications <a href="preparation/lookup-tables.html" class="quarto-xref"><span>4&nbsp; Lookup tables for both classifications</span></a>, and membership tables from five interpreters <span class="quarto-unresolved-ref">?sec-memb-table</span>. Then, we validate and clean the input data, <a href="preparation/validation.html" class="quarto-xref"><span>6&nbsp; Data validation</span></a>. Finally, we explore the cleaned dataset with a full membership table including the assessments of the five interpreters in two rounds of interpretation <a href="preparation/exploration.html" class="quarto-xref"><span>7&nbsp; Exploration of the data</span></a>.</p>
-<p>The second part of the document is dedicated to Analysis of the cross-referencing data. We analysed agreement between interpreters and inherent cross-referencing uncertainty for each round of interpretaton <a href="analysis/round-1.html" class="quarto-xref"><span>8&nbsp; Round one</span></a>, <a href="analysis/round-2.html" class="quarto-xref"><span>9&nbsp; Round two</span></a>, and compared differences between rounds <a href="analysis/between-rounds.html" class="quarto-xref"><span>10&nbsp; Between rounds</span></a>.</p>
-<p>The final part of the document presents a synthesis of the cross-referencing information and produces different types of outputs, including, symmary tables and maps.</p>
+<p>This document presents a reproducible computational workflow for the analysis and synthesis of cross-referencing information for Tasmanian terrestrial and transitional ecosystems. Cross-referencing aims to elucidate explicit, evidence-based relationships between units of ecosystem classifications that represent comparable entities , <a href="preliminaries/stepwise.html" class="quarto-xref">see&nbsp;<span>1&nbsp; Stepwise cross-referencing process</span></a>.</p>
+<p>The repository serves a <strong>dual purpose</strong>:</p>
+<ol type="1">
+<li><strong>Analytical workflow documentation</strong> (this Quarto book, authored in <code>docs-src/</code>): documents every conceptual and computational step—from source alignment and lookup-table preparation through validation, multi-round expert-elicitation analysis, and synthesis—using the <a href="https://github.com/Ecosystem-Indicators-Workflows/ecoSynthesis"><code>ecoSynthesis</code></a> R package <span class="citation" data-cites="ecoSynthesis_pkg">(<a href="references.html#ref-ecoSynthesis_pkg" role="doc-biblioref">Ferrer-Paris, Gould, and Singh 2026</a>)</span> alongside repository-specific helper scripts.</li>
+<li><strong>Standalone spatial and tabular output generation</strong> (kept separate in <code>scripts/</code> and summarised in <a href="appendices/outputs.html" class="quarto-xref"><span>17&nbsp; Overview of workflow outputs</span></a>): executes computationally heavier vector unions, rasterisation, and Zenodo dataset packaging without slowing down or repeating calculations inside the documentation workflow.</li>
+</ol>
+<p>In this workflow, the source classification is the TASVEG 5.0 dataset <span class="citation" data-cites="TASVEG_5 KitchenerHarris_2013">(<a href="references.html#ref-TASVEG_5" role="doc-biblioref">Tasmanian Vegetation Monitoring and Mapping Program 2025</a>; <a href="references.html#ref-KitchenerHarris_2013" role="doc-biblioref">Kitchener and Harris 2013</a>)</span>, whose technical manual and fire-attributes lookup table define 159 mapping units (156 mapped as polygons across mainland Tasmania and surrounding islands), most of which represent ecological vegetation communities (see <a href="preliminaries/source-data.html" class="quarto-xref"><span>2&nbsp; Source classification: TASVEG</span></a>). These vegetation communities are aligned with the ecosystem concept of the target classification, the IUCN Global Ecosystem Typology (IUCN GET; <span class="citation" data-cites="Keith_2022">Keith et al. (<a href="references.html#ref-Keith_2022" role="doc-biblioref">2022</a>)</span>; see <a href="preliminaries/alignment.html" class="quarto-xref"><span>3&nbsp; Assess alignment between classifications</span></a>), specifically at Level 3 (Ecosystem Functional Groups, EFGs).</p>
+<p>The main body of the document is organised into three parts:</p>
+<ul>
+<li><strong>Part I — Preparation</strong>: Builds formal lookup tables for both classifications (<a href="preparation/lookup-tables.html" class="quarto-xref"><span>4&nbsp; Lookup tables for both classifications</span></a>), ingests heterogeneous membership tables from five expert interpreters across two elicitation rounds (<a href="preparation/input-memb-tables.html" class="quarto-xref"><span>5&nbsp; Reading input data</span></a>), validates and cleans membership records (<a href="preparation/validation.html" class="quarto-xref"><span>6&nbsp; Data validation</span></a>), and explores completeness, duplicates, and group-level patterns (<a href="preparation/exploration.html" class="quarto-xref"><span>7&nbsp; Exploration of the data</span></a>).</li>
+<li><strong>Part II — Analysis</strong>: Quantifies inter-interpreter agreement (pairwise similarity/dissimilarity), target usage, and within-interpreter uncertainty (normalised Shannon’s entropy) in Round 1 (<a href="analysis/round-1.html" class="quarto-xref"><span>8&nbsp; Round one</span></a>) and Round 2 (<a href="analysis/round-2.html" class="quarto-xref"><span>9&nbsp; Round two</span></a>), and evaluates convergence and remaining conceptual disagreement between rounds (<a href="analysis/between-rounds.html" class="quarto-xref"><span>10&nbsp; Between rounds</span></a>).</li>
+<li><strong>Part III — Synthesis</strong>: Consolidates Round 2 memberships under four synthesis strategies (<a href="synthesis/index.html" class="quarto-xref"><span>11&nbsp; Synthesis overview</span></a>), computes unweighted and membership-weighted area summaries (<a href="synthesis/area-summaries.html" class="quarto-xref"><span>12&nbsp; Area summaries</span></a>), and explains how tabular syntheses connect to spatial raster and vector outputs (<a href="synthesis/EFG-map.html" class="quarto-xref"><span>13&nbsp; Spatial outputs</span></a>).</li>
+</ul>
+<p>Appendices provide a glossary of cross-referencing terminology, a reference on tabular membership formats (<a href="appendices/membership-tables.html" class="quarto-xref"><span>15&nbsp; Membership data formats</span></a>), R session and benchmarking notes (<a href="reproducibility-notes/reproducibility-R.html" class="quarto-xref"><span>16&nbsp; Reproducibility of R code</span></a>), and an overview table summarising the status of all published, draft, and in-development workflow outputs (<a href="appendices/outputs.html" class="quarto-xref"><span>17&nbsp; Overview of workflow outputs</span></a>).</p>
 <p>This online document is a joint output of the ARDC “Ecosystem Indicators Workflows” (EIW) project and the ARC Industry Laureate Fellowship Project “Foundations for leading the nature positive ecosystem conservation agenda”.</p>
 <p>You can use the links on the left to navigate through the different sections of this resource.</p>
 <div class="callout callout-style-default callout-note callout-titled">
@@ -445,11 +455,11 @@ div.csl-indent {
 </div>
 <section id="contributions" class="level2">
 <h2 class="anchored" data-anchor-id="contributions">Contributions</h2>
-<p>MT led the expert elicitation process. MT, DAK, AL, AK, and JB contributed membership tables for cross-referencing. JRFP led the technical documentation of all sections of the on-line document. JRFP, EG and ARS contributed scripts for all sections.</p>
+<p>MGT led the expert elicitation process. MGT, DAK, AL, AK, and JB contributed membership tables for cross-referencing. JRFP led the technical documentation of all sections of the online document. JRFP, EG, and ARS contributed scripts and <code>ecoSynthesis</code> package functions across all sections.</p>
 </section>
 <section id="revision-history" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="revision-history">Revision history</h2>
-<p>Version control for this document is maintained in the original <a href="https://github.com/Ecosystem-Indicators-Workflows/">GitHub repository</a>.</p>
+<p>Version control for this document is maintained in the <a href="https://github.com/Ecosystem-Indicators-Workflows/TASVEG-XREF">GitHub repository</a>.</p>
 <div class="callout callout-style-default callout-caution callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -465,10 +475,10 @@ Caution
 </div>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 11%">
-<col style="width: 11%">
-<col style="width: 33%">
-<col style="width: 43%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -480,30 +490,36 @@ Caution
 </thead>
 <tbody>
 <tr class="odd">
+<td>0.1.0</td>
+<td>27 Nov 2026</td>
+<td>JRFP (with AI assistance)</td>
+<td>Expanded step context and per-block code explanations; added examples for all exported <code>ecoSynthesis</code> functions with overlap/conflict call-out notes; added target-use heatmaps and Shannon’s entropy analyses across rounds; verified citations, completed outputs status table, and added AI transparency statement.</td>
+</tr>
+<tr class="even">
 <td>0.0.5</td>
 <td>7 Nov 2026</td>
 <td>JRFP, ARS, EG, MGT, DAK</td>
 <td>Full structure of the document, benchmarks on reproducibility, preparing outputs, implementation of FAIR kit.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>0.0.4</td>
 <td>1 Nov 2026</td>
 <td>JRFP, MGT</td>
 <td>Updated cross-referencing tables, update structure, revised content.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>0.0.3</td>
 <td>23 Oct 2026</td>
 <td>JRFP</td>
 <td>Merged contributions and update structure.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>0.0.2</td>
 <td>15 Oct 2026</td>
 <td>EG, ARS</td>
 <td>Explore visualisations and draft functions. Add Glossary.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>0.0.1</td>
 <td>13 Aug 2026</td>
 <td>JRFP, MGT</td>
@@ -514,7 +530,11 @@ Caution
 </section>
 <section id="reproducibility-statement" class="level2">
 <h2 class="anchored" data-anchor-id="reproducibility-statement">Reproducibility statement</h2>
-<p>This resource uses Bash and R for steps of data download, preparation and analysis. All steps are documented using Jupyter notebooks and quarto. This resource is designed to be reproducible, with instructions for data download and code execution provided in the relevant sections. The data used in this resource is publicly available, and the code is open source. Instructions for setting up the environment and running the code and notes on the implementation of FAIR principles are provided in the relevant sections at the end of this document.</p>
+<p>This resource uses Bash and R for data download, preparation, analysis, and synthesis, and is rendered as a Quarto book following FAIR data and research software principles <span class="citation" data-cites="Wilkinson_2016 Barker_2022">(<a href="references.html#ref-Wilkinson_2016" role="doc-biblioref">Wilkinson et al. 2016</a>; <a href="references.html#ref-Barker_2022" role="doc-biblioref">Barker et al. 2022</a>)</span>. All analytical steps in the documentation are reproducible from the tracked expert elicitation tables (<code>xrefdata/</code>) and publicly available TASVEG 5.0 spatial data (<code>gisdata/</code>). Standalone spatial output scripts are separated in <code>scripts/</code> so computationally expensive rasterisation and vector-union steps are not repeated unnecessarily when updating the documentation. Instructions for environment setup, benchmarking logs, and FAIR assessment notes are provided in <a href="reproducibility-notes/reproducibility-R.html" class="quarto-xref"><span>16&nbsp; Reproducibility of R code</span></a> and <a href="appendices/outputs.html" class="quarto-xref"><span>17&nbsp; Overview of workflow outputs</span></a>.</p>
+</section>
+<section id="statement-on-ai-use" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="statement-on-ai-use">Statement on AI use</h2>
+<p>Generative AI assistance (Google Antigravity / Gemini) was used during version <code>0.0.6</code> to assist with refining narrative context, drafting code-block explanations, auditing overlaps between repository helper scripts and the <code>ecoSynthesis</code> package, adding exploratory analysis blocks (heatmaps and entropy metrics), formatting bibliographic entries, and compiling the outputs status table. All underlying expert elicitation data, ecological interpretations, workflow design decisions, code execution checks, and final editorial responsibility remain entirely with the human authors.</p>
 </section>
 <section id="acknowledgements" class="level2">
 <h2 class="anchored" data-anchor-id="acknowledgements">Acknowledgements</h2>
@@ -527,6 +547,12 @@ Caution
 
 
 <div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list" style="display: none">
+<div id="ref-Barker_2022" class="csl-entry" role="listitem">
+Barker, Michelle, Neil P. Chue Hong, Daniel S. Katz, Anna-Lena Lamprecht, Carlos Martinez-Ortiz, Fotis Psomopoulos, Jennifer Harrow, et al. 2022. <span>“Introducing the <span>FAIR</span> Principles for Research Software.”</span> <em>Scientific Data</em> 9: 622. <a href="https://doi.org/10.1038/s41597-022-01710-x">https://doi.org/10.1038/s41597-022-01710-x</a>.
+</div>
+<div id="ref-ecoSynthesis_pkg" class="csl-entry" role="listitem">
+Ferrer-Paris, José R., Elliot Gould, and Abhimanyu Raj Singh. 2026. <em><span class="nocase">ecoSynthesis</span>: Synthesis of Cross-Referencing Information Between Two Classification Systems</em>. <a href="https://github.com/Ecosystem-Indicators-Workflows/ecoSynthesis">https://github.com/Ecosystem-Indicators-Workflows/ecoSynthesis</a>.
+</div>
 <div id="ref-Keith_2022" class="csl-entry" role="listitem">
 Keith, David A., José R. Ferrer-Paris, Emily Nicholson, Melanie J. Bishop, Beth A. Polidoro, Eva Ramirez-Llodra, Mark G. Tozer, et al. 2022. <span>“A Function-Based Typology for Earth’s Ecosystems.”</span> <em>Nature</em> 610 (7932): 513–18. <a href="https://doi.org/10.1038/s41586-022-05318-4">https://doi.org/10.1038/s41586-022-05318-4</a>.
 </div>
@@ -535,6 +561,9 @@ Kitchener, A., and S. Harris. 2013. <span>“<span class="nocase">From Forest to
 </div>
 <div id="ref-TASVEG_5" class="csl-entry" role="listitem">
 Tasmanian Vegetation Monitoring and Mapping Program. 2025. <span>“TASVEG 5.0.”</span> Tasmania: <span>Department of Natural Resources and Environment</span>.
+</div>
+<div id="ref-Wilkinson_2016" class="csl-entry" role="listitem">
+Wilkinson, Mark D., Michel Dumontier, I. Jsbrand Jan Aalbersberg, Gabrielle Appleton, Myles Axton, Arie Baak, Niklas Blomberg, et al. 2016. <span>“The <span>FAIR</span> Guiding Principles for Scientific Data Management and Stewardship.”</span> <em>Scientific Data</em> 3: 160018. <a href="https://doi.org/10.1038/sdata.2016.18">https://doi.org/10.1038/sdata.2016.18</a>.
 </div>
 </div>
 </section>

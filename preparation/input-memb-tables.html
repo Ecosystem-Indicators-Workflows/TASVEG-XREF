@@ -55,7 +55,27 @@ div.sourceCode
 @media screen {
 pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
-</style>
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
 <script src="../site_libs/quarto-nav/quarto-nav.js"></script>
@@ -316,7 +336,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#read-membership-tables" id="toc-read-membership-tables" class="nav-link active" data-scroll-target="#read-membership-tables"><span class="header-section-number">5.1</span> Read membership tables</a></li>
+  <li><a href="#inspecting-the-two-input-layouts" id="toc-inspecting-the-two-input-layouts" class="nav-link active" data-scroll-target="#inspecting-the-two-input-layouts"><span class="header-section-number">5.1</span> Inspecting the two input layouts</a></li>
+  <li><a href="#batch-ingestion-across-all-files-and-rounds" id="toc-batch-ingestion-across-all-files-and-rounds" class="nav-link" data-scroll-target="#batch-ingestion-across-all-files-and-rounds"><span class="header-section-number">5.2</span> Batch ingestion across all files and rounds</a></li>
+  <li><a href="#ecosynthesis-import-helpers-and-overlap-with-repository-functions" id="toc-ecosynthesis-import-helpers-and-overlap-with-repository-functions" class="nav-link" data-scroll-target="#ecosynthesis-import-helpers-and-overlap-with-repository-functions"><span class="header-section-number">5.3</span> <code>ecoSynthesis</code> import helpers and overlap with repository functions</a></li>
+  <li><a href="#inspecting-and-saving-the-combined-table" id="toc-inspecting-and-saving-the-combined-table" class="nav-link" data-scroll-target="#inspecting-and-saving-the-combined-table"><span class="header-section-number">5.4</span> Inspecting and saving the combined table</a></li>
   </ul>
 </nav>
     </div>
@@ -325,7 +348,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../preparation/lookup-tables.html">Preparation</a></li><li class="breadcrumb-item"><a href="../preparation/input-memb-tables.html"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Membership table</span></a></li></ol></nav>
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Reading input data</span></h1>
+<h1 class="title"><span id="sec-input-memb" class="quarto-section-identifier"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Reading input data</span></span></h1>
 </div>
 
 
@@ -342,61 +365,43 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>The objective of this section is to read input data in different formats and create a summary of the relationships in a consistent output format.</p>
-<p>Input formats are convenient for data entry, but not optimal for data analysis.</p>
-<p>Different experts will work with different types of input formats.</p>
-<p>A consistent output format is useful for designing streamlined operations and functions. This format allows better interoperability in data operations.</p>
-<p>The output format can be back-transformed to the input formats if required.</p>
+<p>The objective of this step is to ingest expert cross-referencing tables supplied in heterogeneous spreadsheet layouts and consolidate them into a single, tidy, long-format membership table suitable for validation (<a href="validation.html" class="quarto-xref"><span>Chapter 6</span></a>) and quantitative analysis (<a href="../analysis/round-1.html" class="quarto-xref"><span>Chapter 8</span></a>–<a href="../analysis/between-rounds.html" class="quarto-xref"><span>Chapter 10</span></a>).</p>
+<p>During structured expert elicitation <span class="citation" data-cites="Martin_2012 Hemming_2018">(<a href="../references.html#ref-Martin_2012" role="doc-biblioref">Martin et al. 2012</a>; <a href="../references.html#ref-Hemming_2018" role="doc-biblioref">Hemming et al. 2018</a>)</span>, different interpreters naturally prefer different data-entry layouts — some enter candidate targets in paired columns (<code>EFG_1</code>, <code>memb_1</code>, <code>EFG_2</code>, <code>memb_2</code>, …), whereas others prefer a sparse source-by-target matrix. While both layouts are convenient for manual entry, a single long-format representation ensures interoperability across downstream validation, agreement, entropy, and synthesis functions (see <a href="../appendices/membership-tables.html" class="quarto-xref"><span>Chapter 15</span></a> for a full overview of tabular formats).</p>
 
 <div class="no-row-height column-margin column-container"><div class="margin-aside">
-<p>We start a session in <em>R</em> and load the libraries we need for this step:</p>
+<p>We start an R session, load the tidyverse, <code>foreach</code>, and <code>ecoSynthesis</code> packages, declare paths relative to <code>docs-src/</code> using <code>here</code>, and source repository-specific helper functions from <code>scripts/functions.R</code>:</p>
 <div class="cell" data-vscode="{&quot;languageId&quot;:&quot;r&quot;}">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># library(readxl)</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>
-Attaching package: 'dplyr'</code></pre>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stringr)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(foreach)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ecoSynthesis)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div class="cell-output cell-output-stderr">
-<pre><code>The following objects are masked from 'package:stats':
-
-    filter, lag</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>The following objects are masked from 'package:base':
-
-    intersect, setdiff, setequal, union</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stringr)</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(foreach)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<p>We also want to declare the relative path using the package <code>here</code>:</p>
 <div class="cell" data-vscode="{&quot;languageId&quot;:&quot;r&quot;}">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>here<span class="sc">::</span><span class="fu">i_am</span>(<span class="st">"preparation/input-memb-tables.qmd"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>here<span class="sc">::</span><span class="fu">i_am</span>(<span class="st">"preparation/input-memb-tables.qmd"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>here() starts at /Users/z3529065/proyectos/EIW/TASVEG-XREF/docs-src</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>csv_folder <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">".."</span>, <span class="st">"xrefdata"</span>)</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>output_dir <span class="ot">&lt;-</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"../results/XREFs"</span>)</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">dir.exists</span>(output_dir)) {</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">dir.create</span>(output_dir, <span class="at">recursive =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>csv_folder <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">".."</span>, <span class="st">"xrefdata"</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>output_dir <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"../results/XREFs"</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">dir.exists</span>(output_dir)) {</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">dir.create</span>(output_dir, <span class="at">recursive =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>And import custom functions:</p>
 <div class="cell" data-vscode="{&quot;languageId&quot;:&quot;r&quot;}">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">".."</span>, <span class="st">"scripts"</span>, <span class="st">"functions.R"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">".."</span>, <span class="st">"scripts"</span>, <span class="st">"functions.R"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-</div></div><section id="read-membership-tables" class="level2 page-columns page-full" data-number="5.1">
-<h2 data-number="5.1" class="anchored" data-anchor-id="read-membership-tables"><span class="header-section-number">5.1</span> Read membership tables</h2>
-<p>We have cross-referencing tables from five interpreters. All files were prepared by MGT in <code>CSV</code> format with a common header but there are two different ways of representing the data.</p>
-<p>Most of the files will have a paired-column format with each pair indicating the target unit and membership value (<code>EFG_1</code>, <code>memb_1</code>, etc.).</p>
+</div></div><section id="inspecting-the-two-input-layouts" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="inspecting-the-two-input-layouts"><span class="header-section-number">5.1</span> Inspecting the two input layouts</h2>
+<p>We have nine CSV files in <code>xrefdata/</code> covering five interpreters across two rounds of elicitation (four interpreters in Round 1 and five in Round 2). All files were prepared by MGT with a standardised 11-row metadata header (interpreter name, date, round notes) followed by a blank row and the tabular data starting on line 13, but the data tables follow two distinct shapes:</p>
+<ol type="1">
+<li><strong>Paired-column (wide) format</strong> (seven files): each row is a <code>VEGCODE</code>, followed by 2 to 4 pairs of columns indicating each candidate target unit and its fuzzy membership (<code>EFG_1</code>, <code>memb_1</code>, <code>EFG_2</code>, <code>memb_2</code>, …). Below we inspect the first 15 lines of <code>AL_V1_100626_TASVEG_5_0.csv</code>:</li>
+</ol>
 <div class="cell" data-vscode="{&quot;languageId&quot;:&quot;r&quot;}">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>file_path <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(csv_folder, <span class="st">"/AL_V1_100626_TASVEG_5_0.csv"</span>)</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>lines <span class="ot">&lt;-</span> <span class="fu">readLines</span>(file_path, <span class="at">n =</span> <span class="dv">15</span>)</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(lines, <span class="at">sep =</span> <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>file_path <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(csv_folder, <span class="st">"AL_V1_100626_TASVEG_5_0.csv"</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>lines <span class="ot">&lt;-</span> <span class="fu">readLines</span>(file_path, <span class="at">n =</span> <span class="dv">15</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(lines, <span class="at">sep =</span> <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Name,Adelina_Latinovic,,,,
 Date,10_06_26,,,,
@@ -415,11 +420,12 @@ AAP,TF1.7,1,NA,NA,1
 AHF,TF1.3,1,NA,NA,1</code></pre>
 </div>
 </div>
-<p>In this case we need a function that can reshape the data from this paired-column format to a long format:</p>
+<p>Reshaping paired-column tables into long format pairs each <code>EFG_k</code> column with its matching <code>memb_k</code> column while repeating <code>VEGCODE</code> (<a href="#fig-wide-long" class="quarto-xref">Figure&nbsp;<span>5.1</span></a>):</p>
 <div class="cell" data-file="../fig/wide-long-diagram.dot" data-fig-height="2.25" data-fig-width="7" data-layout-align="default">
 <div class="cell-output-display">
-<div>
-<p></p><figure class="figure"><p></p>
+<div id="fig-wide-long" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-wide-long-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div>
 <svg width="672" height="216" viewbox="0.00 0.00 891.00 223.00" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" style="; max-width: none; max-height: none">
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 219)">
@@ -542,15 +548,21 @@ AHF,TF1.3,1,NA,NA,1</code></pre>
 </g>
 </svg>
 </div>
-<p></p></figure><p></p>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-wide-long-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.1: Reshaping a paired-column (wide) membership table into a long-format table.
+</figcaption>
+</figure>
 </div>
 </div>
 </div>
-<p>Two files have a matrix format with echo column indicating a different target unit, and cell values indicating the membership:</p>
+<ol start="2" type="1">
+<li><strong>Matrix format</strong> (two files: <code>AK_V1_050726_TASVEG_5_0.csv</code> and <code>AL_V2_050726_TASVEG_5_0.csv</code>): each column after <code>VEGCODE</code> represents a candidate target EFG, and cell entries store the membership value. Below we inspect the first 15 lines of <code>AK_V1_050726_TASVEG_5_0.csv</code>:</li>
+</ol>
 <div class="cell" data-vscode="{&quot;languageId&quot;:&quot;r&quot;}">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>file_path <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(csv_folder, <span class="st">"AK_V1_050726_TASVEG_5_0.csv"</span>)</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>lines <span class="ot">&lt;-</span> <span class="fu">readLines</span>(file_path, <span class="at">n =</span> <span class="dv">15</span>)</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(lines, <span class="at">sep =</span> <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>file_path <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(csv_folder, <span class="st">"AK_V1_050726_TASVEG_5_0.csv"</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>lines <span class="ot">&lt;-</span> <span class="fu">readLines</span>(file_path, <span class="at">n =</span> <span class="dv">15</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(lines, <span class="at">sep =</span> <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Name,Anne Kitchener,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 Date,05_07_26,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
@@ -569,7 +581,7 @@ AAP,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1
 AHF,0,0,0,0,0,0.4,0.4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.2,0,0,1</code></pre>
 </div>
 </div>
-<p>For these, we will use another function to reformat from matrix to long format.</p>
+<p>Reshaping a matrix-format table pivots all target columns into a single <code>EFG</code> column and a single <code>memb</code> column (<a href="#fig-matrix-long" class="quarto-xref">Figure&nbsp;<span>5.2</span></a>):</p>
 <div class="cell" data-file="../fig/matrix-long-diagram.dot" data-fig-height="2.25" data-fig-width="7" data-layout-align="default">
 <div class="cell-output-display">
 <div id="fig-matrix-long" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -703,41 +715,47 @@ AHF,0,0,0,0,0,0.4,0.4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.2,0,0,1<
 </div>
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-matrix-long-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;5.1: Figure caption here.
+Figure&nbsp;5.2: Reshaping a source-by-target membership matrix into a long-format table.
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p>We use the following code to run through the list of files, read metadata and data, apply the relevant functions according to the shape of the input data, and combine all in a single table.</p>
+</section>
+<section id="batch-ingestion-across-all-files-and-rounds" class="level2 page-columns page-full" data-number="5.2">
+<h2 data-number="5.2" class="anchored" data-anchor-id="batch-ingestion-across-all-files-and-rounds"><span class="header-section-number">5.2</span> Batch ingestion across all files and rounds</h2>
+<p>The loop below iterates over every CSV file in <code>xrefdata/</code>, reads the 11-row metadata block to extract the interpreter name (<code>metadata[[1, 2]]</code>) and elicitation round (<code>metadata[11, 2]</code>), reads the membership records starting after line 12, dispatches either <code>pivot_wide_membership_table()</code> (when <code>"EFG_1"</code> is present) or <code>pivot_membership_matrix()</code> (otherwise), and row-binds all files into <code>memb_data</code>:</p>
 <div class="cell" data-vscode="{&quot;languageId&quot;:&quot;r&quot;}">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>memb_data <span class="ot">&lt;-</span> <span class="fu">foreach</span>(<span class="at">j =</span> <span class="fu">dir</span>(csv_folder), <span class="at">.combine =</span> bind_rows) <span class="sc">%do%</span> {</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    metadata <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(here<span class="sc">::</span><span class="fu">here</span>(csv_folder, j),</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>        <span class="at">col_names =</span> <span class="fu">c</span>(<span class="st">"name"</span>, <span class="st">"value"</span>), <span class="at">n_max =</span> <span class="dv">11</span>, <span class="at">show_col_types =</span> F</span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    )[, <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>]</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(here<span class="sc">::</span><span class="fu">here</span>(csv_folder, j), <span class="at">skip =</span> <span class="dv">12</span>, <span class="at">show_col_types =</span> F)</span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"Read %s, interpreter %s</span><span class="sc">\n</span><span class="st">%s</span><span class="sc">\n</span><span class="st">"</span>, j, metadata[<span class="dv">1</span>, <span class="dv">2</span>], metadata[<span class="dv">11</span>, <span class="dv">2</span>]))</span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="st">"EFG_1"</span> <span class="sc">%in%</span> <span class="fu">colnames</span>(data)) {</span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>        <span class="fu">pivot_wide_membership_table</span>(</span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>            <span class="at">xref =</span> data,</span>
-<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>            <span class="at">original_names =</span> <span class="st">"VEGCODE"</span>,</span>
-<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>            <span class="at">target_names =</span> <span class="fu">sprintf</span>(<span class="st">"EFG_%s"</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>),</span>
-<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>            <span class="at">membership_values =</span> <span class="fu">sprintf</span>(<span class="st">"memb_%s"</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>),</span>
-<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>            <span class="at">expert_name =</span> metadata[[<span class="dv">1</span>, <span class="dv">2</span>]],</span>
-<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>            <span class="at">round =</span> <span class="fu">if_else</span>(<span class="fu">grepl</span>(<span class="st">"First"</span>, metadata[<span class="dv">11</span>, <span class="dv">2</span>]), <span class="dv">1</span>, <span class="dv">2</span>)</span>
-<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>        )</span>
-<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">else</span> {</span>
-<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>        <span class="fu">pivot_membership_matrix</span>(</span>
-<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>            <span class="at">xref =</span> data,</span>
-<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>            <span class="at">original_names =</span> <span class="st">"VEGCODE"</span>,</span>
-<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>            <span class="at">target_names =</span> <span class="fu">colnames</span>(data)[<span class="sc">-</span><span class="dv">1</span>],</span>
-<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>            <span class="at">expert_name =</span> metadata[[<span class="dv">1</span>, <span class="dv">2</span>]],</span>
-<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>            <span class="at">round =</span> <span class="fu">if_else</span>(<span class="fu">grepl</span>(<span class="st">"First"</span>, metadata[<span class="dv">11</span>, <span class="dv">2</span>]), <span class="dv">1</span>, <span class="dv">2</span>)</span>
-<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>        )</span>
-<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>memb_data <span class="ot">&lt;-</span> <span class="fu">foreach</span>(<span class="at">j =</span> <span class="fu">dir</span>(csv_folder), <span class="at">.combine =</span> bind_rows) <span class="sc">%do%</span> {</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    metadata <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>        here<span class="sc">::</span><span class="fu">here</span>(csv_folder, j),</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>        <span class="at">col_names =</span> <span class="fu">c</span>(<span class="st">"name"</span>, <span class="st">"value"</span>),</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>        <span class="at">n_max =</span> <span class="dv">11</span>,</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>        <span class="at">show_col_types =</span> <span class="cn">FALSE</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    )[, <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>]</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(here<span class="sc">::</span><span class="fu">here</span>(csv_folder, j), <span class="at">skip =</span> <span class="dv">12</span>, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"Read %s, interpreter %s</span><span class="sc">\n</span><span class="st">%s</span><span class="sc">\n</span><span class="st">"</span>, j, metadata[<span class="dv">1</span>, <span class="dv">2</span>], metadata[<span class="dv">11</span>, <span class="dv">2</span>]))</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="st">"EFG_1"</span> <span class="sc">%in%</span> <span class="fu">colnames</span>(data)) {</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>        <span class="fu">pivot_wide_membership_table</span>(</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>            <span class="at">xref =</span> data,</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>            <span class="at">original_names =</span> <span class="st">"VEGCODE"</span>,</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>            <span class="at">target_names =</span> <span class="fu">sprintf</span>(<span class="st">"EFG_%s"</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>),</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>            <span class="at">membership_values =</span> <span class="fu">sprintf</span>(<span class="st">"memb_%s"</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>),</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>            <span class="at">expert_name =</span> metadata[[<span class="dv">1</span>, <span class="dv">2</span>]],</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>            <span class="at">round_nr =</span> <span class="fu">if_else</span>(<span class="fu">grepl</span>(<span class="st">"First"</span>, metadata[<span class="dv">11</span>, <span class="dv">2</span>]), <span class="dv">1</span>, <span class="dv">2</span>)</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">else</span> {</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>        <span class="fu">pivot_membership_matrix</span>(</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>            <span class="at">xref =</span> data,</span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>            <span class="at">original_names =</span> <span class="st">"VEGCODE"</span>,</span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>            <span class="at">target_names =</span> <span class="fu">colnames</span>(data)[<span class="sc">-</span><span class="dv">1</span>],</span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>            <span class="at">expert_name =</span> metadata[[<span class="dv">1</span>, <span class="dv">2</span>]],</span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>            <span class="at">round_nr =</span> <span class="fu">if_else</span>(<span class="fu">grepl</span>(<span class="st">"First"</span>, metadata[<span class="dv">11</span>, <span class="dv">2</span>]), <span class="dv">1</span>, <span class="dv">2</span>)</span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Read AK_V1_050726_TASVEG_5_0.csv, interpreter Anne Kitchener
 First formal documentation of cross-references with insights gained in discussions with David Keith, Mark Tozer (UNSW), Adelina Latinovic and Jayne Balmer (Tasmanian government NRE) covering each of the vegetation communities over which there was disagreement
@@ -759,41 +777,131 @@ Read MGT_V2_240626_TASVEG_5_0.csv, interpreter Mark_Tozer
 Revised cross-references following discussions with David Keith, Anne Kitchener, Adelina Latinovic and Jayne Balmer (Tasmanian government NRE) covering each of the vegetation communities over which there was disagreement</code></pre>
 </div>
 </div>
+<p>Because Anne Kitchener joined for the second round only, her single file’s header note was labelled like a first submission; the step below explicitly assigns her records to <code>round = 2</code>:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>memb_data <span class="ot">&lt;-</span> memb_data <span class="sc">|&gt;</span></span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">round =</span> <span class="fu">if_else</span>(expert <span class="sc">==</span> <span class="st">"Anne Kitchener"</span>, <span class="dv">2</span>, round))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>memb_data <span class="ot">&lt;-</span> memb_data <span class="sc">|&gt;</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">round =</span> <span class="fu">if_else</span>(expert <span class="sc">==</span> <span class="st">"Anne Kitchener"</span>, <span class="dv">2</span>, round))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 
 <div class="no-row-height column-margin column-container"><div class="margin-aside">
-<p>Note that we only have one file for Anne Kitchener, but metadata indicates this should be round 2 instead of round 1.</p>
-</div></div><p>The output has five columns:</p>
+<p>Note that we only have one file for Anne Kitchener (<code>AK_V1_050726_TASVEG_5_0.csv</code>), contributed alongside the Round 2 revisions, so its round label is corrected from 1 to 2.</p>
+</div></div></section>
+<section id="ecosynthesis-import-helpers-and-overlap-with-repository-functions" class="level2" data-number="5.3">
+<h2 data-number="5.3" class="anchored" data-anchor-id="ecosynthesis-import-helpers-and-overlap-with-repository-functions"><span class="header-section-number">5.3</span> <code>ecoSynthesis</code> import helpers and overlap with repository functions</h2>
+<p>The <code>ecoSynthesis</code> package <span class="citation" data-cites="ecoSynthesis_pkg">(<a href="../references.html#ref-ecoSynthesis_pkg" role="doc-biblioref">Ferrer-Paris, Gould, and Singh 2026</a>)</span> provides two dedicated helpers for importing paired-column spreadsheets:</p>
 <ul>
-<li><code>VEGCODE</code> is the original code of the units used in the TASVEG 5.0 dataset</li>
-<li><code>EFG</code> is the code/name for the target Ecosystem Functional Group</li>
-<li><code>memb</code> is the membership value between 0 and 1</li>
-<li><code>expert</code> is the name of the interpreter</li>
-<li><code>round</code> indicates whether the record comes from their first assessment (value of 1), or if the record comes from a revised assessment after group discussions (value of 2)</li>
+<li><strong><code>standardise_xref_pairs()</code></strong> standardises non-uniform paired column names (such as <code>GET1</code>/<code>GET1_p</code>, <code>GET2</code>/<code>GET2_p</code> in raw interpreter spreadsheets) to the canonical <code>efg_1</code>/<code>memb_1</code> convention before pivoting. Below we demonstrate this on the package’s bundled <code>TASVEG_mini_expert_wide</code> dataset:</li>
 </ul>
-<p>Lets look at a random sample from this table:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">standardise_xref_pairs</span>(</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    TASVEG_mini_expert_wide,</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">prefix =</span> <span class="st">"GET"</span>,</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">suffix =</span> <span class="st">"p"</span>,</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">separator =</span> <span class="st">"_"</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(VEGCODE, <span class="fu">starts_with</span>(<span class="st">"efg_"</span>), <span class="fu">starts_with</span>(<span class="st">"memb_"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">head</span>(<span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 3 × 9
+  VEGCODE efg_1 efg_2 efg_3 efg_4 memb_1 memb_2 memb_3 memb_4
+  &lt;chr&gt;   &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;
+1 OAQ     F2.2  F2.1  F3.1  F1.2     0.4    0.2    0.2    0.2
+2 AAP     TF1.7 TF1.6 &lt;NA&gt;  &lt;NA&gt;     0.7    0.3   NA     NA  
+3 AWU     F2.3  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;     1     NA     NA     NA  </code></pre>
+</div>
+</div>
+<ul>
+<li><strong><code>import_paired_membership()</code></strong> pivots a single paired-column data frame directly into a <code>membership_tbl</code> object when the exact target and membership column names are supplied. For example, on <code>AL_V1_100626_TASVEG_5_0.csv</code> (which contains two pairs, <code>EFG_1</code>–<code>EFG_2</code> and <code>memb_1</code>–<code>memb_2</code>):</li>
+</ul>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>al_v1_raw <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    here<span class="sc">::</span><span class="fu">here</span>(csv_folder, <span class="st">"AL_V1_100626_TASVEG_5_0.csv"</span>),</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">skip =</span> <span class="dv">12</span>,</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">show_col_types =</span> <span class="cn">FALSE</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="fu">import_paired_membership</span>(</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> al_v1_raw,</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">original_names =</span> <span class="st">"VEGCODE"</span>,</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">target_names =</span> <span class="fu">c</span>(<span class="st">"EFG_1"</span>, <span class="st">"EFG_2"</span>),</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">membership_values =</span> <span class="fu">c</span>(<span class="st">"memb_1"</span>, <span class="st">"memb_2"</span>),</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">interpreter =</span> <span class="st">"Adelina_Latinovic"</span></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(memb)) <span class="sc">|&gt;</span></span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">head</span>(<span class="dv">6</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>&lt;membership_tbl&gt;
+source_id column: VEGCODE
+target_id column: EFG
+membership column: memb
+interpreter column: interpreter
+
+# A tibble: 6 × 5
+  VEGCODE pair  EFG     memb interpreter      
+  &lt;chr&gt;   &lt;chr&gt; &lt;chr&gt;  &lt;dbl&gt; &lt;chr&gt;            
+1 AAP     1     TF1.7      1 Adelina_Latinovic
+2 AHF     1     TF1.3      1 Adelina_Latinovic
+3 AHL     1     TF1.3      1 Adelina_Latinovic
+4 AHS     1     MFT1.3     1 Adelina_Latinovic
+5 ARS     1     MFT1.3     1 Adelina_Latinovic
+6 ASF     1     TF1.3      1 Adelina_Latinovic</code></pre>
+</div>
+</div>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Overlap &amp; conflict: <code>ecoSynthesis::import_paired_membership()</code> vs.&nbsp;<code>scripts/functions.R</code>
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>ecoSynthesis::import_paired_membership()</code> overlaps directly with our repository helper <code>pivot_wide_membership_table()</code> in <code>scripts/functions.R</code>, but <strong>we intentionally retain the repository helpers (<code>pivot_wide_membership_table()</code> and <code>pivot_membership_matrix()</code>) for the batch ingestion loop above</strong> for four reasons in <code>ecoSynthesis</code> <code>v0.0.0.9005</code>:</p>
+<ol type="1">
+<li><strong>Strict column selection</strong>: <code>import_paired_membership()</code> uses <code>dplyr::all_of(c(target_names, membership_values))</code> and aborts if a file has fewer pairs than requested (e.g.&nbsp;<code>AL_V1</code> has only 2 pairs rather than 4), whereas <code>pivot_wide_membership_table()</code> uses <code>dplyr::any_of()</code> and handles 2-pair and 4-pair files uniformly.</li>
+<li><strong>Round metadata</strong>: <code>import_paired_membership()</code> does not yet accept a <code>round</code> argument.</li>
+<li><strong>Output schema</strong>: <code>import_paired_membership()</code> always names the interpreter column <code>"interpreter"</code> and adds a <code>pair</code> index column, whereas downstream repository code uses <code>"expert"</code>.</li>
+<li><strong>Matrix-format files</strong>: <code>ecoSynthesis</code> does not yet provide a matrix-format importer analogous to <code>pivot_membership_matrix()</code> for <code>AK_V1</code> and <code>AL_V2</code>.</li>
+</ol>
+</div>
+</div>
+</section>
+<section id="inspecting-and-saving-the-combined-table" class="level2 page-columns page-full" data-number="5.4">
+<h2 data-number="5.4" class="anchored" data-anchor-id="inspecting-and-saving-the-combined-table"><span class="header-section-number">5.4</span> Inspecting and saving the combined table</h2>
+<p>The combined table <code>memb_data</code> has five columns:</p>
+<ul>
+<li><code>VEGCODE</code>: source unit code in TASVEG 5.0</li>
+<li><code>EFG</code>: candidate target Ecosystem Functional Group code in IUCN GET</li>
+<li><code>memb</code>: fuzzy membership value between 0 and 1</li>
+<li><code>expert</code>: interpreter name</li>
+<li><code>round</code>: elicitation round (<code>1</code> = independent initial assessment; <code>2</code> = revised assessment after group discussion)</li>
+</ul>
+<p>Let us inspect five random rows from <code>memb_data</code>:</p>
 <div class="cell" data-vscode="{&quot;languageId&quot;:&quot;r&quot;}">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">slice_sample</span>(memb_data, <span class="at">n =</span> <span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="fu">slice_sample</span>(memb_data, <span class="at">n =</span> <span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 5 × 5
   VEGCODE EFG    memb expert            round
   &lt;chr&gt;   &lt;chr&gt; &lt;dbl&gt; &lt;chr&gt;             &lt;dbl&gt;
-1 SSW     MT1.4     0 Adelina_Latinovic     2
-2 NME     &lt;NA&gt;     NA Mark_Tozer            1
-3 DMW     F2.1      0 Anne Kitchener        2
-4 SAL     MT2.1     1 Jayne_Balmer          2
-5 DBA     T6.4      0 Adelina_Latinovic     2</code></pre>
+1 WDU     T3.4   0    Adelina_Latinovic     2
+2 NLE     TF1.6  0.15 David_Keith           2
+3 HHE     T4.5   0    Anne Kitchener        2
+4 WOL     T4.4   0    Anne Kitchener        2
+5 RHP     MT2.2  0    Adelina_Latinovic     2</code></pre>
 </div>
 </div>
-<p>We can summarise the data, excluding all <code>NA</code> values:</p>
+<p>Next, we filter out <code>NA</code> and zero-membership entries and count the distinct source units (<code>VEGCODE</code>) and distinct target units (<code>EFG</code>) recorded by each interpreter in each round. Notice that in Round 1, Jayne Balmer assessed a subset of 98 units and Adelina Latinovic assessed 149 (148 eligible), whereas in Round 2 all five interpreters assessed the full set of units:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>memb_data <span class="sc">|&gt;</span></span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(memb), memb <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="sc">|&gt;</span></span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(expert, round) <span class="sc">|&gt;</span></span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarise</span>(<span class="st">`</span><span class="at">source ids</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">n_distinct</span>(VEGCODE), <span class="st">`</span><span class="at">target ids</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">n_distinct</span>(EFG), <span class="at">.groups =</span> <span class="st">"drop"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarise</span>(</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>        <span class="st">`</span><span class="at">source ids</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">n_distinct</span>(VEGCODE),</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>        <span class="st">`</span><span class="at">target ids</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">n_distinct</span>(EFG),</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>        <span class="at">.groups =</span> <span class="st">"drop"</span></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>    )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 9 × 4
   expert            round `source ids` `target ids`
@@ -813,7 +921,7 @@ Revised cross-references following discussions with David Keith, Anne Kitchener,
 
 
 <div class="no-row-height column-margin column-container"><div class="margin-aside">
-<p>We save the membership table in a file that we can load in later steps of the workflow:</p>
+<p>We filter <code>memb_data</code> to retain only positive non-missing memberships (<code>TASVEG_xref</code>) and save it to <code>results/XREFs/memb-tables.rda</code> for validation in <a href="validation.html" class="quarto-xref"><span>Chapter 6</span></a>. A hidden chunk also writes an anonymised CSV copy (<code>TASVEG-xref-two-rounds-anon.csv</code>) using codenames for testing and teaching examples:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>TASVEG_xref <span class="ot">&lt;-</span> memb_data <span class="sc">|&gt;</span></span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(</span>
@@ -821,14 +929,23 @@ Revised cross-references following discussions with David Keith, Anne Kitchener,
 <span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>        memb <span class="sc">&gt;</span> <span class="dv">0</span></span>
 <span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>    )</span>
 <span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a><span class="fu">save</span>(TASVEG_xref,</span>
-<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">file =</span> here<span class="sc">::</span><span class="fu">here</span>(</span>
-<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>        output_dir,</span>
-<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>        <span class="st">"memb-tables.rda"</span></span>
-<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a><span class="fu">save</span>(</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>    TASVEG_xref,</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">file =</span> here<span class="sc">::</span><span class="fu">here</span>(output_dir, <span class="st">"memb-tables.rda"</span>)</span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-</div></div></section>
+</div></div><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list" style="display: none">
+<div id="ref-ecoSynthesis_pkg" class="csl-entry" role="listitem">
+Ferrer-Paris, José R., Elliot Gould, and Abhimanyu Raj Singh. 2026. <em><span class="nocase">ecoSynthesis</span>: Synthesis of Cross-Referencing Information Between Two Classification Systems</em>. <a href="https://github.com/Ecosystem-Indicators-Workflows/ecoSynthesis">https://github.com/Ecosystem-Indicators-Workflows/ecoSynthesis</a>.
+</div>
+<div id="ref-Hemming_2018" class="csl-entry" role="listitem">
+Hemming, Victoria, Mark A. Burgman, Anca M. Hanea, Marissa F. McBride, and Bonnie C. Wintle. 2018. <span>“A Practical Guide to Structured Expert Elicitation Using the <span>IDEA</span> Protocol.”</span> <em>Methods in Ecology and Evolution</em> 9 (1): 169–80. <a href="https://doi.org/10.1111/2041-210X.12857">https://doi.org/10.1111/2041-210X.12857</a>.
+</div>
+<div id="ref-Martin_2012" class="csl-entry" role="listitem">
+Martin, Tara G., Mark A. Burgman, Fiona Fidler, Petra M. Kuhnert, Samantha Low-Choy, Marissa McBride, and Kerrie Mengersen. 2012. <span>“Eliciting Expert Knowledge in Conservation Science.”</span> <em>Conservation Biology</em> 26 (1): 29–38. <a href="https://doi.org/10.1111/j.1523-1739.2011.01806.x">https://doi.org/10.1111/j.1523-1739.2011.01806.x</a>.
+</div>
+</div>
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">

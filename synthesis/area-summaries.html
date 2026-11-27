@@ -55,7 +55,27 @@ div.sourceCode
 @media screen {
 pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
-</style>
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
 <script src="../site_libs/quarto-nav/quarto-nav.js"></script>
@@ -106,6 +126,35 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   }
 }</script>
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 <link rel="stylesheet" href="../styles.css">
 </head>
@@ -316,10 +365,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#summarising-areas" id="toc-summarising-areas" class="nav-link active" data-scroll-target="#summarising-areas"><span class="header-section-number">12.1</span> Summarising areas</a>
-  <ul class="collapse">
-  <li><a href="#weighted-area-estimates" id="toc-weighted-area-estimates" class="nav-link" data-scroll-target="#weighted-area-estimates"><span class="header-section-number">12.1.1</span> Weighted area estimates</a></li>
-  </ul></li>
+  <li><a href="#computing-polygon-areas-from-tasveg-5.0" id="toc-computing-polygon-areas-from-tasveg-5.0" class="nav-link active" data-scroll-target="#computing-polygon-areas-from-tasveg-5.0"><span class="header-section-number">12.1</span> Computing polygon areas from TASVEG 5.0</a></li>
+  <li><a href="#individual-interpreter-weighted-area-estimates" id="toc-individual-interpreter-weighted-area-estimates" class="nav-link" data-scroll-target="#individual-interpreter-weighted-area-estimates"><span class="header-section-number">12.2</span> Individual-interpreter weighted area estimates</a></li>
+  <li><a href="#aggregated-multi-interpreter-area-estimates" id="toc-aggregated-multi-interpreter-area-estimates" class="nav-link" data-scroll-target="#aggregated-multi-interpreter-area-estimates"><span class="header-section-number">12.3</span> Aggregated multi-interpreter area estimates</a></li>
+  <li><a href="#statewide-comparison-across-all-iucn-get-functional-groups" id="toc-statewide-comparison-across-all-iucn-get-functional-groups" class="nav-link" data-scroll-target="#statewide-comparison-across-all-iucn-get-functional-groups"><span class="header-section-number">12.4</span> Statewide comparison across all IUCN GET functional groups</a></li>
   </ul>
 </nav>
     </div>
@@ -328,7 +377,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../synthesis/index.html">Synthesis</a></li><li class="breadcrumb-item"><a href="../synthesis/area-summaries.html"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Area summaries</span></a></li></ol></nav>
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Area summaries</span></h1>
+<h1 class="title"><span id="sec-areas" class="quarto-section-identifier"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Area summaries</span></span></h1>
 </div>
 
 
@@ -345,10 +394,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
+<p>Linking the tabular synthesis outputs from <a href="index.html" class="quarto-xref"><span>Chapter 11</span></a> with the polygon areas of TASVEG 5.0 allows us to quantify the statewide extent of each IUCN GET Ecosystem Functional Group—and to evaluate how sensitive area estimates are to (1) <strong>membership weighting</strong> (unweighted total polygon area vs.&nbsp;membership-weighted area) and (2) <strong>aggregation choices</strong> (individual interpreters vs.&nbsp;multi-interpreter consensus, and all candidates vs.&nbsp;best-candidate only).</p>
 
 <div class="no-row-height column-margin column-container"><div class="margin-aside">
-<p>Our setup for this R session is:</p>
-<div class="cell" data-warnings="false">
+<p>Our setup for this R session loads spatial (<code>sf</code>, <code>units</code>; <span class="citation" data-cites="Pebesma_2018">Pebesma (<a href="../references.html#ref-Pebesma_2018" role="doc-biblioref">2018</a>)</span>), cross-referencing (<code>ecoSynthesis</code>), and tidyverse/plotting packages, along with the saved lookup and synthesis tables:</p>
+<div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(sf)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ecoSynthesis)</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
@@ -357,7 +407,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>here<span class="sc">::</span><span class="fu">i_am</span>(<span class="st">"synthesis/EFG-map.qmd"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>here<span class="sc">::</span><span class="fu">i_am</span>(<span class="st">"synthesis/area-summaries.qmd"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>here() starts at /Users/z3529065/proyectos/EIW/TASVEG-XREF/docs-src</code></pre>
 </div>
@@ -366,30 +416,33 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="fu">load</span>(here<span class="sc">::</span><span class="fu">here</span>(output_dir, <span class="st">"lookup-tables.rda"</span>))</span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="fu">load</span>(here<span class="sc">::</span><span class="fu">here</span>(output_dir, <span class="st">"memb-summaries.rda"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-</div></div><section id="summarising-areas" class="level2" data-number="12.1">
-<h2 data-number="12.1" class="anchored" data-anchor-id="summarising-areas"><span class="header-section-number">12.1</span> Summarising areas</h2>
-<p>We read the spatial data from the TASVEG dataset using <code>read_sf</code> from the <code>sf</code> package.</p>
-<p>We then use the <code>st_area</code> to calculate the spatial extent of each spatial feature.For the next calculation we don’t need to keep the spatial information, so we use but we drop the geometry column to speed up other calculations.</p>
+</div></div><section id="computing-polygon-areas-from-tasveg-5.0" class="level2" data-number="12.1">
+<h2 data-number="12.1" class="anchored" data-anchor-id="computing-polygon-areas-from-tasveg-5.0"><span class="header-section-number">12.1</span> Computing polygon areas from TASVEG 5.0</h2>
+<p>We read the TASVEG 5.0 statewide polygon shapefile using <code>sf::read_sf()</code>, select the classification fields (<code>VEG_GROUP</code>, <code>VEGCODE</code>, <code>VEGCODE_D</code>), calculate each polygon’s area via <code>sf::st_area()</code>, and immediately drop the geometry column (<code>sf::st_drop_geometry()</code>) so all subsequent joins and summaries execute quickly on a lightweight attribute table:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>TASVEG_xy <span class="ot">&lt;-</span> <span class="fu">read_sf</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">".."</span>, <span class="st">"gisdata"</span>, <span class="st">"LIST_TASVEG_50_STATEWIDE"</span>, <span class="st">"TASVEG_5_0.shp"</span>)) <span class="sc">|&gt;</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(VEG_GROUP, VEGCODE, VEGCODE_D)</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>TASVEG_areas <span class="ot">&lt;-</span> TASVEG_xy <span class="sc">|&gt;</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">area =</span> <span class="fu">st_area</span>(geometry)) <span class="sc">|&gt;</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">st_drop_geometry</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>TASVEG_areas <span class="ot">&lt;-</span> TASVEG_xy <span class="sc">|&gt;</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">area =</span> <span class="fu">st_area</span>(geometry)) <span class="sc">|&gt;</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">st_drop_geometry</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>We have four different membership summary tables created in <a href="index.html" class="quarto-xref"><span>Chapter 11</span></a>. Each one of these approaches will lead to different interpretation of spatial data linked to the source concepts and their mapping units.</p>
-<section id="weighted-area-estimates" class="level3" data-number="12.1.1">
-<h3 data-number="12.1.1" class="anchored" data-anchor-id="weighted-area-estimates"><span class="header-section-number">12.1.1</span> Weighted area estimates</h3>
-<p>For calculations of areas we have to consider that each source unit might be represented by multiple map units, and each map unit might be assigned to more that one target unit.</p>
-<p>The calculations in this workflow assume that the relationships between source and target units are the same for all mapping unit within each source unit.</p>
-<p>This can be calculated using a left join of both tables with a <code>many to many</code> relationship:</p>
+</section>
+<section id="individual-interpreter-weighted-area-estimates" class="level2" data-number="12.2">
+<h2 data-number="12.2" class="anchored" data-anchor-id="individual-interpreter-weighted-area-estimates"><span class="header-section-number">12.2</span> Individual-interpreter weighted area estimates</h2>
+<p>In cross-referencing area calculations, each TASVEG <code>VEGCODE</code> occurs across many map polygons, and each <code>VEGCODE</code> may carry fuzzy membership to multiple target EFGs. This workflow assumes that the source-to-target membership vector applies uniformly across all polygons belonging to the same <code>VEGCODE</code>.</p>
+<p>First, we perform a <code>many-to-many</code> left join between <code>TASVEG_areas</code> and the individual Round 2 assessments (<code>TASVEG_revised</code>), coding non-eligible polygons (<code>OAQ</code>, <code>OSM</code>, <code>ORO</code>) explicitly as <code>"!XREF"</code>:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>EFG_memb_exp_areas <span class="ot">&lt;-</span> TASVEG_areas <span class="sc">|&gt;</span> <span class="co"># nolint: object_name_linter.</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">left_join</span>(TASVEG_revised, <span class="at">by =</span> <span class="st">"VEGCODE"</span>, <span class="at">relationship =</span> <span class="st">"many-to-many"</span>) <span class="sc">|&gt;</span></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">EFG =</span> <span class="fu">coalesce</span>(EFG, <span class="st">"!XREF"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>Furthermore, we need to decide if we want to adjust the areas to represent uncertainty in the assignment of the relationship. One possible way to adjust the areas is to use the membership value as an estimate of the proportion of the area that can be assigned to the target unit.</p>
-<p>Using an example of one target unit (T2.5), we can summarise the data by expert and membership and calculate total areas of the units vs the weighed area estimates:</p>
+<p>To incorporate cross-referencing uncertainty into extent estimates, we compare:</p>
+<ul>
+<li><strong>Unweighted total area</strong> (<span class="math inline">\(\sum \text{area}\)</span>): full extent of every polygon with positive membership to the target EFG.</li>
+<li><strong>Membership-weighted area</strong> (<span class="math inline">\(\sum \text{area} \times \text{memb}\)</span>): scales each polygon’s contribution by its fuzzy membership proportion.</li>
+</ul>
+<p>Using <strong><code>T2.5</code> (<em>Temperate pyric humid forests</em>)</strong> as a concrete example, we summarise unweighted and weighted areas (in <span class="math inline">\(\text{km}^2\)</span>) by interpreter and whether <code>T2.5</code> is the best candidate (<code>best = TRUE</code>) or a secondary candidate (<code>best = FALSE</code>):</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>EFG_memb_exp_areas <span class="sc">|&gt;</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(EFG <span class="sc">==</span> <span class="st">"T2.5"</span>) <span class="sc">|&gt;</span></span>
@@ -417,13 +470,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 10 Jayne_Balmer      T2.5  FALSE         11     0.147      6077.          789.</code></pre>
 </div>
 </div>
-<p>Interpreters differ in the nr of source of unit and the mean membership values assigned to those units. Consequently the total and weighted area estimates will be different.</p>
-<p>We need to reshape the data if we want to explore this at the level of the source units:</p>
+<p>Because interpreters assign slightly different sets of secondary communities and fuzzy weights to <code>T2.5</code>, both the unweighted and weighted area estimates vary across interpreters.</p>
+<p>To inspect which individual TASVEG units drive that difference, we aggregate polygon areas to <code>km²</code> per <code>(expert, VEGCODE)</code>, split each unit’s total area into <code>assigned_area</code> (<span class="math inline">\(\text{area} \times \text{memb}\)</span>) and <code>remaining_area</code> (<span class="math inline">\(\text{area} \times (1 - \text{memb})\)</span>), and reshape long for stacked bar plotting:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>plot_data <span class="ot">&lt;-</span> EFG_memb_exp_areas <span class="sc">|&gt;</span></span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(EFG <span class="sc">==</span> <span class="st">"T2.5"</span>) <span class="sc">|&gt;</span></span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarise</span>(</span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>        <span class="at">total_area =</span> <span class="fu">sum</span>(<span class="fu">drop_units</span>(area)),</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>        <span class="at">total_area =</span> <span class="fu">sum</span>(<span class="fu">drop_units</span>(<span class="fu">set_units</span>(area, <span class="st">"km2"</span>))),</span>
 <span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>        <span class="at">.by =</span> <span class="fu">all_of</span>(<span class="fu">c</span>(<span class="st">"expert"</span>, <span class="st">"VEGCODE"</span>, <span class="st">"memb"</span>, <span class="st">"best"</span>))</span>
 <span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
 <span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
@@ -433,11 +486,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
 <span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pivot_longer</span>(</span>
 <span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>        <span class="at">cols =</span> <span class="fu">c</span>(assigned_area, remaining_area),</span>
-<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>        <span class="at">names_to =</span> <span class="st">"segment"</span>, <span class="at">values_to =</span> <span class="st">"height"</span></span>
-<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
-<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">segment =</span> <span class="fu">factor</span>(segment, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"remaining_area"</span>, <span class="st">"assigned_area"</span>))) <span class="sc">|&gt;</span></span>
-<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">arrange</span>(sid)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>        <span class="at">names_to =</span> <span class="st">"segment"</span>,</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>        <span class="at">values_to =</span> <span class="st">"height"</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">segment =</span> <span class="fu">factor</span>(segment, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"remaining_area"</span>, <span class="st">"assigned_area"</span>))) <span class="sc">|&gt;</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">arrange</span>(sid)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
+<p>Plotting all units assigned positive membership to <code>T2.5</code> faceted by interpreter reveals that several spatially extensive TASVEG communities carry only low secondary membership weights—contributing substantially to <em>unweighted</em> area totals while adding only modestly to <em>weighted</em> area estimates:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(plot_data, <span class="fu">aes</span>(<span class="at">x =</span> sid, <span class="at">y =</span> height, <span class="at">fill =</span> segment)) <span class="sc">+</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_col</span>(<span class="at">position =</span> <span class="st">"stack"</span>) <span class="sc">+</span></span>
@@ -446,23 +501,23 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>        <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"assigned_area"</span> <span class="ot">=</span> <span class="st">"Assigned (area * memb)"</span>, <span class="st">"remaining_area"</span> <span class="ot">=</span> <span class="st">"Remaining area"</span>)</span>
 <span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
 <span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(</span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">title =</span> <span class="st">"Units assigned to T2.5 ordered by Total Area (x)"</span>,</span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">x =</span> <span class="st">"Source units (Ordered by x)"</span>,</span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>        <span class="at">y =</span> <span class="st">"Total Area (x)"</span>,</span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>        <span class="at">fill =</span> <span class="st">"Status"</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">title =</span> <span class="st">"TASVEG units assigned to T2.5 by interpreter (all candidates)"</span>,</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">x =</span> <span class="st">"Source units ordered by total area"</span>,</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>        <span class="at">y =</span> <span class="st">"Area (km²)"</span>,</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>        <span class="at">fill =</span> <span class="st">"Component"</span></span>
 <span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
 <span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">facet_wrap</span>(<span class="sc">~</span>expert) <span class="sc">+</span></span>
-<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_wp3</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_wp3</span>() <span class="sc">+</span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">90</span>, <span class="at">vjust =</span> <span class="fl">0.5</span>, <span class="at">hjust =</span> <span class="dv">1</span>, <span class="at">size =</span> <span class="dv">6</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="area-summaries_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="area-summaries_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid figure-img" width="1056"></p>
 </figure>
 </div>
 </div>
 </div>
-<p>This plot reveals that some large units have low membership values, thus they contribute to larger total areas but only marginally to the weighted area estimates.</p>
-<p>We can choose to keep only the best candidate target unit for these area calculations</p>
+<p>Restricting the same chart to units where <code>T2.5</code> is the <strong>best candidate</strong> (<code>best == TRUE</code>) removes those low-weight secondary communities and highlights the high-consensus core communities of <code>T2.5</code>:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="fu">filter</span>(plot_data, best), <span class="fu">aes</span>(<span class="at">x =</span> sid, <span class="at">y =</span> height, <span class="at">fill =</span> segment)) <span class="sc">+</span></span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_col</span>(<span class="at">position =</span> <span class="st">"stack"</span>) <span class="sc">+</span></span>
@@ -471,26 +526,32 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>        <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"assigned_area"</span> <span class="ot">=</span> <span class="st">"Assigned (area * memb)"</span>, <span class="st">"remaining_area"</span> <span class="ot">=</span> <span class="st">"Remaining area"</span>)</span>
 <span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
 <span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(</span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">title =</span> <span class="st">"Units assigned to T2.5 ordered by Total Area (x)"</span>,</span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">x =</span> <span class="st">"Source units (Ordered by x)"</span>,</span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>        <span class="at">y =</span> <span class="st">"Total Area (x)"</span>,</span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>        <span class="at">fill =</span> <span class="st">"Status"</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">title =</span> <span class="st">"TASVEG units assigned to T2.5 by interpreter (best candidate only)"</span>,</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">x =</span> <span class="st">"Source units ordered by total area"</span>,</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>        <span class="at">y =</span> <span class="st">"Area (km²)"</span>,</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>        <span class="at">fill =</span> <span class="st">"Component"</span></span>
 <span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
 <span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">facet_wrap</span>(<span class="sc">~</span>expert) <span class="sc">+</span></span>
-<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_wp3</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_wp3</span>() <span class="sc">+</span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">90</span>, <span class="at">vjust =</span> <span class="fl">0.5</span>, <span class="at">hjust =</span> <span class="dv">1</span>, <span class="at">size =</span> <span class="dv">7</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="area-summaries_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="area-summaries_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid figure-img" width="1056"></p>
 </figure>
 </div>
 </div>
 </div>
+</section>
+<section id="aggregated-multi-interpreter-area-estimates" class="level2" data-number="12.3">
+<h2 data-number="12.3" class="anchored" data-anchor-id="aggregated-multi-interpreter-area-estimates"><span class="header-section-number">12.3</span> Aggregated multi-interpreter area estimates</h2>
+<p>Next, we repeat the spatial join using <code>TASVEG_summary</code> (aggregated Round 2 <code>prop_memb</code> across all five interpreters from <a href="index.html" class="quarto-xref"><span>Chapter 11</span></a>) so every polygon is linked to the consensus membership proportions:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>EFG_memb_agg_areas <span class="ot">&lt;-</span> TASVEG_areas <span class="sc">|&gt;</span></span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">left_join</span>(TASVEG_summary, <span class="at">by =</span> <span class="st">"VEGCODE"</span>, <span class="at">relationship =</span> <span class="st">"many-to-many"</span>) <span class="sc">|&gt;</span></span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">EFG =</span> <span class="fu">coalesce</span>(EFG, <span class="st">"!XREF"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
+<p>Summarising <code>T2.5</code> from the aggregated table splits total and <code>prop_memb</code>-weighted areas cleanly between primary (<code>best == TRUE</code>) and secondary (<code>best == FALSE</code>) source communities:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>EFG_memb_agg_areas <span class="sc">|&gt;</span></span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(EFG <span class="sc">==</span> <span class="st">"T2.5"</span>) <span class="sc">|&gt;</span></span>
@@ -510,11 +571,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 2 T2.5  FALSE         17     0.128      8750.          764.</code></pre>
 </div>
 </div>
+<p>Reshaping the aggregated <code>T2.5</code> table into <code>assigned_area</code> (<span class="math inline">\(\text{area} \times \text{prop\_memb}\)</span>) and <code>remaining_area</code> lets us compare primary vs.&nbsp;secondary contributing communities side by side:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>plot_data <span class="ot">&lt;-</span> EFG_memb_agg_areas <span class="sc">|&gt;</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>plot_data_agg <span class="ot">&lt;-</span> EFG_memb_agg_areas <span class="sc">|&gt;</span></span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(EFG <span class="sc">==</span> <span class="st">"T2.5"</span>) <span class="sc">|&gt;</span></span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarise</span>(</span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>        <span class="at">total_area =</span> <span class="fu">sum</span>(<span class="fu">drop_units</span>(area)),</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>        <span class="at">total_area =</span> <span class="fu">sum</span>(<span class="fu">drop_units</span>(<span class="fu">set_units</span>(area, <span class="st">"km2"</span>))),</span>
 <span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>        <span class="at">.by =</span> <span class="fu">all_of</span>(<span class="fu">c</span>(<span class="st">"VEGCODE"</span>, <span class="st">"prop_memb"</span>, <span class="st">"best"</span>))</span>
 <span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
 <span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
@@ -524,34 +586,41 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
 <span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pivot_longer</span>(</span>
 <span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>        <span class="at">cols =</span> <span class="fu">c</span>(assigned_area, remaining_area),</span>
-<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>        <span class="at">names_to =</span> <span class="st">"segment"</span>, <span class="at">values_to =</span> <span class="st">"height"</span></span>
-<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
-<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">segment =</span> <span class="fu">factor</span>(segment, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"remaining_area"</span>, <span class="st">"assigned_area"</span>))) <span class="sc">|&gt;</span></span>
-<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">arrange</span>(sid)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>        <span class="at">names_to =</span> <span class="st">"segment"</span>,</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>        <span class="at">values_to =</span> <span class="st">"height"</span></span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">segment =</span> <span class="fu">factor</span>(segment, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"remaining_area"</span>, <span class="st">"assigned_area"</span>))) <span class="sc">|&gt;</span></span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">arrange</span>(sid)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
+<p>Faceting the stacked bars by <code>best</code> (<code>FALSE</code> = secondary candidate, <code>TRUE</code> = primary/best candidate) visually contrasts how secondary units contribute minor fractional slices while primary units carry high consensus membership:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="fu">filter</span>(plot_data), <span class="fu">aes</span>(<span class="at">x =</span> sid, <span class="at">y =</span> height, <span class="at">fill =</span> segment)) <span class="sc">+</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(plot_data_agg, <span class="fu">aes</span>(<span class="at">x =</span> sid, <span class="at">y =</span> height, <span class="at">fill =</span> segment)) <span class="sc">+</span></span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_col</span>(<span class="at">position =</span> <span class="st">"stack"</span>) <span class="sc">+</span></span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_fill_manual</span>(</span>
 <span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>        <span class="at">values =</span> <span class="fu">c</span>(<span class="st">"assigned_area"</span> <span class="ot">=</span> <span class="st">"#db349e"</span>, <span class="st">"remaining_area"</span> <span class="ot">=</span> <span class="st">"#e1a6cb"</span>),</span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>        <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"assigned_area"</span> <span class="ot">=</span> <span class="st">"Assigned (area * memb)"</span>, <span class="st">"remaining_area"</span> <span class="ot">=</span> <span class="st">"Remaining area"</span>)</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>        <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"assigned_area"</span> <span class="ot">=</span> <span class="st">"Assigned (area * prop_memb)"</span>, <span class="st">"remaining_area"</span> <span class="ot">=</span> <span class="st">"Remaining area"</span>)</span>
 <span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
 <span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(</span>
-<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">title =</span> <span class="st">"Units assigned to T2.5 ordered by Total Area (x)"</span>,</span>
-<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">x =</span> <span class="st">"Source units (Ordered by x)"</span>,</span>
-<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>        <span class="at">y =</span> <span class="st">"Total Area (x)"</span>,</span>
-<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>        <span class="at">fill =</span> <span class="st">"Status"</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">title =</span> <span class="st">"Aggregated TASVEG units assigned to T2.5 (secondary vs. best candidate)"</span>,</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">x =</span> <span class="st">"Source units ordered by total area"</span>,</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>        <span class="at">y =</span> <span class="st">"Area (km²)"</span>,</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>        <span class="at">fill =</span> <span class="st">"Component"</span></span>
 <span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
-<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">facet_grid</span>(best <span class="sc">~</span> .) <span class="sc">+</span></span>
-<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_wp3</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">facet_grid</span>(best <span class="sc">~</span> ., <span class="at">labeller =</span> label_both) <span class="sc">+</span></span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_wp3</span>() <span class="sc">+</span></span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">90</span>, <span class="at">vjust =</span> <span class="fl">0.5</span>, <span class="at">hjust =</span> <span class="dv">1</span>, <span class="at">size =</span> <span class="fl">6.5</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="area-summaries_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="area-summaries_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid figure-img" width="1056"></p>
 </figure>
 </div>
 </div>
 </div>
+</section>
+<section id="statewide-comparison-across-all-iucn-get-functional-groups" class="level2" data-number="12.4">
+<h2 data-number="12.4" class="anchored" data-anchor-id="statewide-comparison-across-all-iucn-get-functional-groups"><span class="header-section-number">12.4</span> Statewide comparison across all IUCN GET functional groups</h2>
+<p>Finally, we compute weighted area estimates across <strong>all</strong> candidate EFGs for both individual interpreters (<code>d1</code>, hollow circles) and the aggregated consensus (<code>d2</code>, filled circles), keeping primary (<code>best == TRUE</code>) and secondary (<code>best == FALSE</code>) contributions distinct:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>d1 <span class="ot">&lt;-</span> EFG_memb_exp_areas <span class="sc">|&gt;</span></span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarise</span>(</span>
@@ -573,23 +642,38 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
 <span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(area_total))</span>
 <span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a>plot_data <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(d1, d2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a>plot_data_all <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(d1, d2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
+<p>Plotting membership-weighted area on a <span class="math inline">\(\log_{10}\)</span> scale across all EFGs shows (1) how tightly individual interpreter extent estimates cluster around the aggregated consensus for dominant terrestrial EFGs, and (2) which EFGs exist purely as secondary components (<code>best = FALSE</code>, e.g.&nbsp;minor wetland or freshwater functional groups) versus dominant mapped ecosystems (<code>best = TRUE</code>):</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">repr.plot.width =</span> <span class="dv">12</span>, <span class="at">repr.plot.height =</span> <span class="dv">18</span>)</span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(plot_data) <span class="sc">+</span></span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="at">y =</span> EFG, <span class="at">x =</span> <span class="fu">drop_units</span>(area_weighted), <span class="at">shape =</span> <span class="fu">is.na</span>(expert), <span class="at">colour =</span> best), <span class="at">size =</span> <span class="dv">4</span>) <span class="sc">+</span></span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_x_log10</span>() <span class="sc">+</span></span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_colour_manual</span>(</span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>        <span class="at">values =</span> <span class="fu">c</span>(<span class="st">"FALSE"</span> <span class="ot">=</span> <span class="st">"peru"</span>, <span class="st">"TRUE"</span> <span class="ot">=</span> <span class="st">"orchid4"</span>),</span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>        <span class="at">na.value =</span> <span class="st">"grey50"</span>,</span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">name =</span> <span class="st">"Is best candidate?"</span></span>
-<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
-<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_shape_manual</span>(</span>
-<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>        <span class="at">values =</span> <span class="fu">c</span>(<span class="st">"TRUE"</span> <span class="ot">=</span> <span class="dv">19</span>, <span class="st">"FALSE"</span> <span class="ot">=</span> <span class="dv">21</span>),</span>
-<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>        <span class="at">name =</span> <span class="st">"Aggregated"</span></span>
-<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
-<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_wp3</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(plot_data_all) <span class="sc">+</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_point</span>(</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>        <span class="fu">aes</span>(</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>            <span class="at">y =</span> EFG,</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">x =</span> <span class="fu">drop_units</span>(area_weighted),</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">shape =</span> <span class="fu">is.na</span>(expert),</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">colour =</span> best</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">size =</span> <span class="fl">3.5</span>,</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>        <span class="at">alpha =</span> <span class="fl">0.85</span></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_x_log10</span>() <span class="sc">+</span></span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_colour_manual</span>(</span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>        <span class="at">values =</span> <span class="fu">c</span>(<span class="st">"FALSE"</span> <span class="ot">=</span> <span class="st">"peru"</span>, <span class="st">"TRUE"</span> <span class="ot">=</span> <span class="st">"orchid4"</span>),</span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>        <span class="at">na.value =</span> <span class="st">"grey50"</span>,</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>        <span class="at">name =</span> <span class="st">"Is best candidate?"</span></span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_shape_manual</span>(</span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>        <span class="at">values =</span> <span class="fu">c</span>(<span class="st">"TRUE"</span> <span class="ot">=</span> <span class="dv">19</span>, <span class="st">"FALSE"</span> <span class="ot">=</span> <span class="dv">21</span>),</span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a>        <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"TRUE"</span> <span class="ot">=</span> <span class="st">"Aggregated consensus"</span>, <span class="st">"FALSE"</span> <span class="ot">=</span> <span class="st">"Individual interpreter"</span>),</span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a>        <span class="at">name =</span> <span class="st">"Estimate type"</span></span>
+<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(</span>
+<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a>        <span class="at">title =</span> <span class="st">"Statewide membership-weighted area across all candidate EFGs"</span>,</span>
+<span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a>        <span class="at">x =</span> <span class="st">"Membership-weighted area (km², log10 scale)"</span>,</span>
+<span id="cb18-26"><a href="#cb18-26" aria-hidden="true" tabindex="-1"></a>        <span class="at">y =</span> <span class="st">"IUCN GET Ecosystem Functional Group (EFG)"</span></span>
+<span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb18-28"><a href="#cb18-28" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_wp3</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Warning: Removed 2 rows containing missing values or values outside the scale range
 (`geom_point()`).</code></pre>
@@ -597,14 +681,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="area-summaries_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="area-summaries_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid figure-img" width="960"></p>
 </figure>
 </div>
 </div>
 </div>
 
 
-</section>
+<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list" style="display: none">
+<div id="ref-Pebesma_2018" class="csl-entry" role="listitem">
+Pebesma, Edzer. 2018. <span>“Simple Features for <span>R</span>: Standardized Support for Spatial Vector Data.”</span> <em>The R Journal</em> 10 (1): 439–46. <a href="https://doi.org/10.32614/RJ-2018-009">https://doi.org/10.32614/RJ-2018-009</a>.
+</div>
+</div>
 </section>
 
 </main> <!-- /main -->

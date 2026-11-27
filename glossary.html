@@ -20,7 +20,27 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-</style>
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
 <script src="site_libs/quarto-nav/quarto-nav.js"></script>
@@ -71,6 +91,35 @@ ul.task-list li input[type="checkbox"] {
   }
 }</script>
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -317,108 +366,139 @@ ul.task-list li input[type="checkbox"] {
 <tbody>
 <tr class="odd">
 <td><strong>Cross-reference (xref) or membership table</strong></td>
-<td>A table that summarises assessments of membership of units of one (source) classification to units of another (target) classification.</td>
-<td>See <span class="quarto-unresolved-ref">?sec-memb-table</span> and <a href="appendices/membership-tables.html" class="quarto-xref"><span>Chapter 15</span></a>.</td>
+<td>A table summarising assessments of fuzzy membership of units in a source classification to units in a target classification.</td>
+<td><code>membership_tbl</code>; see <a href="preparation/input-memb-tables.html" class="quarto-xref"><span>Chapter 5</span></a> and <a href="appendices/membership-tables.html" class="quarto-xref"><span>Chapter 15</span></a>.</td>
 </tr>
 <tr class="even">
+<td><strong>Lookup table (<code>lookup_tbl</code>)</strong></td>
+<td>Controlled vocabulary listing all valid unit IDs, names, and conceptual eligibility flags (<code>eligible = TRUE/FALSE</code>) for a source or target classification.</td>
+<td><code>TASVEG</code> and <code>IUCN_GET</code>; see <a href="preparation/lookup-tables.html" class="quarto-xref"><span>Chapter 4</span></a>.</td>
+</tr>
+<tr class="odd">
 <td><strong>Source</strong></td>
 <td>The classification being cross-referenced <em>from</em>.</td>
-<td>In this document the source classification is TASVEG 5.0, the Tasmanian vegetation mapping. See <a href="preliminaries/source-data.html" class="quarto-xref"><span>Chapter 2</span></a>.</td>
-</tr>
-<tr class="odd">
-<td><strong>Source unit</strong></td>
-<td>One concept or mapping unit of the source classification. Each unit is assessed separately.</td>
-<td>In TASVEG the classification units represent vegetation communities, see <a href="preliminaries/source-data.html" class="quarto-xref"><span>Chapter 2</span></a>.</td>
+<td>TASVEG 5.0, Tasmania’s vegetation classification and map; see <a href="preliminaries/source-data.html" class="quarto-xref"><span>Chapter 2</span></a>.</td>
 </tr>
 <tr class="even">
-<td><strong>Source unit id / Source id</strong></td>
-<td>Unique ids for the units in the source classification.</td>
-<td><code>VEGCODE</code> column in the TASVEG Look-up table (<a href="preparation/lookup-tables.html" class="quarto-xref"><span>Chapter 4</span></a>)</td>
+<td><strong>Source unit</strong></td>
+<td>One ecological concept or mapping unit of the source classification, assessed independently.</td>
+<td>Vegetation communities in TASVEG 5.0; see <a href="preliminaries/source-data.html" class="quarto-xref"><span>Chapter 2</span></a>.</td>
 </tr>
 <tr class="odd">
+<td><strong>Source unit id / Source id</strong></td>
+<td>Unique identifier for each unit in the source classification.</td>
+<td><code>VEGCODE</code> column in the TASVEG lookup table (<a href="preparation/lookup-tables.html" class="quarto-xref"><span>Chapter 4</span></a>).</td>
+</tr>
+<tr class="even">
 <td><strong>Target</strong></td>
 <td>The classification being cross-referenced <em>to</em>.</td>
-<td>In this document the target classification is the IUCN Global Ecosystem Typology, see <a href="preliminaries/alignment.html" class="quarto-xref"><span>Chapter 3</span></a>.</td>
+<td>IUCN Global Ecosystem Typology (IUCN GET); see <a href="preliminaries/alignment.html" class="quarto-xref"><span>Chapter 3</span></a>.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><strong>Target unit</strong></td>
 <td>One unit of the target classification.</td>
-<td>Here we use level 3 of the IUCN Global Ecosystem Typology: Ecosystem Functional Group (EFG), see <a href="preliminaries/source-data.html" class="quarto-xref"><span>Chapter 2</span></a>.</td>
+<td>Level 3 Ecosystem Functional Groups (EFGs) of IUCN GET; see <a href="preliminaries/alignment.html" class="quarto-xref"><span>Chapter 3</span></a>.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><strong>Target unit id / Target id</strong></td>
-<td>Unique ids for the units in the target classification.</td>
-<td><code>EFG</code> or <code>efg_id</code> columns. Codes for EFG Codes are realm + biome + group, e.g.&nbsp;<code>T2.6</code> (terrestrial), <code>F2.2</code> (freshwater), <code>MT1.3</code> (marine–terrestrial shoreline), <code>TF1.6</code> (terrestrial–freshwater wetland), <code>MFT1.3</code> (marine–freshwater–terrestrial).</td>
+<td>Unique identifier for each target unit.</td>
+<td><code>EFG</code> or <code>efg_id</code> columns (realm + biome + group, e.g.&nbsp;<code>T2.6</code> terrestrial, <code>F2.2</code> freshwater, <code>MT2.1</code> marine–terrestrial, <code>TF1.7</code> terrestrial–freshwater wetland, <code>MFT1.3</code> marine–freshwater–terrestrial).</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><strong>Interpreter</strong></td>
-<td>The person who made the assessment of memberships.</td>
-<td>Here we refer to <code>interpreter</code> or <code>expert</code> interchangeably, see <span class="quarto-unresolved-ref">?sec-memb-table</span>.</td>
+<td>A domain expert who provides fuzzy membership assessments during elicitation.</td>
+<td>Referred to as <code>interpreter</code> or <code>expert</code> interchangeably (<code>AK</code>, <code>AL</code>, <code>DAK</code>, <code>JB</code>, <code>MGT</code>); see <a href="preparation/input-memb-tables.html" class="quarto-xref"><span>Chapter 5</span></a>.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><strong>Membership</strong></td>
-<td>An interpreter’s estimate of the relationship between a source unit and a target unit. Target units have a broader scope, so they can group multiple source units. Memberships are interpreted as fuzzy memberships, such that a source unit might belong to multiple target units. This fuzzy membership is expressed as a continuous value between 0 (excluded from the group) and 1 (unambiguous membership).</td>
-<td>See <span class="quarto-unresolved-ref">?sec-memb-table</span> and <a href="appendices/membership-tables.html" class="quarto-xref"><span>Chapter 15</span></a>.</td>
+<td>An interpreter’s fuzzy estimate <span class="citation" data-cites="Zadeh_1965">(<a href="references.html#ref-Zadeh_1965" role="doc-biblioref">Zadeh 1965</a>)</span> of the relationship between a source unit and a target unit on <span class="math inline">\([0, 1]\)</span>, where 0 means excluded and 1 means unambiguous membership.</td>
+<td><code>memb</code> column; see <a href="preparation/input-memb-tables.html" class="quarto-xref"><span>Chapter 5</span></a> and <a href="appendices/membership-tables.html" class="quarto-xref"><span>Chapter 15</span></a>.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><strong>Assigned / not assigned</strong></td>
-<td>Each interpreter assigns one or multiple target for each source unit with membership values above 0 (<em>assigned target</em>). The sum of membership values for assigned targets of a single interpreter should sum to 1. Potential targets (for example, those assigned by other interpreters) that are not listed by an interpreter, are considered <em>not assigned</em> and have a membership value of 0.</td>
-<td>See <span class="quarto-unresolved-ref">?sec-memb-table</span>.</td>
+<td>Targets given positive membership (<span class="math inline">\(&gt; 0\)</span>) by an interpreter are <em>assigned</em> (summing to 1 per source unit). Other candidate targets not listed by that interpreter for an assessed unit are <em>not assigned</em> (implicit membership 0).</td>
+<td>See <a href="preparation/input-memb-tables.html" class="quarto-xref"><span>Chapter 5</span></a> and <a href="analysis/round-1.html" class="quarto-xref"><span>Chapter 8</span></a>.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><strong>Not assessed</strong></td>
-<td>The interpreter gave no record for the unit at all. This is different from “not assigned” and is never filled with 0.</td>
-<td>See <span class="quarto-unresolved-ref">?sec-memb-table</span>.</td>
+<td>The interpreter provided no record for the source unit in that round; kept as <code>NA</code> in <code>membership_matrix</code> and never filled with 0.</td>
+<td>E.g. 55 units not assessed by <code>Jayne_Balmer</code> in Round 1 (<a href="analysis/round-1.html" class="quarto-xref"><span>Chapter 8</span></a>).</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><strong>Record</strong></td>
-<td>One interpreter’s membership for one unit and one target. Long format means one record per row.</td>
-<td>See <span class="quarto-unresolved-ref">?sec-memb-table</span>.</td>
+<td>One interpreter’s membership estimate for one <code>(source, target, round)</code> combination (one row in long format).</td>
+<td>See <a href="preparation/input-memb-tables.html" class="quarto-xref"><span>Chapter 5</span></a>.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><strong>Profile</strong></td>
-<td>An interpreter’s full set of memberships for one unit, across every target that any expert used for that unit.</td>
-<td></td>
-</tr>
-<tr class="even">
-<td><strong>Matrix table</strong></td>
-<td>The data reshaped wide: one row per unit and interpreter, one column per target group.</td>
-<td><code>membership_matrix</code>, see <a href="appendices/membership-tables.html" class="quarto-xref"><span>Chapter 15</span></a>.</td>
+<td>An interpreter’s full membership vector for one source unit across all candidate targets considered for that unit.</td>
+<td>Used in <code>calc_agreement()</code> and <code>calc_shannons_entropy()</code>.</td>
 </tr>
 <tr class="odd">
+<td><strong>Membership matrix</strong></td>
+<td>3D numeric array <code>[source, target, interpreter]</code> produced by <code>ecoSynthesis::membership_matrix()</code>, with 0 for unused targets and <code>NA</code> for unassessed units.</td>
+<td><code>TASVEG_mtx_r1</code>, <code>TASVEG_mtx_r2</code>; see <a href="analysis/round-1.html" class="quarto-xref"><span>Chapter 8</span></a> and <a href="appendices/membership-tables.html" class="quarto-xref"><span>Chapter 15</span></a>.</td>
+</tr>
+<tr class="even">
 <td><strong>Dissimilarity</strong></td>
-<td>How different two interpreter’ profiles are for a unit: ½ × the sum of absolute differences, i.e.&nbsp;the share of membership that would have to move to make them identical. 0 = identical, 1 = no shared membership.</td>
-<td><code>dissimilarity</code></td>
-</tr>
-<tr class="even">
-<td><strong>Similarity</strong></td>
-<td>1 − dissimilarity. 1 = identical profiles, 0 = no overlap.</td>
-<td><code>similarity</code></td>
+<td>Half-<span class="math inline">\(L_1\)</span> distance between two interpreters’ profiles for a unit: <span class="math inline">\(D = \frac{1}{2}\sum_k |a_k - b_k|\)</span> (equivalent to Bray–Curtis dissimilarity for unit-sum vectors; 0 = identical, 1 = no overlap).</td>
+<td><code>dissimilarity</code> in <code>calc_agreement()</code>; see <a href="analysis/round-1.html" class="quarto-xref"><span>Chapter 8</span></a>.</td>
 </tr>
 <tr class="odd">
+<td><strong>Agreement / Similarity</strong></td>
+<td>Complement of dissimilarity: <span class="math inline">\(S = 1 - D\)</span> (1 = identical profiles, 0 = no shared target membership).</td>
+<td><code>similarity</code>, <code>mean_similarity</code> in <code>calc_agreement()</code>; see <a href="analysis/round-1.html" class="quarto-xref"><span>Chapter 8</span></a>.</td>
+</tr>
+<tr class="even">
 <td><strong>Identical</strong></td>
-<td>Two profiles with a dissimilarity of essentially 0 (below 0.001).</td>
-<td><code>share_identical</code></td>
-</tr>
-<tr class="even">
-<td><strong>Expert pair</strong></td>
-<td>Two interpreter compared on the same unit. With four interpreter there are six pairs.</td>
-<td><code>expert_a</code>, <code>expert_b</code></td>
+<td>Two profiles with dissimilarity below <code>0.001</code>.</td>
+<td><code>share_identical</code> in <code>calc_agreement()</code>.</td>
 </tr>
 <tr class="odd">
+<td><strong>Expert pair</strong></td>
+<td>Two interpreters compared on the same source unit (6 pairs among 4 interpreters in Round 1; 10 pairs among 5 interpreters in Round 2).</td>
+<td><code>interpreter_x</code>, <code>interpreter_y</code>.</td>
+</tr>
+<tr class="even">
 <td><strong>Contested unit</strong></td>
-<td>A unit where interpreter disagree. Units are ranked by their mean dissimilarity across all expert pairs.</td>
-<td><code>unit_disagreement</code></td>
+<td>A source unit with high mean pairwise dissimilarity across interpreter pairs.</td>
+<td>E.g. <code>FMG</code>, <code>FSM</code>, <code>SWR</code>; see <a href="analysis/round-1.html" class="quarto-xref"><span>Chapter 8</span></a> and <a href="analysis/round-2.html" class="quarto-xref"><span>Chapter 9</span></a>.</td>
+</tr>
+<tr class="odd">
+<td><strong>Shannon’s entropy (normalised)</strong></td>
+<td>Information-theoretic measure of within-interpreter fuzziness/ambiguity on <span class="math inline">\([0, 1]\)</span>, normalised by <span class="math inline">\(\log_2(N)\)</span> under interpreter (<span class="math inline">\(S\)</span>), source (<span class="math inline">\(N_{\text{source}}\)</span>), or set (<span class="math inline">\(N_{\text{set}}\)</span>) bases <span class="citation" data-cites="Shannon_1948 Pielou_1966">(<a href="references.html#ref-Shannon_1948" role="doc-biblioref">Shannon 1948</a>; <a href="references.html#ref-Pielou_1966" role="doc-biblioref">Pielou 1966</a>)</span>.</td>
+<td><code>calc_shannons_entropy()</code>, <code>calc_entropy_tbl()</code>; see <a href="analysis/round-1.html" class="quarto-xref"><span>Chapter 8</span></a>–<a href="analysis/between-rounds.html" class="quarto-xref"><span>Chapter 10</span></a>.</td>
+</tr>
+<tr class="even">
+<td><strong>Proportion of membership (<code>prop_memb</code>)</strong></td>
+<td>Aggregated share of total Round 2 membership votes across interpreters assigned to a target EFG for a source unit.</td>
+<td><code>summarise_membership()</code>; see <a href="synthesis/index.html" class="quarto-xref"><span>Chapter 11</span></a>.</td>
+</tr>
+<tr class="odd">
+<td><strong>Supporting interpreters (<code>supporting</code>)</strong></td>
+<td>Number of interpreters (out of <code>total_interp</code>) who assigned positive membership (<span class="math inline">\(&gt; 0\)</span>) to a candidate EFG for a source unit.</td>
+<td><code>summarise_membership()</code>; see <a href="synthesis/index.html" class="quarto-xref"><span>Chapter 11</span></a> and <a href="synthesis/EFG-map.html" class="quarto-xref"><span>Chapter 13</span></a>.</td>
 </tr>
 <tr class="even">
 <td><strong>Data checks</strong></td>
-<td>Problems that are reported but not fixed: missing membership values, target codes that don’t match the <code>XX0.0</code> pattern, and totals per unit and expert that aren’t 1.</td>
-<td><code>check_*</code></td>
+<td>Non-destructive validation diagnostics checking numeric type, missing values, <span class="math inline">\([0, 1]\)</span> bounds, source eligibility, and target validity.</td>
+<td><code>check_membership()</code>; see <a href="preparation/validation.html" class="quarto-xref"><span>Chapter 6</span></a>.</td>
 </tr>
 </tbody>
 </table>
 
 
+<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list" style="display: none">
+<div id="ref-Pielou_1966" class="csl-entry" role="listitem">
+Pielou, Evelyn C. 1966. <span>“The Measurement of Diversity in Different Types of Biological Collections.”</span> <em>Journal of Theoretical Biology</em> 13: 131–44. <a href="https://doi.org/10.1016/0022-5193(66)90013-0">https://doi.org/10.1016/0022-5193(66)90013-0</a>.
+</div>
+<div id="ref-Shannon_1948" class="csl-entry" role="listitem">
+Shannon, Claude E. 1948. <span>“A Mathematical Theory of Communication.”</span> <em>The Bell System Technical Journal</em> 27 (3): 379–423. <a href="https://doi.org/10.1002/j.1538-7305.1948.tb01338.x">https://doi.org/10.1002/j.1538-7305.1948.tb01338.x</a>.
+</div>
+<div id="ref-Zadeh_1965" class="csl-entry" role="listitem">
+Zadeh, Lotfi A. 1965. <span>“Fuzzy Sets.”</span> <em>Information and Control</em> 8 (3): 338–53. <a href="https://doi.org/10.1016/S0019-9958(65)90241-X">https://doi.org/10.1016/S0019-9958(65)90241-X</a>.
+</div>
+</div>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">

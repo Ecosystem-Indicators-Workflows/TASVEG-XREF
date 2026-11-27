@@ -304,7 +304,10 @@ div.csl-indent {
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#eligibility-of-units" id="toc-eligibility-of-units" class="nav-link active" data-scroll-target="#eligibility-of-units"><span class="header-section-number">3.1</span> Eligibility of units</a></li>
+  <li><a href="#eligibility-of-tasveg-mapping-units" id="toc-eligibility-of-tasveg-mapping-units" class="nav-link active" data-scroll-target="#eligibility-of-tasveg-mapping-units"><span class="header-section-number">3.1</span> Eligibility of TASVEG mapping units</a>
+  <ul class="collapse">
+  <li><a href="#eligibility-decision" id="toc-eligibility-decision" class="nav-link" data-scroll-target="#eligibility-decision"><span class="header-section-number">3.1.1</span> Eligibility decision</a></li>
+  </ul></li>
   </ul>
 </nav>
     </div>
@@ -330,19 +333,20 @@ div.csl-indent {
 </header>
 
 
-<p>Conceptual alignment is the first principle for cross-referencing classifications. Units in both the source and target classification should be based on similar concepts.</p>
-<p>Cross-referencing aims to elucidate relationships between units of classifications that represent similar types of entities. To be cross-referenced to the IUCN Global Ecosystem Typology (IUCN GET), it follows that the units of the source classification must be aligned with the ecosystem concept.</p>
-<p>Based on the definition agreed upon by <span class="citation" data-cites="UNCBD_1992">Secretariat of the Convention on Biological Diversity (<a href="../references.html#ref-UNCBD_1992" role="doc-biblioref">1992</a>)</span>, following <span class="citation" data-cites="Tansley_1935">Tansley (<a href="../references.html#ref-Tansley_1935" role="doc-biblioref">1935</a>)</span> original concept, an ecosystem is:</p>
+<p><strong>Conceptual alignment</strong> is the first principle of cross-referencing ecosystem classifications <span class="citation" data-cites="IUCN_2025">(<a href="../references.html#ref-IUCN_2025" role="doc-biblioref">IUCN 2025</a>)</span>. Before estimating memberships, we must verify that units in the source classification (TASVEG 5.0) and the target classification (IUCN GET) represent comparable kinds of ecological entities <span class="citation" data-cites="DeCaceres_2012">(<a href="../references.html#ref-DeCaceres_2012" role="doc-biblioref">De Cáceres and Wiser 2012</a>)</span>.</p>
+<p>Cross-referencing elucidates relationships between units representing similar types of entities. To be eligible for cross-referencing to the IUCN Global Ecosystem Typology (IUCN GET; <span class="citation" data-cites="Keith_2022">Keith et al. (<a href="../references.html#ref-Keith_2022" role="doc-biblioref">2022</a>)</span>), source units must align with the ecosystem concept defined by the Convention on Biological Diversity <span class="citation" data-cites="UNCBD_1992">(<a href="../references.html#ref-UNCBD_1992" role="doc-biblioref">Secretariat of the Convention on Biological Diversity 1992</a>)</span>, following <span class="citation" data-cites="Tansley_1935">Tansley (<a href="../references.html#ref-Tansley_1935" role="doc-biblioref">1935</a>)</span>:</p>
 <blockquote class="blockquote">
 <p>“a dynamic complex of plant, animal and micro-organism communities and their non-living environment interacting as a functional unit”.</p>
 </blockquote>
-<p>Qualitatively different kinds of entities should not be compared to the IUCN GET. In some cases partial relationships or conceptual overlaps may arise, and these warrant rigorous evaluation in cross-referencing to determine eligibility. For example land use and land cover classes or types are sometimes used as proxies of structural features of ecosystems, but they lack information on compositional and functional features.</p>
+<p>Qualitatively different kinds of entities—such as purely abiotic land-cover masks, administrative boundaries, or coarse land-use mosaics lacking ecological specificity—should not be forced into IUCN GET functional groups. Where partial conceptual overlaps exist, units require explicit eligibility screening so that non-aligned mapping classes are flagged rather than assigned spurious memberships.</p>
+<p>The conceptual diagram below (<a href="#fig-alignment" class="quarto-xref">Figure&nbsp;<span>3.1</span></a>) illustrates how diagnostic ecological descriptions from the TASVEG Technical Manual and the IUCN GET framework inform eligibility screening and fuzzy membership assignment during cross-referencing.</p>
 <div class="cell" data-layout-align="default">
 <div class="cell-output-display">
+<div id="fig-alignment" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-alignment-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div>
-<p></p><figure class="figure"><p></p>
-<div>
-<pre class="mermaid mermaid-js">flowchart LR
+<pre class="mermaid mermaid-js" data-label="fig-alignment">flowchart LR
     subgraph Inputs
         direction LR
         DD[(Technical&lt;br&gt;manual)]:::ddata
@@ -358,7 +362,7 @@ div.csl-indent {
         RE2 --&gt; XR2{X-ref}:::xref
         RE3 --&gt; XR3((...)):::not
         XR1 --&gt;|0.7| EFG1[EFG 1]:::get
-        XR1 --&gt;|0.3| EFG2[EFG 2]
+        XR1 --&gt;|0.3| EFG2[EFG 2]:::get
         XR2 --&gt;|1.0| EFG2:::get
         XR3 --&gt; EFG3[not eligible]:::not
     end
@@ -372,28 +376,43 @@ div.csl-indent {
     style Crossreference fill:none,color:black,stroke:#333,stroke-width:1px,stroke-dasharray: 1 1;
 </pre>
 </div>
-<p></p></figure><p></p>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-alignment-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3.1: Conceptual alignment between TASVEG vegetation communities (eligible source units), non-eligible mapping units, and IUCN GET Ecosystem Functional Groups (EFGs).
+</figcaption>
+</figure>
 </div>
 </div>
 </div>
-<section id="eligibility-of-units" class="level2" data-number="3.1">
-<h2 data-number="3.1" class="anchored" data-anchor-id="eligibility-of-units"><span class="header-section-number">3.1</span> Eligibility of units</h2>
-<p>Most units in the TASVEG dataset represent vegetation communities and can be considered eligible for crossreferencing to the IUCN GET.</p>
-<p>However, there are three mapping units in the group ‘Other natural environments’ that require more scrutiny: Lichen lithosere (ORO), Sand, mud (OSM), and Water, sea (OAQ).</p>
-<p>According to the technical manual <span class="citation" data-cites="KitchenerHarris_2013">(<a href="../references.html#ref-KitchenerHarris_2013" role="doc-biblioref">Kitchener and Harris 2013</a>)</span>:</p>
+<section id="eligibility-of-tasveg-mapping-units" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="eligibility-of-tasveg-mapping-units"><span class="header-section-number">3.1</span> Eligibility of TASVEG mapping units</h2>
+<p>Most units in TASVEG 5.0 (153 of the 156 mapped statewide units, plus 3 additional codes in the Fire Attributes lookup table) represent ecological vegetation communities or recognised anthropogenic ecosystems (e.g.&nbsp;agricultural land, plantations, urban areas) that align well with the ecosystem concept and are therefore <strong>eligible</strong> for cross-referencing to IUCN GET Level 3 Ecosystem Functional Groups.</p>
+<p>However, three mapping units in the broad group <em>Other natural environments</em> require closer scrutiny: <strong>Lichen lithosere (<code>ORO</code>)</strong>, <strong>Sand, mud (<code>OSM</code>)</strong>, and <strong>Water, sea (<code>OAQ</code>)</strong>. According to the TASVEG Technical Manual <span class="citation" data-cites="KitchenerHarris_2013">(<a href="../references.html#ref-KitchenerHarris_2013" role="doc-biblioref">Kitchener and Harris 2013</a>)</span>:</p>
 <blockquote class="blockquote">
-<p>Lichen lithosere (ORO) is important for undisturbed cryptogamic communities, such as on blockstreams, cliffs, talus and scree slopes and exposed bedrock on mountain tops and ridges.</p>
+<p><strong>Lichen lithosere (<code>ORO</code>)</strong> is important for undisturbed cryptogamic communities, such as on blockstreams, cliffs, talus and scree slopes and exposed bedrock on mountain tops and ridges.</p>
 </blockquote>
 <blockquote class="blockquote">
-<p>Sand, mud (OSM) is bare of vegetation, has been used for mapping beaches, sand dune systems, and mobile sand sheets such as those at Waterhouse in north-east Tasmania or at Sandy Cape on the west coast.</p>
+<p><strong>Sand, mud (<code>OSM</code>)</strong> is bare of vegetation, and has been used for mapping beaches, sand dune systems, and mobile sand sheets such as those at Waterhouse in north-east Tasmania or at Sandy Cape on the west coast.</p>
 </blockquote>
 <blockquote class="blockquote">
-<p>Water, sea (OAQ) has been used to designate areas of sea, artificial impoundments such as Lake Gordon, Lake Saint Clair and Lake Pedder, as well as deep water in natural lakes.</p>
+<p><strong>Water, sea (<code>OAQ</code>)</strong> has been used to designate areas of sea, artificial impoundments such as Lake Gordon, Lake Saint Clair and Lake Pedder, as well as deep water in natural lakes.</p>
 </blockquote>
-<p>The units OAQ and OSM are mapping units combining multiple types of ecosystems</p>
+<section id="eligibility-decision" class="level3" data-number="3.1.1">
+<h3 data-number="3.1.1" class="anchored" data-anchor-id="eligibility-decision"><span class="header-section-number">3.1.1</span> Eligibility decision</h3>
+<p>The units <code>OAQ</code> and <code>OSM</code> are broad, non-vegetated mapping complexes that combine multiple functionally distinct ecosystems across different IUCN GET realms and biomes—for example, <code>OAQ</code> merges marine waters, natural freshwater lakes, and artificial reservoirs, while <code>OSM</code> merges marine-terrestrial sandy beaches, intertidal mudflats, and terrestrial mobile dunes. Similarly, <code>ORO</code> captures exposed rock and cryptogamic lithoseres spanning disparate alpine, montane, and coastal environments that cannot be resolved into a single Ecosystem Functional Group from the TASVEG classification alone.</p>
+<p>Without auxiliary spatial layers (such as hydrography, bathymetry, shoreline delineations, or elevation masks) to disaggregate these mapping complexes, assigning them a single statewide membership profile would introduce systematic thematic error. Consequently, <strong><code>OAQ</code>, <code>OSM</code>, and <code>ORO</code> are flagged as not eligible (<code>eligible = FALSE</code>)</strong> in the TASVEG lookup table (<a href="../preparation/lookup-tables.html" class="quarto-xref"><span>Chapter 4</span></a>), excluded during validation and cleaning (<a href="../preparation/validation.html" class="quarto-xref"><span>Chapter 6</span></a>), and represented as <code>NoData</code> (<code>NA</code>) in the statewide spatial outputs (<a href="../synthesis/EFG-map.html" class="quarto-xref"><span>Chapter 13</span></a> and <a href="../appendices/outputs.html" class="quarto-xref"><span>Chapter 17</span></a>).</p>
 
 
 <div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list" style="display: none">
+<div id="ref-DeCaceres_2012" class="csl-entry" role="listitem">
+De Cáceres, Miquel, and Susan K. Wiser. 2012. <span>“Towards Consistency in Vegetation Classification.”</span> <em>Journal of Vegetation Science</em> 23 (2): 387–93. <a href="https://doi.org/10.1111/j.1654-1103.2011.01354.x">https://doi.org/10.1111/j.1654-1103.2011.01354.x</a>.
+</div>
+<div id="ref-IUCN_2025" class="csl-entry" role="listitem">
+IUCN. 2025. <em>Standards, Methods and Guidelines for Cross-Referencing Ecosystem Classifications and Maps to the IUCN Global Ecosystem Typology</em> (version Version 1.0). Edited by D. A. Keith, A. Dayaram, A. Driver, J. R. Ferrer-Paris, R. Francis, S. Hay, N. J. Murray, et al. Gland, Switzerland: IUCN. <a href="https://doi.org/10.2305/CPPC6126">https://doi.org/10.2305/CPPC6126</a>.
+</div>
+<div id="ref-Keith_2022" class="csl-entry" role="listitem">
+Keith, David A., José R. Ferrer-Paris, Emily Nicholson, Melanie J. Bishop, Beth A. Polidoro, Eva Ramirez-Llodra, Mark G. Tozer, et al. 2022. <span>“A Function-Based Typology for Earth’s Ecosystems.”</span> <em>Nature</em> 610 (7932): 513–18. <a href="https://doi.org/10.1038/s41586-022-05318-4">https://doi.org/10.1038/s41586-022-05318-4</a>.
+</div>
 <div id="ref-KitchenerHarris_2013" class="csl-entry" role="listitem">
 Kitchener, A., and S. Harris. 2013. <span>“<span class="nocase">From Forest to Fjaeldmark​: Descriptions of Tasmania’s Vegetation</span>.”</span> 2nd ed. Tasmania: Department of Primary Industries, Parks, Water; Environment. <a href="http://nre.tas.gov.au/conservation/flora-of-tasmania/from-forest-to-fjaeldmark-descriptions-of-tasmanias-vegetation">http://nre.tas.gov.au/conservation/flora-of-tasmania/from-forest-to-fjaeldmark-descriptions-of-tasmanias-vegetation</a>.
 </div>
@@ -404,6 +423,7 @@ Secretariat of the Convention on Biological Diversity. 1992. <span>“Convention
 Tansley, A. G. 1935. <span>“The Use and Abuse of Vegetational Concepts and Terms.”</span> <em>Ecology</em> 16 (3): 284–307. https://doi.org/<a href="https://doi.org/10.2307/1930070">https://doi.org/10.2307/1930070</a>.
 </div>
 </div>
+</section>
 </section>
 
 </main> <!-- /main -->

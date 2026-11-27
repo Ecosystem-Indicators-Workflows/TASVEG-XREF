@@ -55,7 +55,27 @@ div.sourceCode
 @media screen {
 pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
-</style>
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
 <script src="../site_libs/quarto-nav/quarto-nav.js"></script>
@@ -106,6 +126,35 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   }
 }</script>
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 <link rel="stylesheet" href="../styles.css">
 </head>
@@ -316,10 +365,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#pairwise-dissimilarity" id="toc-pairwise-dissimilarity" class="nav-link active" data-scroll-target="#pairwise-dissimilarity"><span class="header-section-number">9.1</span> Pairwise dissimilarity</a></li>
-  <li><a href="#pairwise-expert-distances-for-each-unit." id="toc-pairwise-expert-distances-for-each-unit." class="nav-link" data-scroll-target="#pairwise-expert-distances-for-each-unit."><span class="header-section-number">9.2</span> Pairwise expert distances for each unit.</a></li>
-  <li><a href="#visualising" id="toc-visualising" class="nav-link" data-scroll-target="#visualising"><span class="header-section-number">9.3</span> Visualising</a></li>
-  <li><a href="#generate-a-membership-matrix" id="toc-generate-a-membership-matrix" class="nav-link" data-scroll-target="#generate-a-membership-matrix"><span class="header-section-number">9.4</span> Generate a membership matrix</a></li>
+  <li><a href="#filtering-round-2-and-building-the-3d-membership-matrix" id="toc-filtering-round-2-and-building-the-3d-membership-matrix" class="nav-link active" data-scroll-target="#filtering-round-2-and-building-the-3d-membership-matrix"><span class="header-section-number">9.1</span> Filtering Round 2 and building the 3D membership matrix</a></li>
+  <li><a href="#inter-interpreter-agreement-calc_agreement" id="toc-inter-interpreter-agreement-calc_agreement" class="nav-link" data-scroll-target="#inter-interpreter-agreement-calc_agreement"><span class="header-section-number">9.2</span> Inter-interpreter agreement (<code>calc_agreement</code>)</a>
+  <ul class="collapse">
+  <li><a href="#global-agreement-between-interpreter-pairs" id="toc-global-agreement-between-interpreter-pairs" class="nav-link" data-scroll-target="#global-agreement-between-interpreter-pairs"><span class="header-section-number">9.2.1</span> Global agreement between interpreter pairs</a></li>
+  <li><a href="#per-unit-pairwise-dissimilarity" id="toc-per-unit-pairwise-dissimilarity" class="nav-link" data-scroll-target="#per-unit-pairwise-dissimilarity"><span class="header-section-number">9.2.2</span> Per-unit pairwise dissimilarity</a></li>
+  </ul></li>
+  <li><a href="#target-usage-patterns-across-interpreters" id="toc-target-usage-patterns-across-interpreters" class="nav-link" data-scroll-target="#target-usage-patterns-across-interpreters"><span class="header-section-number">9.3</span> Target usage patterns across interpreters</a></li>
+  <li><a href="#within-interpreter-uncertainty-shannons-entropy" id="toc-within-interpreter-uncertainty-shannons-entropy" class="nav-link" data-scroll-target="#within-interpreter-uncertainty-shannons-entropy"><span class="header-section-number">9.4</span> Within-interpreter uncertainty: Shannon’s entropy</a></li>
+  <li><a href="#inspecting-the-most-contested-round-2-units" id="toc-inspecting-the-most-contested-round-2-units" class="nav-link" data-scroll-target="#inspecting-the-most-contested-round-2-units"><span class="header-section-number">9.5</span> Inspecting the most contested Round 2 units</a></li>
   </ul>
 </nav>
     </div>
@@ -345,179 +399,30 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
+<p>Following structured group discussions of Round 1 discrepancies (<a href="round-1.html" class="quarto-xref"><span>Chapter 8</span></a>), all interpreters revised their assignments in <strong>Round 2</strong> <span class="citation" data-cites="Hemming_2018 IUCN_2025">(<a href="../references.html#ref-Hemming_2018" role="doc-biblioref">Hemming et al. 2018</a>; <a href="../references.html#ref-IUCN_2025" role="doc-biblioref">IUCN 2025</a>)</span>. Round 2 includes five interpreters (<code>Adelina_Latinovic</code>, <code>Anne Kitchener</code>, <code>David_Keith</code>, <code>Jayne_Balmer</code>, and <code>Mark_Tozer</code>), and every interpreter assessed the complete set of <strong>153 eligible TASVEG 5.0 communities</strong>. Because Round 2 incorporates both shared conceptual clarification and full coverage across all five interpreters, it forms the basis for the synthesis and spatial outputs in Part III (<a href="../synthesis/index.html" class="quarto-xref"><span>Chapter 11</span></a>–<a href="../synthesis/EFG-map.html" class="quarto-xref"><span>Chapter 13</span></a>).</p>
 
 <div class="no-row-height column-margin column-container"><div class="margin-aside">
-<p>Our setup for this R session is:</p>
-<div class="cell" data-warnings="false">
+<p>Our setup for this R session loads <code>ecoSynthesis</code>, tidyverse/plotting packages, custom plot styling, and the validated lookup and membership tables:</p>
+<div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ecoSynthesis)</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>here<span class="sc">::</span><span class="fu">i_am</span>(<span class="st">"analysis/round-1.qmd"</span>)</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>output_dir <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"../results/XREFs"</span>)</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"../scripts/setup.R"</span>))</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"../scripts/functions.R"</span>))</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">load</span>(here<span class="sc">::</span><span class="fu">here</span>(output_dir, <span class="st">"lookup-tables.rda"</span>))</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">load</span>(here<span class="sc">::</span><span class="fu">here</span>(output_dir, <span class="st">"memb-tables.rda"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ecoSynthesis)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>here<span class="sc">::</span><span class="fu">i_am</span>(<span class="st">"analysis/round-2.qmd"</span>)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>output_dir <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"../results/XREFs"</span>)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"../scripts/setup.R"</span>))</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"../scripts/functions.R"</span>))</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">load</span>(here<span class="sc">::</span><span class="fu">here</span>(output_dir, <span class="st">"lookup-tables.rda"</span>))</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">load</span>(here<span class="sc">::</span><span class="fu">here</span>(output_dir, <span class="st">"memb-tables.rda"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-</div></div><section id="pairwise-dissimilarity" class="level2" data-number="9.1">
-<h2 data-number="9.1" class="anchored" data-anchor-id="pairwise-dissimilarity"><span class="header-section-number">9.1</span> Pairwise dissimilarity</h2>
-<p>Calculate pairwise dissimilarities</p>
+</div></div><section id="filtering-round-2-and-building-the-3d-membership-matrix" class="level2" data-number="9.1">
+<h2 data-number="9.1" class="anchored" data-anchor-id="filtering-round-2-and-building-the-3d-membership-matrix"><span class="header-section-number">9.1</span> Filtering Round 2 and building the 3D membership matrix</h2>
+<p>We filter <code>TASVEG_clean</code> to Round 2 and construct the 3D <code>membership_matrix</code> (<code>[source, target, interpreter]</code>) via <code>ecoSynthesis::membership_matrix()</code>. Notice that all 5 interpreters now have 153 assessed source units across 31 candidate EFGs (compared with 29 EFGs in Round 1), and <code>Mark_Tozer</code>’s split <code>T4.5</code> entry for <code>SWR</code> (<a href="../preparation/exploration.html" class="quarto-xref"><span>Chapter 7</span></a>) is summed automatically inside the matrix:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>TASVEG_revised <span class="ot">&lt;-</span> <span class="fu">filter</span>(TASVEG_clean, round <span class="sc">==</span> <span class="dv">2</span>)</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>(pd <span class="ot">&lt;-</span> <span class="fu">pairwise_dissimilarity</span>(TASVEG_revised))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 1,530 × 6
-   VEGCODE expert_a          expert_b       dissimilarity similarity pair       
- * &lt;chr&gt;   &lt;chr&gt;             &lt;chr&gt;                  &lt;dbl&gt;      &lt;dbl&gt; &lt;chr&gt;      
- 1 AAP     Adelina_Latinovic Anne Kitchener           0          1   Adelina_La…
- 2 AAP     Adelina_Latinovic David_Keith              0.2        0.8 Adelina_La…
- 3 AAP     Adelina_Latinovic Jayne_Balmer             0          1   Adelina_La…
- 4 AAP     Adelina_Latinovic Mark_Tozer               0.1        0.9 Adelina_La…
- 5 AAP     Anne Kitchener    David_Keith              0.2        0.8 Anne Kitch…
- 6 AAP     Anne Kitchener    Jayne_Balmer             0          1   Anne Kitch…
- 7 AAP     Anne Kitchener    Mark_Tozer               0.1        0.9 Anne Kitch…
- 8 AAP     David_Keith       Jayne_Balmer             0.2        0.8 David_Keit…
- 9 AAP     David_Keith       Mark_Tozer               0.2        0.8 David_Keit…
-10 AAP     Jayne_Balmer      Mark_Tozer               0.1        0.9 Jayne_Balm…
-# ℹ 1,520 more rows</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_pairwise_diss</span>(pd) <span class="sc">+</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_wp3</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="round-2_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid figure-img" width="672"></p>
-</figure>
-</div>
-</div>
-</div>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>efg_order <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">unique</span>(TASVEG_revised<span class="sc">$</span>EFG))</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>membership_matrix <span class="ot">&lt;-</span> profiles <span class="sc">|&gt;</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    tidyr<span class="sc">::</span><span class="fu">pivot_wider</span>(<span class="at">names_from =</span> efg, <span class="at">values_from =</span> memb) <span class="sc">|&gt;</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">select</span>(VEGCODE, expert, dplyr<span class="sc">::</span><span class="fu">any_of</span>(efg_order)) <span class="sc">|&gt;</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">arrange</span>(VEGCODE, expert)</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="fu">message</span>(</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">nrow</span>(membership_matrix),</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">" rows (unit × expert) × "</span>,</span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">length</span>(efg_order),</span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">" target columns. "</span>,</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"NA = target not used by any expert for that unit; 0 = used by another expert but not this one."</span></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(membership_matrix, <span class="dv">12</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</section>
-<section id="pairwise-expert-distances-for-each-unit." class="level2" data-number="9.2">
-<h2 data-number="9.2" class="anchored" data-anchor-id="pairwise-expert-distances-for-each-unit."><span class="header-section-number">9.2</span> Pairwise expert distances for each unit.</h2>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>sid <span class="ot">&lt;-</span> rlang<span class="sc">::</span><span class="fu">sym</span>(<span class="fu">attr</span>(pd, <span class="st">"source_id"</span>))</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>unit_disagreement <span class="ot">&lt;-</span> pd <span class="sc">|&gt;</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">group_by</span>(<span class="sc">!!</span>sid) <span class="sc">|&gt;</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">summarise</span>(</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>        <span class="at">mean_dissimilarity =</span> <span class="fu">mean</span>(dissimilarity),</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>        <span class="at">min_dissimilarity =</span> <span class="fu">min</span>(dissimilarity),</span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">max_dissimilarity =</span> <span class="fu">max</span>(dissimilarity),</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">n_pairs =</span> dplyr<span class="sc">::</span><span class="fu">n</span>(),</span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>        <span class="at">.groups =</span> <span class="st">"drop"</span></span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">arrange</span>(dplyr<span class="sc">::</span><span class="fu">desc</span>(mean_dissimilarity), VEGCODE)</span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>msg <span class="ot">&lt;-</span> <span class="st">"%s of %s units have identical profiles from every interpreter."</span></span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="fu">message</span>(</span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">sprintf</span>(</span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>        msg,</span>
-<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>        <span class="fu">sum</span>(unit_disagreement<span class="sc">$</span>max_dissimilarity <span class="sc">&lt;</span> <span class="fl">0.001</span>),</span>
-<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>        <span class="fu">nrow</span>(unit_disagreement)</span>
-<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>31 of 153 units have identical profiles from every interpreter.</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(unit_disagreement, <span class="dv">10</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 10 × 5
-   VEGCODE mean_dissimilarity min_dissimilarity max_dissimilarity n_pairs
-   &lt;chr&gt;                &lt;dbl&gt;             &lt;dbl&gt;             &lt;dbl&gt;   &lt;int&gt;
- 1 FMG                  0.725               0.3               1        10
- 2 SWR                  0.56                0                 0.9      10
- 3 FSM                  0.52                0                 1        10
- 4 SBR                  0.52                0                 1        10
- 5 AHL                  0.518               0                 0.9      10
- 6 SMP                  0.49                0.3               0.9      10
- 7 FWU                  0.475               0                 0.8      10
- 8 ARS                  0.465               0                 1        10
- 9 NLA                  0.445               0                 0.9      10
-10 SRH                  0.44                0                 1        10</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(unit_disagreement, <span class="fu">aes</span>(<span class="at">x =</span> mean_dissimilarity)) <span class="sc">+</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_histogram</span>(<span class="at">binwidth =</span> <span class="fl">0.1</span>) <span class="sc">+</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_wp3</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="round-2_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid figure-img" width="672"></p>
-</figure>
-</div>
-</div>
-</div>
-</section>
-<section id="visualising" class="level2" data-number="9.3">
-<h2 data-number="9.3" class="anchored" data-anchor-id="visualising"><span class="header-section-number">9.3</span> Visualising</h2>
-<p>This source unit had the highest dissimilarity:</p>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>TASVEG <span class="sc">|&gt;</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">filter</span>(VEGCODE <span class="sc">==</span> <span class="st">"FMG"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">glimpse</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Rows: 1
-Columns: 4
-$ VEG_GROUP &lt;chr&gt; "Agricultural, urban and exotic vegetation"
-$ VEGCODE   &lt;chr&gt; "FMG"
-$ VEGCODE_D &lt;chr&gt; "(FMG) Marram grassland"
-$ eligible  &lt;lgl&gt; TRUE</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>dplyr<span class="sc">::</span><span class="fu">filter</span>(TASVEG_revised, VEGCODE <span class="sc">==</span> <span class="st">"FMG"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">membership_tile_plot</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="round-2_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid figure-img" width="672"></p>
-</figure>
-</div>
-</div>
-</div>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>TASVEG <span class="sc">|&gt;</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">filter</span>(VEGCODE <span class="sc">==</span> <span class="st">"SWR"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">glimpse</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Rows: 1
-Columns: 4
-$ VEG_GROUP &lt;chr&gt; "Scrub, heathland and coastal complexes"
-$ VEGCODE   &lt;chr&gt; "SWR"
-$ VEGCODE_D &lt;chr&gt; "(SWR) Western regrowth complex"
-$ eligible  &lt;lgl&gt; TRUE</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>dplyr<span class="sc">::</span><span class="fu">filter</span>(TASVEG_revised, VEGCODE <span class="sc">==</span> <span class="st">"SWR"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">membership_tile_plot</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="round-2_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid figure-img" width="672"></p>
-</figure>
-</div>
-</div>
-</div>
-</section>
-<section id="generate-a-membership-matrix" class="level2" data-number="9.4">
-<h2 data-number="9.4" class="anchored" data-anchor-id="generate-a-membership-matrix"><span class="header-section-number">9.4</span> Generate a membership matrix</h2>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>TASVEG_mtx <span class="ot">&lt;-</span> <span class="fu">membership_matrix</span>(TASVEG_revised)</span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>TASVEG_mtx</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>TASVEG_mtx_r2 <span class="ot">&lt;-</span> <span class="fu">membership_matrix</span>(TASVEG_revised)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>TASVEG_mtx_r2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>&lt;membership_matrix&gt; 153 sources x 31 targets x 5 interpreters</code></pre>
 </div>
@@ -539,30 +444,351 @@ $ eligible  &lt;lgl&gt; TRUE</code></pre>
 <div class="cell-output cell-output-stderr">
 <pre><code>Use `unclass(data)[source, target, interpreter]` to view values.</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>TASVEG_mtx[<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>, , <span class="st">"Adelina_Latinovic"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We can inspect an individual slice of the 3D array using <code>unclass()</code>—for example, the first four TASVEG units across the first six target EFGs for <code>Adelina_Latinovic</code>:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">unclass</span>(TASVEG_mtx_r2)[<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>, <span class="st">"Adelina_Latinovic"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>      target
-source      F2.2      F2.3 F2.4 F2.8 F3.1 F3.3 MFT1.3 MT2.1 MT2.2 MT3.1 T2.3
-   AAP 0.0000000 0.0000000    0    0    0    0      0     0     0     0    0
-   AHF 0.3333333 0.3333333    0    0    0    0      0     0     0     0    0
-   AHL 0.0000000 0.0000000    0    0    0    0      0     0     0     0    0
-   AHS 0.0000000 0.0000000    0    0    0    0      1     0     0     0    0
-      target
-source T2.4 T2.5 T2.6 T3.2 T3.4 T4.4 T4.5 T6.4 T7.1 T7.2 T7.3 T7.4 T7.5 TF1.1
-   AAP    0    0    0    0    0    0    0    0    0    0    0    0    0     0
-   AHF    0    0    0    0    0    0    0    0    0    0    0    0    0     0
-   AHL    0    0    0    0    0    0    0    0    0    0    0    0    0     0
-   AHS    0    0    0    0    0    0    0    0    0    0    0    0    0     0
-      target
-source TF1.2     TF1.3 TF1.4 TF1.5 TF1.6 TF1.7
-   AAP     0 0.0000000     0     0     0     1
-   AHF     0 0.3333333     0     0     0     0
-   AHL     0 1.0000000     0     0     0     0
-   AHS     0 0.0000000     0     0     0     0</code></pre>
+source      F2.2      F2.3 F2.4 F2.8 F3.1 F3.3
+   AAP 0.0000000 0.0000000    0    0    0    0
+   AHF 0.3333333 0.3333333    0    0    0    0
+   AHL 0.0000000 0.0000000    0    0    0    0
+   AHS 0.0000000 0.0000000    0    0    0    0</code></pre>
+</div>
+</div>
+</section>
+<section id="inter-interpreter-agreement-calc_agreement" class="level2" data-number="9.2">
+<h2 data-number="9.2" class="anchored" data-anchor-id="inter-interpreter-agreement-calc_agreement"><span class="header-section-number">9.2</span> Inter-interpreter agreement (<code>calc_agreement</code>)</h2>
+<section id="global-agreement-between-interpreter-pairs" class="level3" data-number="9.2.1">
+<h3 data-number="9.2.1" class="anchored" data-anchor-id="global-agreement-between-interpreter-pairs"><span class="header-section-number">9.2.1</span> Global agreement between interpreter pairs</h3>
+<p>Calling <code>calc_agreement(TASVEG_mtx_r2)</code> computes global pairwise agreement across all 10 unique interpreter pairs (mirrored symmetrically with diagonal = 1). Compared to Round 1 (<a href="round-1.html" class="quarto-xref"><span>Chapter 8</span></a>), every pair of interpreters now compares all 153 units and achieves substantially higher mean similarity (<span class="math inline">\(\ge 0.84\)</span> across every pair):</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>ag2_global <span class="ot">&lt;-</span> <span class="fu">calc_agreement</span>(TASVEG_mtx_r2)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>ag2_global</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 25 × 7
+   interpreter_x     interpreter_y     n_units mean_similarity median_similarity
+   &lt;chr&gt;             &lt;chr&gt;               &lt;int&gt;           &lt;dbl&gt;             &lt;dbl&gt;
+ 1 Adelina_Latinovic Adelina_Latinovic     153           1                  1   
+ 2 Adelina_Latinovic Anne Kitchener        153           0.982              1   
+ 3 Adelina_Latinovic David_Keith           153           0.842              0.9 
+ 4 Adelina_Latinovic Jayne_Balmer          153           0.853              0.95
+ 5 Adelina_Latinovic Mark_Tozer            153           0.859              0.9 
+ 6 Anne Kitchener    Adelina_Latinovic     153           0.982              1   
+ 7 Anne Kitchener    Anne Kitchener        153           1                  1   
+ 8 Anne Kitchener    David_Keith           153           0.846              0.9 
+ 9 Anne Kitchener    Jayne_Balmer          153           0.848              0.95
+10 Anne Kitchener    Mark_Tozer            153           0.863              0.9 
+# ℹ 15 more rows
+# ℹ 2 more variables: share_identical &lt;dbl&gt;, mean_dissimilarity &lt;dbl&gt;</code></pre>
+</div>
+</div>
+<p>The heatmap below visualises the global Round 2 pairwise similarity matrix:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(ag2_global, <span class="fu">aes</span>(<span class="at">x =</span> interpreter_x, <span class="at">y =</span> interpreter_y, <span class="at">fill =</span> mean_similarity)) <span class="sc">+</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_tile</span>(<span class="at">colour =</span> <span class="st">"white"</span>, <span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_text</span>(</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>        <span class="fu">aes</span>(</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">label =</span> <span class="fu">sprintf</span>(<span class="st">"%.2f</span><span class="sc">\n</span><span class="st">(%.0f%% id.)"</span>, mean_similarity, <span class="dv">100</span> <span class="sc">*</span> share_identical),</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">colour =</span> mean_similarity <span class="sc">&gt;</span> <span class="fl">0.88</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">size =</span> <span class="fl">3.2</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_fill_gradient</span>(<span class="at">low =</span> teal_low, <span class="at">high =</span> teal_high, <span class="at">limits =</span> <span class="fu">c</span>(<span class="fl">0.75</span>, <span class="dv">1</span>)) <span class="sc">+</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>    label_colour_scale <span class="sc">+</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>        <span class="at">title =</span> <span class="st">"Round 2: Mean pairwise similarity and share of identical profiles"</span>,</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>        <span class="at">x =</span> <span class="cn">NULL</span>,</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>        <span class="at">y =</span> <span class="cn">NULL</span>,</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>        <span class="at">fill =</span> <span class="st">"Mean similarity"</span></span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">coord_fixed</span>() <span class="sc">+</span></span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_wp3</span>() <span class="sc">+</span></span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">25</span>, <span class="at">hjust =</span> <span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="round-2_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid figure-img" width="720"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="per-unit-pairwise-dissimilarity" class="level3" data-number="9.2.2">
+<h3 data-number="9.2.2" class="anchored" data-anchor-id="per-unit-pairwise-dissimilarity"><span class="header-section-number">9.2.2</span> Per-unit pairwise dissimilarity</h3>
+<p>Next, <code>calc_agreement(TASVEG_mtx_r2, by_source = TRUE)</code> computes pairwise similarity and dissimilarity for all 1,530 unit-pair combinations (153 units × 10 interpreter pairs). The faceted histograms illustrate the strong concentration near <span class="math inline">\(S = 1\)</span> across all ten pairs:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>ag2_by_source <span class="ot">&lt;-</span> <span class="fu">calc_agreement</span>(TASVEG_mtx_r2, <span class="at">by_source =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(ag2_by_source, <span class="fu">aes</span>(<span class="at">x =</span> similarity)) <span class="sc">+</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_histogram</span>(<span class="at">binwidth =</span> <span class="fl">0.1</span>, <span class="at">fill =</span> teal_high, <span class="at">colour =</span> <span class="st">"white"</span>) <span class="sc">+</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">facet_grid</span>(<span class="at">rows =</span> <span class="fu">vars</span>(interpreter_x), <span class="at">cols =</span> <span class="fu">vars</span>(interpreter_y)) <span class="sc">+</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>        <span class="at">title =</span> <span class="st">"Round 2: Distribution of pairwise similarity by interpreter pair"</span>,</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">x =</span> <span class="st">"Pairwise similarity (1 - dissimilarity)"</span>,</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">y =</span> <span class="st">"Number of TASVEG units"</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_wp3</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="round-2_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Summarising <code>ag2_by_source</code> by <code>source</code> identifies how many TASVEG communities achieved complete consensus across all five interpreters in Round 2, lists the 10 remaining most-contested units, and plots the unit-level dissimilarity distribution:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>unit_disagreement_r2 <span class="ot">&lt;-</span> ag2_by_source <span class="sc">|&gt;</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(<span class="at">VEGCODE =</span> source) <span class="sc">|&gt;</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarise</span>(</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>        <span class="at">mean_dissimilarity =</span> <span class="fu">mean</span>(dissimilarity),</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>        <span class="at">min_dissimilarity =</span> <span class="fu">min</span>(dissimilarity),</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>        <span class="at">max_dissimilarity =</span> <span class="fu">max</span>(dissimilarity),</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>        <span class="at">n_pairs =</span> <span class="fu">n</span>(),</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">.groups =</span> <span class="st">"drop"</span></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">arrange</span>(<span class="fu">desc</span>(mean_dissimilarity), VEGCODE)</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a><span class="fu">message</span>(<span class="fu">sprintf</span>(</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"%s of %s units have identical profiles from every interpreter in Round 2."</span>,</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">sum</span>(unit_disagreement_r2<span class="sc">$</span>max_dissimilarity <span class="sc">&lt;</span> <span class="fl">0.001</span>),</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">nrow</span>(unit_disagreement_r2)</span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>31 of 153 units have identical profiles from every interpreter in Round 2.</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(unit_disagreement_r2, <span class="dv">10</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 10 × 5
+   VEGCODE mean_dissimilarity min_dissimilarity max_dissimilarity n_pairs
+   &lt;chr&gt;                &lt;dbl&gt;             &lt;dbl&gt;             &lt;dbl&gt;   &lt;int&gt;
+ 1 FMG                  0.725               0.3               1        10
+ 2 SWR                  0.56                0                 0.9      10
+ 3 FSM                  0.52                0                 1        10
+ 4 SBR                  0.52                0                 1        10
+ 5 AHL                  0.518               0                 0.9      10
+ 6 SMP                  0.49                0.3               0.9      10
+ 7 FWU                  0.475               0                 0.8      10
+ 8 ARS                  0.465               0                 1        10
+ 9 NLA                  0.445               0                 0.9      10
+10 SRH                  0.44                0                 1        10</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(unit_disagreement_r2, <span class="fu">aes</span>(<span class="at">x =</span> mean_dissimilarity)) <span class="sc">+</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_histogram</span>(<span class="at">binwidth =</span> <span class="fl">0.1</span>, <span class="at">fill =</span> rust_high, <span class="at">colour =</span> <span class="st">"white"</span>) <span class="sc">+</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>        <span class="at">title =</span> <span class="st">"Round 2: Mean pairwise dissimilarity across TASVEG units"</span>,</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>        <span class="at">x =</span> <span class="st">"Mean pairwise dissimilarity per unit"</span>,</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>        <span class="at">y =</span> <span class="st">"Number of TASVEG units"</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_wp3</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="round-2_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="target-usage-patterns-across-interpreters" class="level2" data-number="9.3">
+<h2 data-number="9.3" class="anchored" data-anchor-id="target-usage-patterns-across-interpreters"><span class="header-section-number">9.3</span> Target usage patterns across interpreters</h2>
+<p>Using <code>ecoSynthesis::membership_target_heatmap()</code> and <code>ecoSynthesis::membership_target_pair_heatmap()</code> on <code>TASVEG_revised</code> shows how evenly the 31 candidate EFGs are used across all five interpreters and ten interpreter pairs after group discussion:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">membership_target_heatmap</span>(TASVEG_revised) <span class="sc">+</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Round 2 Target Use"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="round-2_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid figure-img" width="816"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">membership_target_pair_heatmap</span>(TASVEG_revised) <span class="sc">+</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Round 2 Shared Target Use"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="round-2_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid figure-img" width="1056"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Package caveat: hardcoded plot titles in <code>ecoSynthesis</code> v0.0.0.9005
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Both <code>membership_target_heatmap()</code> (default <code>"Round X Target Use"</code>) and <code>membership_target_pair_heatmap()</code> (default <code>"Round 1 Shared Target Use"</code>) hardcode their plot titles and do not yet accept a <code>round</code> filter in <code>v0.0.0.9005</code>. Pre-filtering to <code>round == 2</code> and appending <code>+ ggplot2::labs(title = ...)</code> ensures accurate Round 2 labels without modifying package code.</p>
+</div>
+</div>
+</section>
+<section id="within-interpreter-uncertainty-shannons-entropy" class="level2" data-number="9.4">
+<h2 data-number="9.4" class="anchored" data-anchor-id="within-interpreter-uncertainty-shannons-entropy"><span class="header-section-number">9.4</span> Within-interpreter uncertainty: Shannon’s entropy</h2>
+<p>We next compute normalised Shannon’s entropy for Round 2 using <code>ecoSynthesis::calc_entropy_tbl()</code> across the entire dataset (<code>overall</code>), per interpreter (<code>by_interpreter</code>), per TASVEG community (<code>by_source</code>), and per target EFG (<code>by_target</code>).</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Incomplete-sum warning on <code>HSE</code>
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Recall from <a href="../preparation/exploration.html" class="quarto-xref"><span>Chapter 7</span></a> that <code>Jayne_Balmer</code>’s Round 2 profile for <code>HSE</code> sums to <code>0.90</code>. When <code>calc_entropy_tbl()</code> calls <code>calc_shannons_entropy()</code> on that vector, <code>ecoSynthesis</code> emits an informative warning (<code>sum of the probabilities is less than 1 (0.9)</code>) and automatically re-normalises the non-zero probabilities internally (<span class="math inline">\(p_k / \sum p\)</span>) so entropy remains strictly comparable on <span class="math inline">\([0, 1]\)</span>.</p>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">calc_entropy_tbl</span>(TASVEG_revised, <span class="at">overall =</span> <span class="st">"overall"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 4
+  round mean_entropy_source_norm…¹ mean_entropy_interpr…² mean_entropy_set_nor…³
+  &lt;dbl&gt;                      &lt;dbl&gt;                  &lt;dbl&gt;                  &lt;dbl&gt;
+1     2                      0.261                  0.323                 0.0767
+# ℹ abbreviated names: ¹​mean_entropy_source_normalised,
+#   ²​mean_entropy_interpreter_normalised, ³​mean_entropy_set_normalised</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">calc_entropy_tbl</span>(TASVEG_revised, <span class="at">overall =</span> <span class="st">"by_interpreter"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 5 × 5
+  expert            round mean_by_interpreter_entropy_s…¹ mean_by_interpreter_…²
+  &lt;chr&gt;             &lt;dbl&gt;                           &lt;dbl&gt;                  &lt;dbl&gt;
+1 David_Keith           2                           0.356                  0.434
+2 Mark_Tozer            2                           0.347                  0.432
+3 Jayne_Balmer          2                           0.301                  0.350
+4 Anne Kitchener        2                           0.154                  0.205
+5 Adelina_Latinovic     2                           0.146                  0.194
+# ℹ abbreviated names: ¹​mean_by_interpreter_entropy_source_normalised,
+#   ²​mean_by_interpreter_entropy_interpreter_normalised
+# ℹ 1 more variable: mean_by_interpreter_entropy_set_normalised &lt;dbl&gt;</code></pre>
+</div>
+</div>
+<p>Inspecting the highest-entropy source units and target EFGs highlights communities that interpreters consistently view as ecologically transitional or multi-functional (for example, woodland/forest ecotones or palustrine wetlands):</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>ent2_by_source <span class="ot">&lt;-</span> <span class="fu">calc_entropy_tbl</span>(TASVEG_revised, <span class="at">overall =</span> <span class="st">"by_source"</span>)</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(ent2_by_source, <span class="dv">10</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 10 × 5
+   VEGCODE round mean_by_source_entropy_source_normalised mean_by_source_entro…¹
+   &lt;chr&gt;   &lt;dbl&gt;                                    &lt;dbl&gt;                  &lt;dbl&gt;
+ 1 DPD         2                                    0.953                  0.953
+ 2 SLL         2                                    0.909                  0.909
+ 3 SSK         2                                    0.903                  0.903
+ 4 NAR         2                                    0.891                  0.891
+ 5 DSC         2                                    0.795                  0.795
+ 6 DVF         2                                    0.767                  0.767
+ 7 SCH         2                                    0.748                  0.748
+ 8 SRF         2                                    0.747                  0.747
+ 9 RPW         2                                    0.744                  0.881
+10 DAZ         2                                    0.707                  0.707
+# ℹ abbreviated name: ¹​mean_by_source_entropy_interpreter_normalised
+# ℹ 1 more variable: mean_by_source_entropy_set_normalised &lt;dbl&gt;</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">calc_entropy_tbl</span>(TASVEG_revised, <span class="at">overall =</span> <span class="st">"by_target"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">head</span>(<span class="dv">10</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 10 × 5
+   EFG   round mean_by_target_entropy_source_normalised mean_by_target_entropy…¹
+   &lt;chr&gt; &lt;dbl&gt;                                    &lt;dbl&gt;                    &lt;dbl&gt;
+ 1 F3.1      2                                    0.636                    0.892
+ 2 T7.2      2                                    0.563                    0.817
+ 3 F2.2      2                                    0.548                    0.869
+ 4 F2.4      2                                    0.548                    0.869
+ 5 T7.1      2                                    0.489                    0.696
+ 6 T7.5      2                                    0.482                    0.655
+ 7 MT3.1     2                                    0.471                    0.776
+ 8 F2.3      2                                    0.392                    0.611
+ 9 T4.5      2                                    0.373                    0.492
+10 T4.4      2                                    0.373                    0.456
+# ℹ abbreviated name: ¹​mean_by_target_entropy_interpreter_normalised
+# ℹ 1 more variable: mean_by_target_entropy_set_normalised &lt;dbl&gt;</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(ent2_by_source, <span class="fu">aes</span>(<span class="at">x =</span> mean_by_source_entropy_source_normalised)) <span class="sc">+</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_histogram</span>(<span class="at">binwidth =</span> <span class="fl">0.1</span>, <span class="at">fill =</span> <span class="st">"#355C7D"</span>, <span class="at">colour =</span> <span class="st">"white"</span>) <span class="sc">+</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>        <span class="at">title =</span> <span class="st">"Round 2: Mean source-normalised Shannon's entropy across units"</span>,</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>        <span class="at">x =</span> <span class="st">"Mean source-normalised entropy"</span>,</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>        <span class="at">y =</span> <span class="st">"Number of TASVEG units"</span></span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_wp3</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="round-2_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="inspecting-the-most-contested-round-2-units" class="level2" data-number="9.5">
+<h2 data-number="9.5" class="anchored" data-anchor-id="inspecting-the-most-contested-round-2-units"><span class="header-section-number">9.5</span> Inspecting the most contested Round 2 units</h2>
+<p>Finally, we inspect the two units with the largest remaining pairwise disagreement in Round 2 (<code>FMG</code> and <code>SWR</code>) using <code>membership_tile_plot()</code>, overriding the default title to reflect Round 2:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>TASVEG <span class="sc">|&gt;</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">filter</span>(VEGCODE <span class="sc">==</span> <span class="st">"FMG"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">glimpse</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 1
+Columns: 4
+$ VEG_GROUP &lt;chr&gt; "Agricultural, urban and exotic vegetation"
+$ VEGCODE   &lt;chr&gt; "FMG"
+$ VEGCODE_D &lt;chr&gt; "(FMG) Marram grassland"
+$ eligible  &lt;lgl&gt; TRUE</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>dplyr<span class="sc">::</span><span class="fu">filter</span>(TASVEG_revised, VEGCODE <span class="sc">==</span> <span class="st">"FMG"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">membership_tile_plot</span>() <span class="sc">+</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Round 2 Cross-Referencing"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="round-2_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>TASVEG <span class="sc">|&gt;</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">filter</span>(VEGCODE <span class="sc">==</span> <span class="st">"SWR"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">glimpse</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 1
+Columns: 4
+$ VEG_GROUP &lt;chr&gt; "Scrub, heathland and coastal complexes"
+$ VEGCODE   &lt;chr&gt; "SWR"
+$ VEGCODE_D &lt;chr&gt; "(SWR) Western regrowth complex"
+$ eligible  &lt;lgl&gt; TRUE</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>dplyr<span class="sc">::</span><span class="fu">filter</span>(TASVEG_revised, VEGCODE <span class="sc">==</span> <span class="st">"SWR"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">membership_tile_plot</span>() <span class="sc">+</span></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Round 2 Cross-Referencing"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="round-2_files/figure-html/unnamed-chunk-13-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 
 
+<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list" style="display: none">
+<div id="ref-Hemming_2018" class="csl-entry" role="listitem">
+Hemming, Victoria, Mark A. Burgman, Anca M. Hanea, Marissa F. McBride, and Bonnie C. Wintle. 2018. <span>“A Practical Guide to Structured Expert Elicitation Using the <span>IDEA</span> Protocol.”</span> <em>Methods in Ecology and Evolution</em> 9 (1): 169–80. <a href="https://doi.org/10.1111/2041-210X.12857">https://doi.org/10.1111/2041-210X.12857</a>.
+</div>
+<div id="ref-IUCN_2025" class="csl-entry" role="listitem">
+IUCN. 2025. <em>Standards, Methods and Guidelines for Cross-Referencing Ecosystem Classifications and Maps to the IUCN Global Ecosystem Typology</em> (version Version 1.0). Edited by D. A. Keith, A. Dayaram, A. Driver, J. R. Ferrer-Paris, R. Francis, S. Hay, N. J. Murray, et al. Gland, Switzerland: IUCN. <a href="https://doi.org/10.2305/CPPC6126">https://doi.org/10.2305/CPPC6126</a>.
+</div>
+</div>
 </section>
 
 </main> <!-- /main -->

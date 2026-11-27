@@ -55,7 +55,27 @@ div.sourceCode
 @media screen {
 pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
-</style>
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
 <script src="../site_libs/quarto-nav/quarto-nav.js"></script>
@@ -106,6 +126,35 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   }
 }</script>
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 <link rel="stylesheet" href="../styles.css">
 </head>
@@ -316,9 +365,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#pairwise-dissimilarity" id="toc-pairwise-dissimilarity" class="nav-link active" data-scroll-target="#pairwise-dissimilarity"><span class="header-section-number">10.1</span> Pairwise dissimilarity</a></li>
-  <li><a href="#pairwise-expert-distances-for-each-unit." id="toc-pairwise-expert-distances-for-each-unit." class="nav-link" data-scroll-target="#pairwise-expert-distances-for-each-unit."><span class="header-section-number">10.2</span> Pairwise expert distances for each unit.</a></li>
-  <li><a href="#visualising" id="toc-visualising" class="nav-link" data-scroll-target="#visualising"><span class="header-section-number">10.3</span> Visualising</a></li>
+  <li><a href="#comparing-inter-interpreter-agreement-between-rounds" id="toc-comparing-inter-interpreter-agreement-between-rounds" class="nav-link active" data-scroll-target="#comparing-inter-interpreter-agreement-between-rounds"><span class="header-section-number">10.1</span> Comparing inter-interpreter agreement between rounds</a>
+  <ul class="collapse">
+  <li><a href="#change-in-global-agreement-for-returning-interpreter-pairs" id="toc-change-in-global-agreement-for-returning-interpreter-pairs" class="nav-link" data-scroll-target="#change-in-global-agreement-for-returning-interpreter-pairs"><span class="header-section-number">10.1.1</span> Change in global agreement for returning interpreter pairs</a></li>
+  <li><a href="#unit-level-shift-in-pairwise-dissimilarity" id="toc-unit-level-shift-in-pairwise-dissimilarity" class="nav-link" data-scroll-target="#unit-level-shift-in-pairwise-dissimilarity"><span class="header-section-number">10.1.2</span> Unit-level shift in pairwise dissimilarity</a></li>
+  </ul></li>
+  <li><a href="#comparing-shannons-entropy-between-rounds" id="toc-comparing-shannons-entropy-between-rounds" class="nav-link" data-scroll-target="#comparing-shannons-entropy-between-rounds"><span class="header-section-number">10.2</span> Comparing Shannon’s entropy between rounds</a></li>
+  <li><a href="#disagreement-vs.-fuzziness-decomposing-round-2-uncertainty" id="toc-disagreement-vs.-fuzziness-decomposing-round-2-uncertainty" class="nav-link" data-scroll-target="#disagreement-vs.-fuzziness-decomposing-round-2-uncertainty"><span class="header-section-number">10.3</span> Disagreement vs.&nbsp;fuzziness: decomposing Round 2 uncertainty</a></li>
   </ul>
 </nav>
     </div>
@@ -344,58 +397,130 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
+<p>Comparing Round 1 (<a href="round-1.html" class="quarto-xref"><span>Chapter 8</span></a>) and Round 2 (<a href="round-2.html" class="quarto-xref"><span>Chapter 9</span></a>) evaluates how effectively facilitated group discussion reduced inter-interpreter disagreement and reveals how interpreters adjusted their expression of fuzzy uncertainty <span class="citation" data-cites="Martin_2012 Hemming_2018 IUCN_2025">(<a href="../references.html#ref-Martin_2012" role="doc-biblioref">Martin et al. 2012</a>; <a href="../references.html#ref-Hemming_2018" role="doc-biblioref">Hemming et al. 2018</a>; <a href="../references.html#ref-IUCN_2025" role="doc-biblioref">IUCN 2025</a>)</span>. Two structural differences between rounds should be kept in mind when interpreting changes:</p>
+<ul>
+<li><strong>Panel composition</strong>: Round 1 included four interpreters (<code>Adelina_Latinovic</code>, <code>David_Keith</code>, <code>Jayne_Balmer</code>, and <code>Mark_Tozer</code>), whereas Round 2 added a fifth interpreter (<code>Anne Kitchener</code>).</li>
+<li><strong>Unit coverage</strong>: In Round 1, <code>Jayne_Balmer</code> assessed 98 units and <code>Adelina_Latinovic</code> assessed 148 units; in Round 2, all five interpreters assessed all 153 eligible TASVEG 5.0 units.</li>
+</ul>
 
 <div class="no-row-height column-margin column-container"><div class="margin-aside">
-<p>Our setup for this R session is:</p>
-<div class="cell" data-warnings="false">
+<p>Our setup for this R session loads <code>ecoSynthesis</code>, tidyverse/plotting packages, custom plot styling, and the validated lookup and multi-round membership tables:</p>
+<div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ecoSynthesis)</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>here<span class="sc">::</span><span class="fu">i_am</span>(<span class="st">"analysis/round-1.qmd"</span>)</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>output_dir <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"../results/XREFs"</span>)</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"../scripts/setup.R"</span>))</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"../scripts/functions.R"</span>))</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">load</span>(here<span class="sc">::</span><span class="fu">here</span>(output_dir, <span class="st">"lookup-tables.rda"</span>))</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">load</span>(here<span class="sc">::</span><span class="fu">here</span>(output_dir, <span class="st">"memb-tables.rda"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ecoSynthesis)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>here<span class="sc">::</span><span class="fu">i_am</span>(<span class="st">"analysis/between-rounds.qmd"</span>)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>output_dir <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"../results/XREFs"</span>)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"../scripts/setup.R"</span>))</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"../scripts/functions.R"</span>))</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">load</span>(here<span class="sc">::</span><span class="fu">here</span>(output_dir, <span class="st">"lookup-tables.rda"</span>))</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">load</span>(here<span class="sc">::</span><span class="fu">here</span>(output_dir, <span class="st">"memb-tables.rda"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-</div></div><section id="pairwise-dissimilarity" class="level2" data-number="10.1">
-<h2 data-number="10.1" class="anchored" data-anchor-id="pairwise-dissimilarity"><span class="header-section-number">10.1</span> Pairwise dissimilarity</h2>
-<p>Calculate pairwise dissimilarities</p>
+</div></div><section id="comparing-inter-interpreter-agreement-between-rounds" class="level2" data-number="10.1">
+<h2 data-number="10.1" class="anchored" data-anchor-id="comparing-inter-interpreter-agreement-between-rounds"><span class="header-section-number">10.1</span> Comparing inter-interpreter agreement between rounds</h2>
+<p>We construct separate <code>membership_matrix</code> objects for Round 1 and Round 2 and compute both global (<code>by_source = FALSE</code>) and per-source (<code>by_source = TRUE</code>) agreement via <code>ecoSynthesis::calc_agreement()</code> (see the overlap call-out in <a href="round-1.html" class="quarto-xref"><span>Chapter 8</span></a> explaining why <code>calc_agreement()</code> is preferred over the prototype <code>pairwise_dissimilarity()</code> helper in <code>scripts/functions.R</code>):</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>TASVEG_first <span class="ot">&lt;-</span> <span class="fu">filter</span>(TASVEG_clean, round <span class="sc">==</span> <span class="dv">1</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>TASVEG_revised <span class="ot">&lt;-</span> <span class="fu">filter</span>(TASVEG_clean, round <span class="sc">==</span> <span class="dv">2</span>)</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>pd1 <span class="ot">&lt;-</span> <span class="fu">pairwise_dissimilarity</span>(TASVEG_first)</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>pd2 <span class="ot">&lt;-</span> <span class="fu">pairwise_dissimilarity</span>(TASVEG_revised)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>mtx1 <span class="ot">&lt;-</span> <span class="fu">membership_matrix</span>(TASVEG_first)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>mtx2 <span class="ot">&lt;-</span> <span class="fu">membership_matrix</span>(TASVEG_revised)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>ag1_global <span class="ot">&lt;-</span> <span class="fu">calc_agreement</span>(mtx1)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>ag2_global <span class="ot">&lt;-</span> <span class="fu">calc_agreement</span>(mtx2)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>ag1_unit <span class="ot">&lt;-</span> <span class="fu">calc_agreement</span>(mtx1, <span class="at">by_source =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>ag2_unit <span class="ot">&lt;-</span> <span class="fu">calc_agreement</span>(mtx2, <span class="at">by_source =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-</section>
-<section id="pairwise-expert-distances-for-each-unit." class="level2" data-number="10.2">
-<h2 data-number="10.2" class="anchored" data-anchor-id="pairwise-expert-distances-for-each-unit."><span class="header-section-number">10.2</span> Pairwise expert distances for each unit.</h2>
+<section id="change-in-global-agreement-for-returning-interpreter-pairs" class="level3" data-number="10.1.1">
+<h3 data-number="10.1.1" class="anchored" data-anchor-id="change-in-global-agreement-for-returning-interpreter-pairs"><span class="header-section-number">10.1.1</span> Change in global agreement for returning interpreter pairs</h3>
+<p>Joining the global agreement tables across the six unique interpreter pairs present in both rounds quantifies the gain in mean similarity (<code>delta_similarity</code>) and share of identical unit profiles (<code>delta_identical</code>) following group discussion:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>dis1 <span class="ot">&lt;-</span> <span class="fu">summary_disagreement</span>(pd1)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>36 of 153 units have identical profiles from every interpreter.</code></pre>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>ag1_global <span class="sc">|&gt;</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(interpreter_x <span class="sc">&lt;</span> interpreter_y) <span class="sc">|&gt;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>        interpreter_x,</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>        interpreter_y,</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>        <span class="at">n_r1 =</span> n_units,</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>        <span class="at">sim_r1 =</span> mean_similarity,</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">id_r1 =</span> share_identical</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">inner_join</span>(</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>        ag2_global <span class="sc">|&gt;</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>            <span class="fu">filter</span>(interpreter_x <span class="sc">&lt;</span> interpreter_y) <span class="sc">|&gt;</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>            <span class="fu">select</span>(</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>                interpreter_x,</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>                interpreter_y,</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>                <span class="at">n_r2 =</span> n_units,</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>                <span class="at">sim_r2 =</span> mean_similarity,</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>                <span class="at">id_r2 =</span> share_identical</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>            ),</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>        <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"interpreter_x"</span>, <span class="st">"interpreter_y"</span>)</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>        <span class="at">delta_similarity =</span> <span class="fu">round</span>(sim_r2 <span class="sc">-</span> sim_r1, <span class="dv">3</span>),</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>        <span class="at">delta_identical =</span> <span class="fu">round</span>(id_r2 <span class="sc">-</span> id_r1, <span class="dv">3</span>)</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">arrange</span>(<span class="fu">desc</span>(delta_similarity))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 10
+  interpreter_x     interpreter_y  n_r1 sim_r1 id_r1  n_r2 sim_r2 id_r2
+  &lt;chr&gt;             &lt;chr&gt;         &lt;int&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;int&gt;  &lt;dbl&gt; &lt;dbl&gt;
+1 Adelina_Latinovic Mark_Tozer      148  0.671 0.351   153  0.859 0.405
+2 Jayne_Balmer      Mark_Tozer       98  0.609 0.337   153  0.794 0.261
+3 David_Keith       Mark_Tozer      153  0.680 0.261   153  0.838 0.333
+4 Adelina_Latinovic David_Keith     148  0.727 0.432   153  0.842 0.444
+5 David_Keith       Jayne_Balmer     98  0.697 0.429   153  0.787 0.294
+6 Adelina_Latinovic Jayne_Balmer     98  0.847 0.776   153  0.853 0.484
+# ℹ 2 more variables: delta_similarity &lt;dbl&gt;, delta_identical &lt;dbl&gt;</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>dis2 <span class="ot">&lt;-</span> <span class="fu">summary_disagreement</span>(pd2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>31 of 153 units have identical profiles from every interpreter.</code></pre>
 </div>
-</div>
+<p>Every returning interpreter pair increased in mean similarity in Round 2 (typically by <span class="math inline">\(+0.10\)</span> to <span class="math inline">\(+0.24\)</span>), reflecting substantial convergence after discussing conceptual boundaries and ambiguous vegetation descriptions.</p>
 </section>
-<section id="visualising" class="level2" data-number="10.3">
-<h2 data-number="10.3" class="anchored" data-anchor-id="visualising"><span class="header-section-number">10.3</span> Visualising</h2>
-<p>This source unit had the highest dissimilarity:</p>
+<section id="unit-level-shift-in-pairwise-dissimilarity" class="level3" data-number="10.1.2">
+<h3 data-number="10.1.2" class="anchored" data-anchor-id="unit-level-shift-in-pairwise-dissimilarity"><span class="header-section-number">10.1.2</span> Unit-level shift in pairwise dissimilarity</h3>
+<p>Next, we summarise per-source disagreement for each round and join the two summaries by <code>VEGCODE</code>. Units falling below the 1:1 diagonal in the scatter plot experienced reduced disagreement in Round 2, while units near or above the diagonal represent persistent conceptual disagreements:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>dis_both <span class="ot">&lt;-</span> dis1 <span class="sc">|&gt;</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(dis2, <span class="at">by =</span> <span class="st">"VEGCODE"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">oo =</span> <span class="fu">rank</span>(mean_dissimilarity.x <span class="sc">+</span> mean_dissimilarity.y))</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(dis_both) <span class="sc">+</span></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="fu">aes</span>(</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> mean_dissimilarity.x,</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> mean_dissimilarity.y,</span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">size =</span> (n_pairs.x <span class="sc">+</span> n_pairs.y) <span class="sc">/</span> <span class="dv">2</span></span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">+</span></span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_wp3</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>summarise_unit_disagreement <span class="ot">&lt;-</span> <span class="cf">function</span>(ag_unit) {</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    ag_unit <span class="sc">|&gt;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>        <span class="fu">group_by</span>(<span class="at">VEGCODE =</span> source) <span class="sc">|&gt;</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>        <span class="fu">summarise</span>(</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">mean_dissimilarity =</span> <span class="fu">mean</span>(dissimilarity),</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">min_dissimilarity =</span> <span class="fu">min</span>(dissimilarity),</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">max_dissimilarity =</span> <span class="fu">max</span>(dissimilarity),</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">n_pairs =</span> <span class="fu">n</span>(),</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>            <span class="at">.groups =</span> <span class="st">"drop"</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>dis1 <span class="ot">&lt;-</span> <span class="fu">summarise_unit_disagreement</span>(ag1_unit)</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>dis2 <span class="ot">&lt;-</span> <span class="fu">summarise_unit_disagreement</span>(ag2_unit)</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>dis_both <span class="ot">&lt;-</span> dis1 <span class="sc">|&gt;</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">left_join</span>(dis2, <span class="at">by =</span> <span class="st">"VEGCODE"</span>, <span class="at">suffix =</span> <span class="fu">c</span>(<span class="st">"_r1"</span>, <span class="st">"_r2"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>        <span class="at">delta_diss =</span> mean_dissimilarity_r2 <span class="sc">-</span> mean_dissimilarity_r1,</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>        <span class="at">combined_rank =</span> <span class="fu">rank</span>(mean_dissimilarity_r1 <span class="sc">+</span> mean_dissimilarity_r2)</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(dis_both, <span class="fu">aes</span>(<span class="at">x =</span> mean_dissimilarity_r1, <span class="at">y =</span> mean_dissimilarity_r2)) <span class="sc">+</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_abline</span>(<span class="at">intercept =</span> <span class="dv">0</span>, <span class="at">slope =</span> <span class="dv">1</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>, <span class="at">colour =</span> <span class="st">"grey50"</span>) <span class="sc">+</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_point</span>(</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>        <span class="fu">aes</span>(<span class="at">size =</span> (n_pairs_r1 <span class="sc">+</span> n_pairs_r2) <span class="sc">/</span> <span class="dv">2</span>),</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>        <span class="at">alpha =</span> <span class="fl">0.7</span>,</span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>        <span class="at">colour =</span> teal_high</span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(</span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>        <span class="at">title =</span> <span class="st">"Change in per-unit mean dissimilarity between Round 1 and Round 2"</span>,</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>        <span class="at">subtitle =</span> <span class="st">"Points below the dashed 1:1 line indicate improved agreement in Round 2"</span>,</span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>        <span class="at">x =</span> <span class="st">"Round 1 mean pairwise dissimilarity"</span>,</span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>        <span class="at">y =</span> <span class="st">"Round 2 mean pairwise dissimilarity"</span>,</span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>        <span class="at">size =</span> <span class="st">"Mean nr. of pairs"</span></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>    <span class="fu">coord_equal</span>(<span class="at">xlim =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>)) <span class="sc">+</span></span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_wp3</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -404,50 +529,41 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>Ordering all 153 TASVEG communities by their combined dissimilarity rank and fitting LOESS smoothers for each round highlights the systematic downward shift in disagreement across almost the entire spectrum of units:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(dis_both) <span class="sc">+</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>      <span class="at">x =</span> oo,</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">y =</span> mean_dissimilarity.x,</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>      <span class="at">colour =</span> <span class="st">"First"</span></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(</span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(</span>
-<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>      <span class="at">x =</span> oo,</span>
-<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>      <span class="at">y =</span> mean_dissimilarity.x</span>
-<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    ),</span>
-<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">formula =</span> <span class="st">'y ~ x'</span>,</span>
-<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">method =</span> <span class="st">"loess"</span>,</span>
-<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">span =</span> <span class="fl">0.75</span>,</span>
-<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">se =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">col =</span> <span class="st">"cyan"</span></span>
-<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
-<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(</span>
-<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(</span>
-<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>      <span class="at">x =</span> oo,</span>
-<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>      <span class="at">y =</span> mean_dissimilarity.y,</span>
-<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>      <span class="at">colour =</span> <span class="st">"Revised"</span></span>
-<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
-<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(</span>
-<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(</span>
-<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>      <span class="at">x =</span> oo,</span>
-<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>      <span class="at">y =</span> mean_dissimilarity.y</span>
-<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>    ),</span>
-<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>    <span class="at">formula =</span> <span class="st">'y ~ x'</span>,</span>
-<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">method =</span> <span class="st">"loess"</span>,</span>
-<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">span =</span> <span class="fl">0.75</span>,</span>
-<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a>    <span class="at">se =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a>    <span class="at">col =</span> <span class="st">"pink"</span></span>
-<span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
-<span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Combined dissimilarity rank"</span>, <span class="at">y =</span> <span class="st">"Mean dissimilarity per round"</span>) <span class="sc">+</span></span>
-<span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_colour_manual</span>(</span>
-<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a>    <span class="at">name =</span> <span class="st">"Round"</span>,</span>
-<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a>    <span class="at">values =</span> <span class="fu">c</span>(<span class="at">First =</span> <span class="st">"slateblue4"</span>, <span class="at">Revised =</span> <span class="st">"maroon"</span>)</span>
-<span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
-<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_wp3</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(dis_both) <span class="sc">+</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_point</span>(</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>        <span class="fu">aes</span>(<span class="at">x =</span> combined_rank, <span class="at">y =</span> mean_dissimilarity_r1, <span class="at">colour =</span> <span class="st">"Round 1"</span>),</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>        <span class="at">alpha =</span> <span class="fl">0.7</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_smooth</span>(</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>        <span class="fu">aes</span>(<span class="at">x =</span> combined_rank, <span class="at">y =</span> mean_dissimilarity_r1, <span class="at">colour =</span> <span class="st">"Round 1"</span>),</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">formula =</span> y <span class="sc">~</span> x,</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">method =</span> <span class="st">"loess"</span>,</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>        <span class="at">span =</span> <span class="fl">0.75</span>,</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>        <span class="at">se =</span> <span class="cn">TRUE</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_point</span>(</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>        <span class="fu">aes</span>(<span class="at">x =</span> combined_rank, <span class="at">y =</span> mean_dissimilarity_r2, <span class="at">colour =</span> <span class="st">"Round 2"</span>),</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>        <span class="at">alpha =</span> <span class="fl">0.7</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_smooth</span>(</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>        <span class="fu">aes</span>(<span class="at">x =</span> combined_rank, <span class="at">y =</span> mean_dissimilarity_r2, <span class="at">colour =</span> <span class="st">"Round 2"</span>),</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>        <span class="at">formula =</span> y <span class="sc">~</span> x,</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>        <span class="at">method =</span> <span class="st">"loess"</span>,</span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>        <span class="at">span =</span> <span class="fl">0.75</span>,</span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>        <span class="at">se =</span> <span class="cn">TRUE</span></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(</span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>        <span class="at">title =</span> <span class="st">"Ranked unit disagreement across elicitation rounds"</span>,</span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>        <span class="at">x =</span> <span class="st">"Combined dissimilarity rank (1 = lowest, 153 = highest)"</span>,</span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>        <span class="at">y =</span> <span class="st">"Mean pairwise dissimilarity per round"</span></span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_colour_manual</span>(</span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>        <span class="at">name =</span> <span class="st">"Round"</span>,</span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>        <span class="at">values =</span> <span class="fu">c</span>(<span class="st">"Round 1"</span> <span class="ot">=</span> <span class="st">"slateblue4"</span>, <span class="st">"Round 2"</span> <span class="ot">=</span> <span class="st">"maroon"</span>)</span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_wp3</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -456,8 +572,178 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+</section>
+</section>
+<section id="comparing-shannons-entropy-between-rounds" class="level2" data-number="10.2">
+<h2 data-number="10.2" class="anchored" data-anchor-id="comparing-shannons-entropy-between-rounds"><span class="header-section-number">10.2</span> Comparing Shannon’s entropy between rounds</h2>
+<p>In addition to tracking inter-interpreter agreement, we compare <strong>normalised Shannon’s entropy</strong> across rounds directly using <code>ecoSynthesis::calc_entropy_tbl()</code> on the multi-round <code>TASVEG_clean</code> table.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Multi-round grouping in <code>ecoSynthesis::calc_entropy_tbl()</code>
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>In <code>ecoSynthesis</code> <code>v0.0.0.9005</code>, <code>calc_entropy_tbl()</code> automatically groups calculations by the <code>round</code> column internally (so passing the full multi-round <code>TASVEG_clean</code> produces side-by-side Round 1 and Round 2 statistics in a single call). By contrast, passing an explicit <code>round = ...</code> argument is not yet implemented and emits a warning.</p>
+</div>
+</div>
+<p>First, we compare overall mean entropy and per-interpreter mean entropy between Round 1 and Round 2:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>ent_overall <span class="ot">&lt;-</span> <span class="fu">calc_entropy_tbl</span>(TASVEG_clean, <span class="at">overall =</span> <span class="st">"overall"</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>ent_overall</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 2 × 4
+  round mean_entropy_source_norm…¹ mean_entropy_interpr…² mean_entropy_set_nor…³
+  &lt;dbl&gt;                      &lt;dbl&gt;                  &lt;dbl&gt;                  &lt;dbl&gt;
+1     2                      0.261                  0.323                 0.0767
+2     1                      0.228                  0.285                 0.0642
+# ℹ abbreviated names: ¹​mean_entropy_source_normalised,
+#   ²​mean_entropy_interpreter_normalised, ³​mean_entropy_set_normalised</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>ent_by_interp <span class="ot">&lt;-</span> <span class="fu">calc_entropy_tbl</span>(TASVEG_clean, <span class="at">overall =</span> <span class="st">"by_interpreter"</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>ent_by_interp</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 9 × 5
+  expert            round mean_by_interpreter_entropy_s…¹ mean_by_interpreter_…²
+  &lt;chr&gt;             &lt;dbl&gt;                           &lt;dbl&gt;                  &lt;dbl&gt;
+1 Mark_Tozer            1                          0.421                   0.510
+2 David_Keith           2                          0.356                   0.434
+3 Mark_Tozer            2                          0.347                   0.432
+4 David_Keith           1                          0.314                   0.393
+5 Jayne_Balmer          2                          0.301                   0.350
+6 Anne Kitchener        2                          0.154                   0.205
+7 Adelina_Latinovic     2                          0.146                   0.194
+8 Adelina_Latinovic     1                          0.0912                  0.128
+9 Jayne_Balmer          1                          0                       0    
+# ℹ abbreviated names: ¹​mean_by_interpreter_entropy_source_normalised,
+#   ²​mean_by_interpreter_entropy_interpreter_normalised
+# ℹ 1 more variable: mean_by_interpreter_entropy_set_normalised &lt;dbl&gt;</code></pre>
+</div>
+</div>
+<p>Plotting interpreter-level mean source-normalised entropy across rounds shows an instructive pattern: while inter-interpreter <em>disagreement</em> dropped sharply in Round 2, within-interpreter <em>entropy</em> increased for <code>Jayne_Balmer</code> (who moved from exclusively 100% single-EFG assignments in Round 1 to fuzzy multi-EFG profiles in Round 2) and <code>Adelina_Latinovic</code>, whereas <code>Mark_Tozer</code>’s entropy decreased slightly as assignments sharpened:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    ent_by_interp,</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>        <span class="at">x =</span> expert,</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>        <span class="at">y =</span> mean_by_interpreter_entropy_source_normalised,</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>        <span class="at">fill =</span> <span class="fu">factor</span>(round)</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>) <span class="sc">+</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_col</span>(<span class="at">position =</span> <span class="fu">position_dodge</span>(<span class="at">width =</span> <span class="fl">0.75</span>), <span class="at">width =</span> <span class="fl">0.65</span>) <span class="sc">+</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_fill_manual</span>(</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>        <span class="at">name =</span> <span class="st">"Round"</span>,</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>        <span class="at">values =</span> <span class="fu">c</span>(<span class="st">"1"</span> <span class="ot">=</span> <span class="st">"slateblue4"</span>, <span class="st">"2"</span> <span class="ot">=</span> <span class="st">"maroon"</span>)</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>        <span class="at">title =</span> <span class="st">"Mean source-normalised Shannon's entropy by interpreter and round"</span>,</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>        <span class="at">x =</span> <span class="st">"Interpreter"</span>,</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>        <span class="at">y =</span> <span class="st">"Mean source-normalised entropy"</span></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_wp3</span>() <span class="sc">+</span></span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">20</span>, <span class="at">hjust =</span> <span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="between-rounds_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Next, we reshape unit-level source-normalised entropy (<code>overall = "by_source"</code>) wide by round to compare how individual TASVEG units shifted in within-interpreter fuzziness between rounds:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>ent_by_source <span class="ot">&lt;-</span> <span class="fu">calc_entropy_tbl</span>(TASVEG_clean, <span class="at">overall =</span> <span class="st">"by_source"</span>)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>ent_wide <span class="ot">&lt;-</span> ent_by_source <span class="sc">|&gt;</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(VEGCODE, round, <span class="at">entropy =</span> mean_by_source_entropy_source_normalised) <span class="sc">|&gt;</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pivot_wider</span>(</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>        <span class="at">names_from =</span> round,</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>        <span class="at">values_from =</span> entropy,</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">names_prefix =</span> <span class="st">"entropy_r"</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(ent_wide, <span class="fu">aes</span>(<span class="at">x =</span> entropy_r1, <span class="at">y =</span> entropy_r2)) <span class="sc">+</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_abline</span>(<span class="at">intercept =</span> <span class="dv">0</span>, <span class="at">slope =</span> <span class="dv">1</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>, <span class="at">colour =</span> <span class="st">"grey50"</span>) <span class="sc">+</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.7</span>, <span class="at">colour =</span> <span class="st">"#355C7D"</span>) <span class="sc">+</span></span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(</span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>        <span class="at">title =</span> <span class="st">"Change in per-unit source-normalised entropy between rounds"</span>,</span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>        <span class="at">x =</span> <span class="st">"Round 1 mean source-normalised entropy"</span>,</span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>        <span class="at">y =</span> <span class="st">"Round 2 mean source-normalised entropy"</span></span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">coord_equal</span>(<span class="at">xlim =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>)) <span class="sc">+</span></span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_wp3</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="between-rounds_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="disagreement-vs.-fuzziness-decomposing-round-2-uncertainty" class="level2" data-number="10.3">
+<h2 data-number="10.3" class="anchored" data-anchor-id="disagreement-vs.-fuzziness-decomposing-round-2-uncertainty"><span class="header-section-number">10.3</span> Disagreement vs.&nbsp;fuzziness: decomposing Round 2 uncertainty</h2>
+<p>Combining Round 2 <strong>mean pairwise dissimilarity</strong> (inter-interpreter disagreement) with Round 2 <strong>mean source-normalised entropy</strong> (within-interpreter fuzziness) separates three distinct ecological regimes across the 153 TASVEG communities:</p>
+<ul>
+<li><strong>Bottom-left (low dissimilarity, low entropy)</strong>: crisp, high-consensus 1:1 mappings to a single IUCN GET EFG.</li>
+<li><strong>Top-left (low dissimilarity, high entropy)</strong>: <em>consensual fuzziness</em> — interpreters agree with one another that the TASVEG community is inherently transitional or composite across multiple EFGs.</li>
+<li><strong>Right (high dissimilarity)</strong>: <em>contested units</em> where interpreters still hold diverging conceptual assignments after Round 2 discussions.</li>
+</ul>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>uncertainty_r2 <span class="ot">&lt;-</span> dis2 <span class="sc">|&gt;</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">left_join</span>(</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>        ent_by_source <span class="sc">|&gt;</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>            <span class="fu">filter</span>(round <span class="sc">==</span> <span class="dv">2</span>) <span class="sc">|&gt;</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>            <span class="fu">select</span>(</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>                VEGCODE,</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>                <span class="at">mean_entropy =</span> mean_by_source_entropy_source_normalised</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>            ),</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">by =</span> <span class="st">"VEGCODE"</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(uncertainty_r2, <span class="fu">aes</span>(<span class="at">x =</span> mean_dissimilarity, <span class="at">y =</span> mean_entropy)) <span class="sc">+</span></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.75</span>, <span class="at">colour =</span> <span class="st">"#84659A"</span>, <span class="at">size =</span> <span class="fl">2.5</span>) <span class="sc">+</span></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_text</span>(</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>        <span class="at">data =</span> <span class="fu">filter</span>(</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>            uncertainty_r2,</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>            mean_dissimilarity <span class="sc">&gt;</span> <span class="fl">0.35</span> <span class="sc">|</span> mean_entropy <span class="sc">&gt;</span> <span class="fl">0.75</span></span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>        <span class="fu">aes</span>(<span class="at">label =</span> VEGCODE),</span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>        <span class="at">nudge_y =</span> <span class="fl">0.03</span>,</span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>        <span class="at">size =</span> <span class="dv">3</span>,</span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>        <span class="at">check_overlap =</span> <span class="cn">TRUE</span></span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(</span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>        <span class="at">title =</span> <span class="st">"Round 2: Disagreement vs. within-interpreter entropy"</span>,</span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>        <span class="at">subtitle =</span> <span class="st">"Crisp consensus (bottom-left), consensual fuzziness (top-left), and contested units (right)"</span>,</span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>        <span class="at">x =</span> <span class="st">"Round 2 mean pairwise dissimilarity"</span>,</span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>        <span class="at">y =</span> <span class="st">"Round 2 mean source-normalised entropy"</span></span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_wp3</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="between-rounds_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid figure-img" width="864"></p>
+</figure>
+</div>
+</div>
+</div>
 
 
+<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list" style="display: none">
+<div id="ref-Hemming_2018" class="csl-entry" role="listitem">
+Hemming, Victoria, Mark A. Burgman, Anca M. Hanea, Marissa F. McBride, and Bonnie C. Wintle. 2018. <span>“A Practical Guide to Structured Expert Elicitation Using the <span>IDEA</span> Protocol.”</span> <em>Methods in Ecology and Evolution</em> 9 (1): 169–80. <a href="https://doi.org/10.1111/2041-210X.12857">https://doi.org/10.1111/2041-210X.12857</a>.
+</div>
+<div id="ref-IUCN_2025" class="csl-entry" role="listitem">
+IUCN. 2025. <em>Standards, Methods and Guidelines for Cross-Referencing Ecosystem Classifications and Maps to the IUCN Global Ecosystem Typology</em> (version Version 1.0). Edited by D. A. Keith, A. Dayaram, A. Driver, J. R. Ferrer-Paris, R. Francis, S. Hay, N. J. Murray, et al. Gland, Switzerland: IUCN. <a href="https://doi.org/10.2305/CPPC6126">https://doi.org/10.2305/CPPC6126</a>.
+</div>
+<div id="ref-Martin_2012" class="csl-entry" role="listitem">
+Martin, Tara G., Mark A. Burgman, Fiona Fidler, Petra M. Kuhnert, Samantha Low-Choy, Marissa McBride, and Kerrie Mengersen. 2012. <span>“Eliciting Expert Knowledge in Conservation Science.”</span> <em>Conservation Biology</em> 26 (1): 29–38. <a href="https://doi.org/10.1111/j.1523-1739.2011.01806.x">https://doi.org/10.1111/j.1523-1739.2011.01806.x</a>.
+</div>
+</div>
 </section>
 
 </main> <!-- /main -->

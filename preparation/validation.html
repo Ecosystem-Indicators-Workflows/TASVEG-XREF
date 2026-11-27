@@ -55,7 +55,27 @@ div.sourceCode
 @media screen {
 pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
-</style>
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
 <script src="../site_libs/quarto-nav/quarto-nav.js"></script>
@@ -106,6 +126,35 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   }
 }</script>
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 <link rel="stylesheet" href="../styles.css">
 </head>
@@ -316,11 +365,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#read-membership-table" id="toc-read-membership-table" class="nav-link active" data-scroll-target="#read-membership-table"><span class="header-section-number">6.1</span> Read membership table</a>
-  <ul class="collapse">
-  <li><a href="#check-membership-table" id="toc-check-membership-table" class="nav-link" data-scroll-target="#check-membership-table"><span class="header-section-number">6.1.1</span> Check membership table</a></li>
-  <li><a href="#clean-membership-table" id="toc-clean-membership-table" class="nav-link" data-scroll-target="#clean-membership-table"><span class="header-section-number">6.1.2</span> Clean membership table</a></li>
-  </ul></li>
+  <li><a href="#constructing-a-membership_tbl-object" id="toc-constructing-a-membership_tbl-object" class="nav-link active" data-scroll-target="#constructing-a-membership_tbl-object"><span class="header-section-number">6.1</span> Constructing a <code>membership_tbl</code> object</a></li>
+  <li><a href="#checking-the-membership-table" id="toc-checking-the-membership-table" class="nav-link" data-scroll-target="#checking-the-membership-table"><span class="header-section-number">6.2</span> Checking the membership table</a></li>
+  <li><a href="#cleaning-flagged-records" id="toc-cleaning-flagged-records" class="nav-link" data-scroll-target="#cleaning-flagged-records"><span class="header-section-number">6.3</span> Cleaning flagged records</a></li>
   </ul>
 </nav>
     </div>
@@ -346,10 +393,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
+<p>Before calculating agreement, entropy, or spatial synthesis metrics, we must verify that every record in the consolidated membership table satisfies the structural and semantic rules of cross-referencing <span class="citation" data-cites="IUCN_2025">(<a href="../references.html#ref-IUCN_2025" role="doc-biblioref">IUCN 2025</a>)</span>:</p>
+<ol type="1">
+<li>Membership values are numeric, non-missing, and bounded within <span class="math inline">\([0, 1]\)</span>.</li>
+<li>Every source unit ID (<code>VEGCODE</code>) belongs to the set of <strong>eligible</strong> source units in the <code>TASVEG</code> lookup table (<a href="lookup-tables.html" class="quarto-xref"><span>Chapter 4</span></a>).</li>
+<li>Every target unit ID (<code>EFG</code>) matches a <strong>valid</strong> Level 3 Ecosystem Functional Group code in the <code>IUCN_GET</code> lookup table (catching typos or deprecated codes).</li>
+</ol>
 
 <div class="no-row-height column-margin column-container"><div class="margin-aside">
-<p>Our setup for this R session is:</p>
-<div class="cell" data-warnings="false">
+<p>Our setup for this R session loads <code>ecoSynthesis</code>, the repository helper script <code>scripts/functions.R</code>, and the saved lookup and raw membership tables from <code>results/XREFs/</code>:</p>
+<div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ecoSynthesis)</span>
@@ -361,22 +414,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">load</span>(here<span class="sc">::</span><span class="fu">here</span>(output_dir, <span class="st">"lookup-tables.rda"</span>))</span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">load</span>(here<span class="sc">::</span><span class="fu">here</span>(output_dir, <span class="st">"memb-tables.rda"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-</div></div><section id="read-membership-table" class="level2 page-columns page-full" data-number="6.1">
-<h2 data-number="6.1" class="anchored" data-anchor-id="read-membership-table"><span class="header-section-number">6.1</span> Read membership table</h2>
-<p>Read data directly from the data frame and coerce it to a <code>membership_tbl</code> object:</p>
+</div></div><section id="constructing-a-membership_tbl-object" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="constructing-a-membership_tbl-object"><span class="header-section-number">6.1</span> Constructing a <code>membership_tbl</code> object</h2>
+<p>We coerce the in-memory <code>TASVEG_xref</code> data frame directly into an <code>ecoSynthesis::membership_tbl</code> object, explicitly mapping column names to the package’s semantic roles (<code>source_id</code>, <code>target_id</code>, <code>membership</code>, <code>interpreter</code>, and <code>round</code>). Downstream <code>ecoSynthesis</code> functions read these attributes automatically:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>TASVEG_memb <span class="ot">&lt;-</span> <span class="fu">read_membership_tbl</span>(</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>TASVEG_memb <span class="ot">&lt;-</span> <span class="fu">membership_tbl</span>(</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    TASVEG_xref,</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">source_id =</span> <span class="st">"VEGCODE"</span>,</span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">target_id =</span> <span class="st">"EFG"</span>,</span>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">membership =</span> <span class="st">"memb"</span>,</span>
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">interpreter =</span> <span class="st">"expert"</span>,</span>
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">round =</span> <span class="st">"round"</span></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Read 2354 rows from data frame supplied in session</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>TASVEG_memb</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>TASVEG_memb</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>&lt;membership_tbl&gt;
 source_id column: VEGCODE
@@ -400,11 +451,25 @@ interpreter column: expert
 # ℹ 2,344 more rows</code></pre>
 </div>
 </div>
-<section id="check-membership-table" class="level3" data-number="6.1.1">
-<h3 data-number="6.1.1" class="anchored" data-anchor-id="check-membership-table"><span class="header-section-number">6.1.1</span> Check membership table</h3>
-<p>Let’s check this file for errors:</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Overlap: <code>ecoSynthesis::membership_tbl()</code> vs.&nbsp;<code>scripts/functions.R::read_membership_tbl()</code>
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>scripts/functions.R</code> defines a wrapper <code>read_membership_tbl()</code> that accepts either a file path (<code>.csv</code>/<code>.xlsx</code>) or an in-memory data frame and then delegates to <code>ecoSynthesis::membership_tbl()</code>. Because <code>TASVEG_xref</code> is already loaded from <code>memb-tables.rda</code> here, calling <code>ecoSynthesis::membership_tbl()</code> directly is simpler and preferred; <code>read_membership_tbl()</code> remains useful in standalone scripts or notebooks that ingest a spreadsheet path directly.</p>
+</div>
+</div>
+</section>
+<section id="checking-the-membership-table" class="level2" data-number="6.2">
+<h2 data-number="6.2" class="anchored" data-anchor-id="checking-the-membership-table"><span class="header-section-number">6.2</span> Checking the membership table</h2>
+<p>We run <code>ecoSynthesis::check_membership()</code> against both lookup tables (<code>TASVEG</code> and <code>IUCN_GET</code>) to audit numeric bounds, missingness, source eligibility, and target validity without modifying the data:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">check_membership</span>(TASVEG_memb, <span class="at">source =</span> TASVEG, <span class="at">target =</span> IUCN_GET)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">check_membership</span>(TASVEG_memb, <span class="at">source =</span> TASVEG, <span class="at">target =</span> IUCN_GET)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>✔ Membership column is numeric</code></pre>
 </div>
@@ -430,12 +495,13 @@ interpreter column: expert
 <pre><code>ℹ Please fix errors and check data before using other package functions.</code></pre>
 </div>
 </div>
+<p>The check flags ineligible source IDs (e.g.&nbsp;records referencing <code>OAQ</code>, <code>OSM</code>, or <code>ORO</code>, which were excluded during conceptual alignment in <a href="../preliminaries/alignment.html" class="quarto-xref"><span>Chapter 3</span></a>) and/or invalid target IDs (such as typos or placeholder labels).</p>
 </section>
-<section id="clean-membership-table" class="level3 page-columns page-full" data-number="6.1.2">
-<h3 data-number="6.1.2" class="anchored" data-anchor-id="clean-membership-table"><span class="header-section-number">6.1.2</span> Clean membership table</h3>
-<p>We can clean these errors with this function:</p>
+<section id="cleaning-flagged-records" class="level2 page-columns page-full" data-number="6.3">
+<h2 data-number="6.3" class="anchored" data-anchor-id="cleaning-flagged-records"><span class="header-section-number">6.3</span> Cleaning flagged records</h2>
+<p>Next, we apply <code>clean_membership()</code> from <code>scripts/functions.R</code>, which evaluates the same four flags (<code>NA</code> memberships, values outside <span class="math inline">\([0, 1]\)</span>, ineligible source IDs, and invalid target IDs), prints a count for each category, and filters out flagged rows to produce <code>TASVEG_clean</code>:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>TASVEG_clean <span class="ot">&lt;-</span> <span class="fu">clean_membership</span>(TASVEG_memb, TASVEG, IUCN_GET)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>TASVEG_clean <span class="ot">&lt;-</span> <span class="fu">clean_membership</span>(TASVEG_memb, TASVEG, IUCN_GET)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Flagged 90 records with not eligible source ids</code></pre>
 </div>
@@ -445,7 +511,7 @@ interpreter column: expert
 <div class="cell-output cell-output-stderr">
 <pre><code>Removed 396 records with one or more flags</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>TASVEG_clean</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>TASVEG_clean</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>&lt;membership_tbl&gt;
 source_id column: VEGCODE
@@ -469,9 +535,22 @@ interpreter column: expert
 # ℹ 1,948 more rows</code></pre>
 </div>
 </div>
-<p>Now we should have a valid dataset!</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Repository helper: <code>clean_membership()</code>
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>In <code>ecoSynthesis</code> <code>v0.0.0.9005</code>, <code>check_membership()</code> diagnoses errors without mutating the data, and there is not yet a package-level cleaning function. We therefore rely on the repository helper <code>clean_membership()</code> in <code>scripts/functions.R</code> to log and drop flagged rows cleanly while preserving the <code>membership_tbl</code> class and attributes.</p>
+</div>
+</div>
+<p>Re-running <code>check_membership()</code> on <code>TASVEG_clean</code> confirms that all seven validation checks now pass:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">check_membership</span>(TASVEG_clean, TASVEG, IUCN_GET)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">check_membership</span>(TASVEG_clean, TASVEG, IUCN_GET)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>✔ Membership column is numeric</code></pre>
 </div>
@@ -497,19 +576,41 @@ interpreter column: expert
 <pre><code>✔ All checks passed, Membership table is valid.</code></pre>
 </div>
 </div>
+<div class="callout callout-style-default callout-caution callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Caution</span>Package caveat: <code>validate_membership()</code> and <code>as_membership_tbl()</code> in <code>ecoSynthesis</code> v0.0.0.9005
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>ecoSynthesis</code> also exports <code>validate_membership(x)</code> (which throws an error if a table fails validation) and <code>as_membership_tbl(x, ...)</code> (which constructs a <code>membership_tbl</code> and immediately calls <code>validate_membership()</code>). However, in <code>v0.0.0.9005</code>, <code>validate_membership()</code> internally invokes <code>check_membership(x)</code> with <code>source = NULL</code> and <code>target = NULL</code>, which always flags missing lookup tables as errors and aborts even on a clean table:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Currently aborts in ecoSynthesis v0.0.0.9005 because source/target lookup</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="co"># tables cannot yet be forwarded to validate_membership():</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="fu">validate_membership</span>(TASVEG_clean)</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="fu">as_membership_tbl</span>(TASVEG_xref, <span class="st">"VEGCODE"</span>, <span class="st">"EFG"</span>, <span class="st">"memb"</span>, <span class="st">"expert"</span>, <span class="st">"round"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Until <code>validate_membership()</code> accepts <code>source</code> and <code>target</code> lookup arguments in a future package release, we use <code>membership_tbl()</code> paired with explicit <code>check_membership(x, source = TASVEG, target = IUCN_GET)</code> calls as shown above.</p>
+</div>
+</div>
 
 
 
 <div class="no-row-height column-margin column-container"><div class="margin-aside">
-<p>We save both the raw and the cleaned membership tables in a file that we can load in later steps of the workflow:</p>
+<p>We overwrite <code>results/XREFs/memb-tables.rda</code> to store both the raw (<code>TASVEG_xref</code>) and validated (<code>TASVEG_clean</code>) tables for all downstream exploration, analysis, and synthesis chapters:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">save</span>(</span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>    TASVEG_xref,</span>
-<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>    TASVEG_clean,</span>
-<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">file =</span> here<span class="sc">::</span><span class="fu">here</span>(output_dir, <span class="st">"memb-tables.rda"</span>)</span>
-<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">save</span>(</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>    TASVEG_xref,</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>    TASVEG_clean,</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">file =</span> here<span class="sc">::</span><span class="fu">here</span>(output_dir, <span class="st">"memb-tables.rda"</span>)</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-</div></div></section>
+</div></div><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list" style="display: none">
+<div id="ref-IUCN_2025" class="csl-entry" role="listitem">
+IUCN. 2025. <em>Standards, Methods and Guidelines for Cross-Referencing Ecosystem Classifications and Maps to the IUCN Global Ecosystem Typology</em> (version Version 1.0). Edited by D. A. Keith, A. Dayaram, A. Driver, J. R. Ferrer-Paris, R. Francis, S. Hay, N. J. Murray, et al. Gland, Switzerland: IUCN. <a href="https://doi.org/10.2305/CPPC6126">https://doi.org/10.2305/CPPC6126</a>.
+</div>
+</div>
 </section>
 
 </main> <!-- /main -->

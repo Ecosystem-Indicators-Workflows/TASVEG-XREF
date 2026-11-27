@@ -98,7 +98,7 @@ div.csl-indent {
 <link rel="stylesheet" href="../styles.css">
 </head>
 
-<body class="nav-sidebar floating quarto-light">
+<body class="nav-sidebar floating slimcontent quarto-light">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -304,18 +304,18 @@ div.csl-indent {
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#overview-of-stepwise-cross-referencing-process" id="toc-overview-of-stepwise-cross-referencing-process" class="nav-link active" data-scroll-target="#overview-of-stepwise-cross-referencing-process"><span class="header-section-number">1.1</span> Overview of stepwise cross-referencing process</a></li>
-  <li><a href="#reproducible-workflow-for-cross-referencing" id="toc-reproducible-workflow-for-cross-referencing" class="nav-link" data-scroll-target="#reproducible-workflow-for-cross-referencing"><span class="header-section-number">1.2</span> Reproducible workflow for cross-referencing</a></li>
+  <li><a href="#overview-of-the-stepwise-cross-referencing-process" id="toc-overview-of-the-stepwise-cross-referencing-process" class="nav-link active" data-scroll-target="#overview-of-the-stepwise-cross-referencing-process"><span class="header-section-number">1.1</span> Overview of the stepwise cross-referencing process</a></li>
+  <li><a href="#reproducible-computational-workflow" id="toc-reproducible-computational-workflow" class="nav-link" data-scroll-target="#reproducible-computational-workflow"><span class="header-section-number">1.2</span> Reproducible computational workflow</a></li>
   <li><a href="#structure-of-this-document" id="toc-structure-of-this-document" class="nav-link" data-scroll-target="#structure-of-this-document"><span class="header-section-number">1.3</span> Structure of this document</a></li>
   </ul>
 </nav>
     </div>
 <!-- main -->
-<main class="content" id="quarto-document-content">
+<main class="content page-columns page-full" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Stepwise cross-referencing process</span></h1>
+<h1 class="title"><span id="sec-process" class="quarto-section-identifier"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Stepwise cross-referencing process</span></span></h1>
 </div>
 
 
@@ -332,33 +332,44 @@ div.csl-indent {
 </header>
 
 
-<p>The need to cross-reference different classification systems arises frequently in ecology and conservation applications. The conceptual foundations for cross-referencing classifications are discussed in <span class="citation" data-cites="IUCN_2025">IUCN (<a href="../references.html#ref-IUCN_2025" role="doc-biblioref">2025</a>)</span>.</p>
-<p>Here we try to apply consistent methods and standards for cross-referencing in order to make the relationships between units more explicit and enhance the reproducibility of the process. This will enable efficient update when more information becomes available, and minimise divergent or erroneous interpretations of relationships between classifications.</p>
-<p>The process of cross-reference involves a source classification and a target classification, where the target classification might have a broader scope than the source. Elements in the source classification can be interpreted as directly related to one or more elements in the target classification. This relationship can be quantified as membership values, where the source element has memberships between 0 and 100% to each element of the target classification.</p>
-<p>Membership estimates from multiple interpreters can be combined to produce more robust cross-referencing relationships. Uncertainty due to disagreements between interpreters can be quantified and documented for maximum transparency.</p>
-<section id="overview-of-stepwise-cross-referencing-process" class="level2" data-number="1.1">
-<h2 data-number="1.1" class="anchored" data-anchor-id="overview-of-stepwise-cross-referencing-process"><span class="header-section-number">1.1</span> Overview of stepwise cross-referencing process</h2>
-<p>A stepwise diagnostic process ensures that the cross-referencing exercise aligns with four key principles: alignment of classifications, membership based on entity properties, using weight of evidence, and transparent representation of uncertainty <span class="citation" data-cites="IUCN_2025">(<a href="../references.html#ref-IUCN_2025" role="doc-biblioref">IUCN 2025</a>)</span>.</p>
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="../fig/stepwise-xref-2026-10-23-182804.png" class="img-fluid figure-img" data-label="fig-process"></p>
-<figcaption>Structure of the stepwise cross-referencing process.</figcaption>
+<p>The need to cross-reference different ecosystem classification systems arises frequently in ecological research, national ecosystem accounting, Red List of Ecosystems assessments, and conservation reporting. The conceptual foundations, standards, and diagnostic methods for cross-referencing classifications to the IUCN Global Ecosystem Typology (IUCN GET; <span class="citation" data-cites="Keith_2022">Keith et al. (<a href="../references.html#ref-Keith_2022" role="doc-biblioref">2022</a>)</span>) are established in <span class="citation" data-cites="IUCN_2025">IUCN (<a href="../references.html#ref-IUCN_2025" role="doc-biblioref">2025</a>)</span>.</p>
+<p>Here we apply consistent standards and reproducible computational methods so that relationships between classification units are explicit, auditable, and straightforward to update whenever new ecological evidence or updated spatial maps become available. Formalising the cross-referencing pipeline also minimises undocumented or divergent interpretations when local vegetation typologies are translated into global reporting frameworks <span class="citation" data-cites="DeCaceres_2012 IUCN_2025">(<a href="../references.html#ref-DeCaceres_2012" role="doc-biblioref">De Cáceres and Wiser 2012</a>; <a href="../references.html#ref-IUCN_2025" role="doc-biblioref">IUCN 2025</a>)</span>.</p>
+<p>Cross-referencing links a <strong>source classification</strong> to a <strong>target classification</strong>, where the target classification typically has a broader thematic or geographic scope than the source. Each unit in the source classification can relate directly to one or more units in the target classification. Following fuzzy set theory <span class="citation" data-cites="Zadeh_1965">(<a href="../references.html#ref-Zadeh_1965" role="doc-biblioref">Zadeh 1965</a>)</span> and the IUCN guidelines <span class="citation" data-cites="IUCN_2025">(<a href="../references.html#ref-IUCN_2025" role="doc-biblioref">IUCN 2025</a>)</span>, this relationship is quantified using <strong>fuzzy membership values</strong> between 0 (0%, excluded) and 1 (100%, unambiguous assignment), summing to 1 across all assigned target units for a given source unit and interpreter.</p>
+<p>Combining independent membership assessments from multiple domain experts—structured across iterative elicitation rounds with facilitated discussion between rounds—reduces linguistic ambiguity, guards against individual cognitive biases, and yields robust, transparent estimates of both consensus and residual thematic uncertainty <span class="citation" data-cites="Martin_2012 Hemming_2018">(<a href="../references.html#ref-Martin_2012" role="doc-biblioref">Martin et al. 2012</a>; <a href="../references.html#ref-Hemming_2018" role="doc-biblioref">Hemming et al. 2018</a>)</span>.</p>
+<section id="overview-of-the-stepwise-cross-referencing-process" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="overview-of-the-stepwise-cross-referencing-process"><span class="header-section-number">1.1</span> Overview of the stepwise cross-referencing process</h2>
+<p>A five-step diagnostic process ensures that the cross-referencing exercise upholds four core principles: (1) conceptual alignment of classifications, (2) membership estimation based on entity properties, (3) weight of evidence, and (4) transparent representation of uncertainty <span class="citation" data-cites="IUCN_2025">(<a href="../references.html#ref-IUCN_2025" role="doc-biblioref">IUCN 2025</a>)</span>.</p>
+<div id="fig-process" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-process-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../fig/stepwise-xref-2026-10-23-182804.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-process-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1.1: Structure of the stepwise cross-referencing process adapted from IUCN (2025).
+</figcaption>
 </figure>
 </div>
-<p>Steps 1 and 2 are essential steps for preparation of the information and decisions that will shape the cross-referencing process. Multiple interpreters might be involved in steps 3 and 4. An additional round of expert elicitation is recommended to try to reduce disagreement.</p>
-<p>The process of expert elicitation usually involves:</p>
 <ul>
-<li>gathering individual experts contributions,</li>
-<li>analysis of discrepancy and agreement: discussion,</li>
-<li>and revised individuals contributions.</li>
+<li><strong>Steps 1 and 2</strong> establish conceptual eligibility and assemble the ecological and spatial reference information that underpins all subsequent decisions.</li>
+<li><strong>Steps 3 and 4</strong> involve multiple domain experts independently eliminating implausible target units and estimating non-zero fuzzy memberships. Conducting a second round of elicitation after structured group discussion (analogous to the Investigate–Discuss–Estimate–Aggregate, or IDEA, protocol; <span class="citation" data-cites="Hemming_2018">Hemming et al. (<a href="../references.html#ref-Hemming_2018" role="doc-biblioref">2018</a>)</span>) typically involves:
+<ul>
+<li>gathering independent first-round expert contributions,</li>
+<li>analysing inter-interpreter discrepancies, target usage, and uncertainty to guide structured discussion, and</li>
+<li>collecting revised second-round contributions from each interpreter.</li>
+</ul></li>
+<li><strong>Step 5</strong> synthesises the validated multi-interpreter membership tables into summary tables, spatial area estimates, and geospatial outputs, while documenting remaining sources of uncertainty.</li>
 </ul>
-<p>In step 5 we are interested in compiling membership matrix from multiple interpreters after the elicitation process, linking back to spatial data for visualisation, and documenting and analysing sources of uncertainties.</p>
 </section>
-<section id="reproducible-workflow-for-cross-referencing" class="level2" data-number="1.2">
-<h2 data-number="1.2" class="anchored" data-anchor-id="reproducible-workflow-for-cross-referencing"><span class="header-section-number">1.2</span> Reproducible workflow for cross-referencing</h2>
-<p>In this document we want to translate the cross-referencing process into a reproducible computation workflow. This computation workflow will take inputs from the interpreters, and describe all steps of data preparation and analysis that lead to specific outputs. The purpose of the workflow is to increase reproducibility of this process that will allow streamlined updates of outputs everytime the input data is updated.</p>
-<p>For this process we lean on the R package <code>ecoSynthesis</code> currently under development, as well as on custom scripts and functions, and additional R packages.</p>
-<p>For this workflow we distinguish two main stages of the cross-referencing process. The first is dedicated to data preparation, validation and exploration. The second is dedicated to analysis and synthesis. See <a href="#fig-userjourney" class="quarto-xref">Figure&nbsp;<span>1.1</span></a> for an overview.</p>
+<section id="reproducible-computational-workflow" class="level2 page-columns page-full" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="reproducible-computational-workflow"><span class="header-section-number">1.2</span> Reproducible computational workflow</h2>
+<p>This repository assists in the translation of parts of the conceptual process in <a href="#fig-process" class="quarto-xref">Figure&nbsp;<span>1.1</span></a> into a reproducible computational workflow.</p>
+
+<div class="no-row-height column-margin column-container"><div class="margin-aside">
+<p>While the computation workflow is reproducible for correctly formatted input data, we stress that these steps cannot be decoupled from the expert elicitation process. Ultimately all inputs and outputs have to be checked and reviewed by the human expert with the ecosystem specific knowledge to make correct decisions and interpretations.</p>
+</div></div><p>The workflow takes raw interpreter spreadsheets (<code>xrefdata/</code>) and authoritative TASVEG 5.0 spatial data (<code>gisdata/</code>), executes validation and analysis steps transparently in R, and produces versioned, FAIR-aligned data products <span class="citation" data-cites="Wilkinson_2016 Barker_2022">(<a href="../references.html#ref-Wilkinson_2016" role="doc-biblioref">Wilkinson et al. 2016</a>; <a href="../references.html#ref-Barker_2022" role="doc-biblioref">Barker et al. 2022</a>)</span>.</p>
+<p>We build on the <a href="https://github.com/Ecosystem-Indicators-Workflows/ecoSynthesis"><code>ecoSynthesis</code></a> R package <span class="citation" data-cites="ecoSynthesis_pkg">(<a href="../references.html#ref-ecoSynthesis_pkg" role="doc-biblioref">Ferrer-Paris, Gould, and Singh 2026</a>)</span>—currently under active development—together with repository-specific helper functions in <code>scripts/functions.R</code> and standard spatial/tidyverse packages. Throughout this book, explicit call-out notes highlight where package functions and repository helpers overlap or differ, explaining which implementation is preferred at each step.</p>
+<p>To keep documentation rendering fast and modular, the <strong>analytical Quarto workflow</strong> (<code>docs-src/</code>) is kept separate from the <strong>standalone output-generation scripts</strong> (<code>scripts/</code>), which perform computationally heavier tasks such as 90 m rasterisation (<code>fasterize</code>) and statewide GeoPackage assembly (see <a href="../appendices/outputs.html" class="quarto-xref"><span>Chapter 17</span></a>).</p>
+<p>Within the analytical workflow, we distinguish two main computational stages: (1) <strong>Data preparation, validation, and exploration</strong>, and (2) <strong>Analysis and synthesis</strong> (see <a href="#fig-userjourney" class="quarto-xref">Figure&nbsp;<span>1.2</span></a>).</p>
 <div class="cell" data-layout-align="default">
 <div class="cell-output-display">
 <div id="fig-userjourney" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -373,30 +384,30 @@ div.csl-indent {
 
     ELI1[Within round&lt;br/&gt;agreement &amp; entropy]:::Tasks
     ELI2[Within round&lt;br/&gt;agreement &amp; entropy]:::Tasks
-    ELI3["Between rounds&lt;br/&gt;entropy metrics"]:::Tasks
+    ELI3["Between rounds&lt;br/&gt;agreement &amp; entropy metrics"]:::Tasks
     SYNT[Synthesis &amp; outputs]:::Tasks
 
     subgraph FIRST["Data preparation and exploration"]
         direction LR
         PREP --&gt; VALID
         VALID --&gt;|no| PREP
-        VALID --&gt;|yes| EXP 
+        VALID --&gt;|yes| EXP
     end
     FIRST:::Steps --&gt; SECOND:::Steps
     subgraph SECOND["Analysis and synthesis"]
         direction LR
-        NINT --&gt;|"Round 1"| ELI1 --&gt; ELI3 
-        NINT --&gt;|"Round 2"| ELI2 --&gt; ELI3 
+        NINT --&gt;|"Round 1"| ELI1 --&gt; ELI3
+        NINT --&gt;|"Round 2"| ELI2 --&gt; ELI3
         ELI2 --&gt; SYNT
     end
-    
-    classDef Tasks fill:#fff,stroke:#90853E,color:#53E908,stroke-width:2px
+
+    classDef Tasks fill:#fff,stroke:#90853E,color:#2d5a27,stroke-width:2px
     classDef Steps fill:#fff,stroke:#853E90,color:#853E90,stroke-width:1px
 </pre>
 </div>
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-userjourney-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;1.1: Steps of the user journey.
+Figure&nbsp;1.2: Computational stages of the cross-referencing workflow from data preparation to analysis and synthesis.
 </figcaption>
 </figure>
 </div>
@@ -405,15 +416,42 @@ Figure&nbsp;1.1: Steps of the user journey.
 </section>
 <section id="structure-of-this-document" class="level2" data-number="1.3">
 <h2 data-number="1.3" class="anchored" data-anchor-id="structure-of-this-document"><span class="header-section-number">1.3</span> Structure of this document</h2>
-<p>We address the source classification in <a href="source-data.html" class="quarto-xref"><span>Chapter 2</span></a> and the alignment to the target classification in <a href="alignment.html" class="quarto-xref"><span>Chapter 3</span></a>.</p>
-<p>We then document the different tasks of data preparation in <a href="../preparation/lookup-tables.html" class="quarto-xref"><span>Chapter 4</span></a> and <span class="quarto-unresolved-ref">?sec-input-memb</span>; data validation in <a href="../preparation/validation.html" class="quarto-xref"><span>Chapter 6</span></a>; and data exploration in <a href="../preparation/exploration.html" class="quarto-xref"><span>Chapter 7</span></a>.</p>
-<p>We then document the analysis stage in three separate tasks: analysis of the first round in <a href="../analysis/round-1.html" class="quarto-xref"><span>Chapter 8</span></a>; analysis of the second round in <a href="../analysis/round-2.html" class="quarto-xref"><span>Chapter 9</span></a>; and the comparison between rounds in <span class="quarto-unresolved-ref">?sec-inter-round</span>.</p>
-<p>Finally we summarise the synthesis and outputs in <a href="../synthesis/index.html" class="quarto-xref"><span>Chapter 11</span></a>, <span class="quarto-unresolved-ref">?sec-areas</span> and <a href="../synthesis/EFG-map.html" class="quarto-xref"><span>Chapter 13</span></a>.</p>
+<ul>
+<li><strong>Preliminaries</strong>: Source classification overview (<a href="source-data.html" class="quarto-xref"><span>Chapter 2</span></a>) and conceptual alignment to IUCN GET (<a href="alignment.html" class="quarto-xref"><span>Chapter 3</span></a>).</li>
+<li><strong>Part I — Preparation</strong>: Lookup tables (<a href="../preparation/lookup-tables.html" class="quarto-xref"><span>Chapter 4</span></a>), reading heterogeneous membership tables (<a href="../preparation/input-memb-tables.html" class="quarto-xref"><span>Chapter 5</span></a>), validation and cleaning (<a href="../preparation/validation.html" class="quarto-xref"><span>Chapter 6</span></a>), and initial data exploration (<a href="../preparation/exploration.html" class="quarto-xref"><span>Chapter 7</span></a>).</li>
+<li><strong>Part II — Analysis</strong>: Within-round agreement, target usage, and Shannon’s entropy for Round 1 (<a href="../analysis/round-1.html" class="quarto-xref"><span>Chapter 8</span></a>) and Round 2 (<a href="../analysis/round-2.html" class="quarto-xref"><span>Chapter 9</span></a>), followed by between-round comparisons (<a href="../analysis/between-rounds.html" class="quarto-xref"><span>Chapter 10</span></a>).</li>
+<li><strong>Part III — Synthesis</strong>: Membership synthesis strategies (<a href="../synthesis/index.html" class="quarto-xref"><span>Chapter 11</span></a>), unweighted and weighted area summaries (<a href="../synthesis/area-summaries.html" class="quarto-xref"><span>Chapter 12</span></a>), and spatial output concepts (<a href="../synthesis/EFG-map.html" class="quarto-xref"><span>Chapter 13</span></a>).</li>
+<li><strong>Appendices</strong>: Glossary, membership table formats (<a href="../appendices/membership-tables.html" class="quarto-xref"><span>Chapter 15</span></a>), R reproducibility and benchmarking notes (<a href="../reproducibility-notes/reproducibility-R.html" class="quarto-xref"><span>Chapter 16</span></a>), and the status overview of all repository outputs (<a href="../appendices/outputs.html" class="quarto-xref"><span>Chapter 17</span></a>).</li>
+</ul>
 
 
 <div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list" style="display: none">
+<div id="ref-Barker_2022" class="csl-entry" role="listitem">
+Barker, Michelle, Neil P. Chue Hong, Daniel S. Katz, Anna-Lena Lamprecht, Carlos Martinez-Ortiz, Fotis Psomopoulos, Jennifer Harrow, et al. 2022. <span>“Introducing the <span>FAIR</span> Principles for Research Software.”</span> <em>Scientific Data</em> 9: 622. <a href="https://doi.org/10.1038/s41597-022-01710-x">https://doi.org/10.1038/s41597-022-01710-x</a>.
+</div>
+<div id="ref-DeCaceres_2012" class="csl-entry" role="listitem">
+De Cáceres, Miquel, and Susan K. Wiser. 2012. <span>“Towards Consistency in Vegetation Classification.”</span> <em>Journal of Vegetation Science</em> 23 (2): 387–93. <a href="https://doi.org/10.1111/j.1654-1103.2011.01354.x">https://doi.org/10.1111/j.1654-1103.2011.01354.x</a>.
+</div>
+<div id="ref-ecoSynthesis_pkg" class="csl-entry" role="listitem">
+Ferrer-Paris, José R., Elliot Gould, and Abhimanyu Raj Singh. 2026. <em><span class="nocase">ecoSynthesis</span>: Synthesis of Cross-Referencing Information Between Two Classification Systems</em>. <a href="https://github.com/Ecosystem-Indicators-Workflows/ecoSynthesis">https://github.com/Ecosystem-Indicators-Workflows/ecoSynthesis</a>.
+</div>
+<div id="ref-Hemming_2018" class="csl-entry" role="listitem">
+Hemming, Victoria, Mark A. Burgman, Anca M. Hanea, Marissa F. McBride, and Bonnie C. Wintle. 2018. <span>“A Practical Guide to Structured Expert Elicitation Using the <span>IDEA</span> Protocol.”</span> <em>Methods in Ecology and Evolution</em> 9 (1): 169–80. <a href="https://doi.org/10.1111/2041-210X.12857">https://doi.org/10.1111/2041-210X.12857</a>.
+</div>
 <div id="ref-IUCN_2025" class="csl-entry" role="listitem">
 IUCN. 2025. <em>Standards, Methods and Guidelines for Cross-Referencing Ecosystem Classifications and Maps to the IUCN Global Ecosystem Typology</em> (version Version 1.0). Edited by D. A. Keith, A. Dayaram, A. Driver, J. R. Ferrer-Paris, R. Francis, S. Hay, N. J. Murray, et al. Gland, Switzerland: IUCN. <a href="https://doi.org/10.2305/CPPC6126">https://doi.org/10.2305/CPPC6126</a>.
+</div>
+<div id="ref-Keith_2022" class="csl-entry" role="listitem">
+Keith, David A., José R. Ferrer-Paris, Emily Nicholson, Melanie J. Bishop, Beth A. Polidoro, Eva Ramirez-Llodra, Mark G. Tozer, et al. 2022. <span>“A Function-Based Typology for Earth’s Ecosystems.”</span> <em>Nature</em> 610 (7932): 513–18. <a href="https://doi.org/10.1038/s41586-022-05318-4">https://doi.org/10.1038/s41586-022-05318-4</a>.
+</div>
+<div id="ref-Martin_2012" class="csl-entry" role="listitem">
+Martin, Tara G., Mark A. Burgman, Fiona Fidler, Petra M. Kuhnert, Samantha Low-Choy, Marissa McBride, and Kerrie Mengersen. 2012. <span>“Eliciting Expert Knowledge in Conservation Science.”</span> <em>Conservation Biology</em> 26 (1): 29–38. <a href="https://doi.org/10.1111/j.1523-1739.2011.01806.x">https://doi.org/10.1111/j.1523-1739.2011.01806.x</a>.
+</div>
+<div id="ref-Wilkinson_2016" class="csl-entry" role="listitem">
+Wilkinson, Mark D., Michel Dumontier, I. Jsbrand Jan Aalbersberg, Gabrielle Appleton, Myles Axton, Arie Baak, Niklas Blomberg, et al. 2016. <span>“The <span>FAIR</span> Guiding Principles for Scientific Data Management and Stewardship.”</span> <em>Scientific Data</em> 3: 160018. <a href="https://doi.org/10.1038/sdata.2016.18">https://doi.org/10.1038/sdata.2016.18</a>.
+</div>
+<div id="ref-Zadeh_1965" class="csl-entry" role="listitem">
+Zadeh, Lotfi A. 1965. <span>“Fuzzy Sets.”</span> <em>Information and Control</em> 8 (3): 338–53. <a href="https://doi.org/10.1016/S0019-9958(65)90241-X">https://doi.org/10.1016/S0019-9958(65)90241-X</a>.
 </div>
 </div>
 </section>
