@@ -2,23 +2,27 @@
 
 | Term | Definition | Examples from this document |
 |---|---|---|
-| **Cross-reference (xref) or membership table** | A table that summarises assessments of membership of units of one (source) classification to units of another (target) classification. | See @sec-memb-table and @sec-formats. |
-| **Source** | The classification being cross-referenced *from*. | In this document the source classification is TASVEG 5.0, the Tasmanian vegetation mapping. See @sec-source. |
-| **Source unit** | One concept or mapping unit of the source classification. Each unit is assessed separately. | In TASVEG the classification units represent vegetation communities, see @sec-source.   |
-| **Source unit id / Source id** | Unique ids for the units in the source classification. | `VEGCODE` column in the TASVEG Look-up table (@sec-lookup) | 
-| **Target** | The classification being cross-referenced *to*. | In this document the target classification is the IUCN Global Ecosystem Typology, see @sec-alignment.|
-| **Target unit** | One unit of the target classification. | Here we use level 3 of the IUCN Global Ecosystem Typology: Ecosystem Functional Group (EFG), see @sec-source.   |
-| **Target unit id / Target id** | Unique ids for the units in the target classification. | `EFG` or `efg_id` columns. Codes for EFG Codes are realm + biome + group, e.g. `T2.6` (terrestrial), `F2.2` (freshwater), `MT1.3` (marine–terrestrial shoreline), `TF1.6` (terrestrial–freshwater wetland), `MFT1.3` (marine–freshwater–terrestrial). |
-| **Interpreter** | The person who made the assessment of memberships. | Here we refer to `interpreter` or `expert` interchangeably, see @sec-memb-table. | 
-| **Membership** | An interpreter's estimate of the relationship between a source unit and a target unit. Target units have a broader scope, so they can group multiple source units. Memberships are interpreted as fuzzy memberships, such that a source unit might belong to multiple target units. This fuzzy membership is expressed as a continuous value between 0 (excluded from the group) and 1 (unambiguous membership). | See @sec-memb-table and @sec-formats. |
-| **Assigned / not assigned** | Each interpreter assigns one or multiple target for each source unit with membership values above 0 (*assigned target*). The sum of membership values for assigned targets of a single interpreter should sum to 1. Potential targets (for example, those assigned by other interpreters) that are not listed by an interpreter, are considered *not assigned* and have a membership value of 0. | See @sec-memb-table. |
-| **Not assessed** | The interpreter gave no record for the unit at all. This is different from "not assigned" and is never filled with 0. | See @sec-memb-table. |
-| **Record** | One interpreter's membership for one unit and one target. Long format means one record per row. | See @sec-memb-table. |
-| **Profile** | An interpreter's full set of memberships for one unit, across every target that any expert used for that unit. | |
-| **Matrix table** | The data reshaped wide: one row per unit and interpreter, one column per target group. | `membership_matrix`, see @sec-formats. | 
-| **Dissimilarity** | How different two interpreter' profiles are for a unit: ½ × the sum of absolute differences, i.e. the share of membership that would have to move to make them identical. 0 = identical, 1 = no shared membership. | `dissimilarity` | 
-| **Similarity** | 1 − dissimilarity. 1 = identical profiles, 0 = no overlap. | `similarity` | 
-| **Identical** | Two profiles with a dissimilarity of essentially 0 (below 0.001). | `share_identical` |
-| **Expert pair** |  Two interpreter compared on the same unit. With four interpreter there are six pairs. | `expert_a`, `expert_b` |
-| **Contested unit** | A unit where interpreter disagree. Units are ranked by their mean dissimilarity across all expert pairs. | `unit_disagreement` | 
-| **Data checks** | Problems that are reported but not fixed: missing membership values, target codes that don't match the `XX0.0` pattern, and totals per unit and expert that aren't 1. | `check_*` | 
+| **Cross-reference (xref) or membership table** | A table summarising assessments of fuzzy membership of units in a source classification to units in a target classification. | `membership_tbl`; see @sec-input-memb and @sec-formats. |
+| **Lookup table (`lookup_tbl`)** | Controlled vocabulary listing all valid unit IDs, names, and conceptual eligibility flags (`eligible = TRUE/FALSE`) for a source or target classification. | `TASVEG` and `IUCN_GET`; see @sec-lookup. |
+| **Source** | The classification being cross-referenced *from*. | TASVEG 5.0, Tasmania's vegetation classification and map; see @sec-source. |
+| **Source unit** | One ecological concept or mapping unit of the source classification, assessed independently. | Vegetation communities in TASVEG 5.0; see @sec-source. |
+| **Source unit id / Source id** | Unique identifier for each unit in the source classification. | `VEGCODE` column in the TASVEG lookup table (@sec-lookup). |
+| **Target** | The classification being cross-referenced *to*. | IUCN Global Ecosystem Typology (IUCN GET); see @sec-alignment. |
+| **Target unit** | One unit of the target classification. | Level 3 Ecosystem Functional Groups (EFGs) of IUCN GET; see @sec-alignment. |
+| **Target unit id / Target id** | Unique identifier for each target unit. | `EFG` or `efg_id` columns (realm + biome + group, e.g. `T2.6` terrestrial, `F2.2` freshwater, `MT2.1` marine–terrestrial, `TF1.7` terrestrial–freshwater wetland, `MFT1.3` marine–freshwater–terrestrial). |
+| **Interpreter** | A domain expert who provides fuzzy membership assessments during elicitation. | Referred to as `interpreter` or `expert` interchangeably (`AK`, `AL`, `DAK`, `JB`, `MGT`); see @sec-input-memb. |
+| **Membership** | An interpreter's fuzzy estimate [@Zadeh_1965] of the relationship between a source unit and a target unit on $[0, 1]$, where 0 means excluded and 1 means unambiguous membership. | `memb` column; see @sec-input-memb and @sec-formats. |
+| **Assigned / not assigned** | Targets given positive membership ($> 0$) by an interpreter are *assigned* (summing to 1 per source unit). Other candidate targets not listed by that interpreter for an assessed unit are *not assigned* (implicit membership 0). | See @sec-input-memb and @sec-round-one. |
+| **Not assessed** | The interpreter provided no record for the source unit in that round; kept as `NA` in `membership_matrix` and never filled with 0. | E.g. 55 units not assessed by `Jayne_Balmer` in Round 1 (@sec-round-one). |
+| **Record** | One interpreter's membership estimate for one `(source, target, round)` combination (one row in long format). | See @sec-input-memb. |
+| **Profile** | An interpreter's full membership vector for one source unit across all candidate targets considered for that unit. | Used in `calc_agreement()` and `calc_shannons_entropy()`. |
+| **Membership matrix** | 3D numeric array `[source, target, interpreter]` produced by `ecoSynthesis::membership_matrix()`, with 0 for unused targets and `NA` for unassessed units. | `TASVEG_mtx_r1`, `TASVEG_mtx_r2`; see @sec-round-one and @sec-formats. |
+| **Dissimilarity** | Half-$L_1$ distance between two interpreters' profiles for a unit: $D = \frac{1}{2}\sum_k |a_k - b_k|$ (equivalent to Bray–Curtis dissimilarity for unit-sum vectors; 0 = identical, 1 = no overlap). | `dissimilarity` in `calc_agreement()`; see @sec-round-one. |
+| **Agreement / Similarity** | Complement of dissimilarity: $S = 1 - D$ (1 = identical profiles, 0 = no shared target membership). | `similarity`, `mean_similarity` in `calc_agreement()`; see @sec-round-one. |
+| **Identical** | Two profiles with dissimilarity below `0.001`. | `share_identical` in `calc_agreement()`. |
+| **Expert pair** | Two interpreters compared on the same source unit (6 pairs among 4 interpreters in Round 1; 10 pairs among 5 interpreters in Round 2). | `interpreter_x`, `interpreter_y`. |
+| **Contested unit** | A source unit with high mean pairwise dissimilarity across interpreter pairs. | E.g. `FMG`, `FSM`, `SWR`; see @sec-round-one and @sec-round-two. |
+| **Shannon's entropy (normalised)** | Information-theoretic measure of within-interpreter fuzziness/ambiguity on $[0, 1]$, normalised by $\log_2(N)$ under interpreter ($S$), source ($N_{\text{source}}$), or set ($N_{\text{set}}$) bases [@Shannon_1948; @Pielou_1966]. | `calc_shannons_entropy()`, `calc_entropy_tbl()`; see @sec-round-one–@sec-between-rounds. |
+| **Proportion of membership (`prop_memb`)** | Aggregated share of total Round 2 membership votes across interpreters assigned to a target EFG for a source unit. | `summarise_membership()`; see @sec-synthesis. |
+| **Supporting interpreters (`supporting`)** | Number of interpreters (out of `total_interp`) who assigned positive membership ($> 0$) to a candidate EFG for a source unit. | `summarise_membership()`; see @sec-synthesis and @sec-maps. |
+| **Data checks** | Non-destructive validation diagnostics checking numeric type, missing values, $[0, 1]$ bounds, source eligibility, and target validity. | `check_membership()`; see @sec-valid. |
