@@ -1,12 +1,13 @@
----
-title: Area summaries
----
+# Area summaries {#sec-areas}
+
+Linking the tabular synthesis outputs from @sec-synthesis with the polygon areas of TASVEG 5.0 allows us to quantify the statewide extent of each IUCN GET Ecosystem Functional Group—and to evaluate how sensitive area estimates are to (1) **membership weighting** (unweighted total polygon area vs. membership-weighted area) and (2) **aggregation choices** (individual interpreters vs. multi-interpreter consensus, and all candidates vs. best-candidate only).
 
 :::{.aside}
-Our setup for this R session is: 
+
+Our setup for this R session loads spatial (`sf`, `units`; @Pebesma_2018), cross-referencing (`ecoSynthesis`), and tidyverse/plotting packages, along with the saved lookup and synthesis tables:
 
 ```{r}
-#| warnings: false
+#| warning: false
 #| message: false
 library(sf)
 library(ecoSynthesis)
@@ -17,7 +18,7 @@ library(tidyr)
 ```
 
 ```{r}
-here::i_am("synthesis/EFG-map.qmd")
+here::i_am("synthesis/area-summaries.qmd")
 output_dir <- here::here("../results/XREFs")
 source(here::here("../scripts/setup.R"))
 load(here::here(output_dir, "lookup-tables.rda"))
@@ -26,43 +27,39 @@ load(here::here(output_dir, "memb-summaries.rda"))
 
 :::
 
-## Summarising areas
+## Computing polygon areas from TASVEG 5.0
 
-We read the spatial data from the TASVEG dataset using `read_sf` from the `sf` package.
-
-We then use the `st_area` to calculate the spatial extent of each spatial feature.For the next calculation we don't need to keep the spatial information, so we use  but we drop the geometry column to speed up other calculations.  
+We read the TASVEG 5.0 statewide polygon shapefile using `sf::read_sf()`, select the classification fields (`VEG_GROUP`, `VEGCODE`, `VEGCODE_D`), calculate each polygon's area via `sf::st_area()`, and immediately drop the geometry column (`sf::st_drop_geometry()`) so all subsequent joins and summaries execute quickly on a lightweight attribute table:
 
 ```{r}
 TASVEG_xy <- read_sf(here::here("..", "gisdata", "LIST_TASVEG_50_STATEWIDE", "TASVEG_5_0.shp")) |>
     select(VEG_GROUP, VEGCODE, VEGCODE_D)
+
 TASVEG_areas <- TASVEG_xy |>
     mutate(area = st_area(geometry)) |>
     st_drop_geometry()
 ```
 
-We have four different membership summary tables created in @sec-synthesis. Each one of these approaches will lead to different interpretation of spatial data linked to the source concepts and their mapping units.
+## Individual-interpreter weighted area estimates
 
-### Weighted area estimates
+In cross-referencing area calculations, each TASVEG `VEGCODE` occurs across many map polygons, and each `VEGCODE` may carry fuzzy membership to multiple target EFGs. This workflow assumes that the source-to-target membership vector applies uniformly across all polygons belonging to the same `VEGCODE`.
 
-For calculations of areas we have to consider that each source unit might be represented by multiple map units, and each map unit might be assigned to more that one target unit.
-
-The calculations in this workflow assume that the relationships between source and target units are the same for all mapping unit within each source unit. 
-
-This can be calculated using a left join of both tables with a `many to many` relationship:
+First, we perform a `many-to-many` left join between `TASVEG_areas` and the individual Round 2 assessments (`TASVEG_revised`), coding non-eligible polygons (`OAQ`, `OSM`, `ORO`) explicitly as `"!XREF"`:
 
 ```{r}
-
 EFG_memb_exp_areas <- TASVEG_areas |> # nolint: object_name_linter.
     left_join(TASVEG_revised, by = "VEGCODE", relationship = "many-to-many") |>
     mutate(EFG = coalesce(EFG, "!XREF"))
 ```
 
-Furthermore, we need to decide if we want to adjust the areas to represent uncertainty in the assignment of the relationship. One possible way to adjust the areas is to use the membership value as an estimate of the proportion of the area that can be assigned to the target unit.
+To incorporate cross-referencing uncertainty into extent estimates, we compare:
 
-Using an example of one target unit (T2.5), we can summarise the data by expert and membership and calculate total areas of the units vs the weighed area estimates:
+- **Unweighted total area** ($\sum \text{area}$): full extent of every polygon with positive membership to the target EFG.
+- **Membership-weighted area** ($\sum \text{area} \times \text{memb}$): scales each polygon's contribution by its fuzzy membership proportion.
+
+Using **`T2.5` (*Temperate pyric humid forests*)** as a concrete example, we summarise unweighted and weighted areas (in $\text{km}^2$) by interpreter and whether `T2.5` is the best candidate (`best = TRUE`) or a secondary candidate (`best = FALSE`):
 
 ```{r}
-
 EFG_memb_exp_areas |>
     filter(EFG == "T2.5") |>
     summarise(
@@ -75,16 +72,15 @@ EFG_memb_exp_areas |>
     filter(!is.na(area_total))
 ```
 
-Interpreters differ in the nr of source of unit and the mean membership values assigned to those units. Consequently the total and weighted area estimates will be different.
+Because interpreters assign slightly different sets of secondary communities and fuzzy weights to `T2.5`, both the unweighted and weighted area estimates vary across interpreters.
 
-We need to reshape the data if we want to explore this at the level of the source units:
+To inspect which individual TASVEG units drive that difference, we aggregate polygon areas to `km²` per `(expert, VEGCODE)`, split each unit's total area into `assigned_area` ($\text{area} \times \text{memb}$) and `remaining_area` ($\text{area} \times (1 - \text{memb})$), and reshape long for stacked bar plotting:
 
 ```{r}
-
 plot_data <- EFG_memb_exp_areas |>
     filter(EFG == "T2.5") |>
     summarise(
-        total_area = sum(drop_units(area)),
+        total_area = sum(drop_units(set_units(area, "km2"))),
         .by = all_of(c("expert", "VEGCODE", "memb", "best"))
     ) |>
     mutate(
@@ -94,14 +90,18 @@ plot_data <- EFG_memb_exp_areas |>
     ) |>
     pivot_longer(
         cols = c(assigned_area, remaining_area),
-        names_to = "segment", values_to = "height"
+        names_to = "segment",
+        values_to = "height"
     ) |>
     mutate(segment = factor(segment, levels = c("remaining_area", "assigned_area"))) |>
     arrange(sid)
 ```
 
-```{r}
+Plotting all units assigned positive membership to `T2.5` faceted by interpreter reveals that several spatially extensive TASVEG communities carry only low secondary membership weights—contributing substantially to *unweighted* area totals while adding only modestly to *weighted* area estimates:
 
+```{r}
+#| fig-width: 11
+#| fig-height: 7
 ggplot(plot_data, aes(x = sid, y = height, fill = segment)) +
     geom_col(position = "stack") +
     scale_fill_manual(
@@ -109,21 +109,21 @@ ggplot(plot_data, aes(x = sid, y = height, fill = segment)) +
         labels = c("assigned_area" = "Assigned (area * memb)", "remaining_area" = "Remaining area")
     ) +
     labs(
-        title = "Units assigned to T2.5 ordered by Total Area (x)",
-        x = "Source units (Ordered by x)",
-        y = "Total Area (x)",
-        fill = "Status"
+        title = "TASVEG units assigned to T2.5 by interpreter (all candidates)",
+        x = "Source units ordered by total area",
+        y = "Area (km²)",
+        fill = "Component"
     ) +
     facet_wrap(~expert) +
-    theme_wp3()
+    theme_wp3() +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 6))
 ```
 
-This plot reveals that some large units have low membership values, thus they contribute to larger total areas but only marginally to the weighted area estimates. 
-
-We can choose to keep only the best candidate target unit for these area calculations
+Restricting the same chart to units where `T2.5` is the **best candidate** (`best == TRUE`) removes those low-weight secondary communities and highlights the high-consensus core communities of `T2.5`:
 
 ```{r}
-
+#| fig-width: 11
+#| fig-height: 7
 ggplot(filter(plot_data, best), aes(x = sid, y = height, fill = segment)) +
     geom_col(position = "stack") +
     scale_fill_manual(
@@ -131,25 +131,29 @@ ggplot(filter(plot_data, best), aes(x = sid, y = height, fill = segment)) +
         labels = c("assigned_area" = "Assigned (area * memb)", "remaining_area" = "Remaining area")
     ) +
     labs(
-        title = "Units assigned to T2.5 ordered by Total Area (x)",
-        x = "Source units (Ordered by x)",
-        y = "Total Area (x)",
-        fill = "Status"
+        title = "TASVEG units assigned to T2.5 by interpreter (best candidate only)",
+        x = "Source units ordered by total area",
+        y = "Area (km²)",
+        fill = "Component"
     ) +
     facet_wrap(~expert) +
-    theme_wp3()
+    theme_wp3() +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 7))
 ```
 
+## Aggregated multi-interpreter area estimates
+
+Next, we repeat the spatial join using `TASVEG_summary` (aggregated Round 2 `prop_memb` across all five interpreters from @sec-synthesis) so every polygon is linked to the consensus membership proportions:
 
 ```{r}
-
 EFG_memb_agg_areas <- TASVEG_areas |>
     left_join(TASVEG_summary, by = "VEGCODE", relationship = "many-to-many") |>
     mutate(EFG = coalesce(EFG, "!XREF"))
 ```
 
-```{r}
+Summarising `T2.5` from the aggregated table splits total and `prop_memb`-weighted areas cleanly between primary (`best == TRUE`) and secondary (`best == FALSE`) source communities:
 
+```{r}
 EFG_memb_agg_areas |>
     filter(EFG == "T2.5") |>
     summarise(
@@ -162,12 +166,13 @@ EFG_memb_agg_areas |>
     filter(!is.na(area_total))
 ```
 
-```{r}
+Reshaping the aggregated `T2.5` table into `assigned_area` ($\text{area} \times \text{prop\_memb}$) and `remaining_area` lets us compare primary vs. secondary contributing communities side by side:
 
-plot_data <- EFG_memb_agg_areas |>
+```{r}
+plot_data_agg <- EFG_memb_agg_areas |>
     filter(EFG == "T2.5") |>
     summarise(
-        total_area = sum(drop_units(area)),
+        total_area = sum(drop_units(set_units(area, "km2"))),
         .by = all_of(c("VEGCODE", "prop_memb", "best"))
     ) |>
     mutate(
@@ -177,32 +182,40 @@ plot_data <- EFG_memb_agg_areas |>
     ) |>
     pivot_longer(
         cols = c(assigned_area, remaining_area),
-        names_to = "segment", values_to = "height"
+        names_to = "segment",
+        values_to = "height"
     ) |>
     mutate(segment = factor(segment, levels = c("remaining_area", "assigned_area"))) |>
     arrange(sid)
 ```
 
-```{r}
+Faceting the stacked bars by `best` (`FALSE` = secondary candidate, `TRUE` = primary/best candidate) visually contrasts how secondary units contribute minor fractional slices while primary units carry high consensus membership:
 
-ggplot(filter(plot_data), aes(x = sid, y = height, fill = segment)) +
+```{r}
+#| fig-width: 11
+#| fig-height: 7
+ggplot(plot_data_agg, aes(x = sid, y = height, fill = segment)) +
     geom_col(position = "stack") +
     scale_fill_manual(
         values = c("assigned_area" = "#db349e", "remaining_area" = "#e1a6cb"),
-        labels = c("assigned_area" = "Assigned (area * memb)", "remaining_area" = "Remaining area")
+        labels = c("assigned_area" = "Assigned (area * prop_memb)", "remaining_area" = "Remaining area")
     ) +
     labs(
-        title = "Units assigned to T2.5 ordered by Total Area (x)",
-        x = "Source units (Ordered by x)",
-        y = "Total Area (x)",
-        fill = "Status"
+        title = "Aggregated TASVEG units assigned to T2.5 (secondary vs. best candidate)",
+        x = "Source units ordered by total area",
+        y = "Area (km²)",
+        fill = "Component"
     ) +
-    facet_grid(best ~ .) +
-    theme_wp3()
+    facet_grid(best ~ ., labeller = label_both) +
+    theme_wp3() +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 6.5))
 ```
 
-```{r}
+## Statewide comparison across all IUCN GET functional groups
 
+Finally, we compute weighted area estimates across **all** candidate EFGs for both individual interpreters (`d1`, hollow circles) and the aggregated consensus (`d2`, filled circles), keeping primary (`best == TRUE`) and secondary (`best == FALSE`) contributions distinct:
+
+```{r}
 d1 <- EFG_memb_exp_areas |>
     summarise(
         nr_VEGCODE = n_distinct(VEGCODE),
@@ -223,14 +236,25 @@ d2 <- EFG_memb_agg_areas |>
     ) |>
     filter(!is.na(area_total))
 
-plot_data <- bind_rows(d1, d2)
+plot_data_all <- bind_rows(d1, d2)
 ```
 
-```{r}
+Plotting membership-weighted area on a $\log_{10}$ scale across all EFGs shows (1) how tightly individual interpreter extent estimates cluster around the aggregated consensus for dominant terrestrial EFGs, and (2) which EFGs exist purely as secondary components (`best = FALSE`, e.g. minor wetland or freshwater functional groups) versus dominant mapped ecosystems (`best = TRUE`):
 
-options(repr.plot.width = 12, repr.plot.height = 18)
-ggplot(plot_data) +
-    geom_point(aes(y = EFG, x = drop_units(area_weighted), shape = is.na(expert), colour = best), size = 4) +
+```{r}
+#| fig-width: 10
+#| fig-height: 9
+ggplot(plot_data_all) +
+    geom_point(
+        aes(
+            y = EFG,
+            x = drop_units(area_weighted),
+            shape = is.na(expert),
+            colour = best
+        ),
+        size = 3.5,
+        alpha = 0.85
+    ) +
     scale_x_log10() +
     scale_colour_manual(
         values = c("FALSE" = "peru", "TRUE" = "orchid4"),
@@ -239,9 +263,13 @@ ggplot(plot_data) +
     ) +
     scale_shape_manual(
         values = c("TRUE" = 19, "FALSE" = 21),
-        name = "Aggregated"
+        labels = c("TRUE" = "Aggregated consensus", "FALSE" = "Individual interpreter"),
+        name = "Estimate type"
+    ) +
+    labs(
+        title = "Statewide membership-weighted area across all candidate EFGs",
+        x = "Membership-weighted area (km², log10 scale)",
+        y = "IUCN GET Ecosystem Functional Group (EFG)"
     ) +
     theme_wp3()
 ```
-
-

@@ -1,38 +1,34 @@
 # Synthesis overview {#sec-synthesis}
 
-The objective of the synthesis step is to consolidate information from different interpreters on how each source unit is aligned with one or more target units. 
+The objective of the synthesis stage (Step 5 of @fig-process; @IUCN_2025) is to consolidate validated membership assessments from multiple interpreters into structured summary tables ready for area accounting (@sec-areas) and spatial mapping (@sec-maps and @sec-outputs).
 
-We use the membership table as the key data source, and we can aggregate this data in multiple dimensions, but here we are interested in the following:
+Using the cleaned membership table (`TASVEG_clean`) as our authoritative input, several explicit design decisions govern how information is aggregated:
 
-- Select the round with the latest review of assessments: if there have been multiple rounds, and interpreters have interacted with each other, we assume the latest round has the best estimates from each interpreter.
-- Aggregate by source unit: the focus is on finding the best answer for each source.
-- Decide to keep or aggregate multiple interpreters: keep each assessment as provided by interpreter or aggregate multiple interpreters into one value.   
-- Decide which metric of aggregation is used: how to aggregate data from multiple interpreters.
-- Decide which candidates to keep: for some applications there is a need to select only one target unit per source unit, for other applications there is need for keeping a maximum number of candidates (e.g. the best three candidates), or all non-zero candidates.
-- Decide on weighting/ranking rule: if not all non-zero candidates are kept, which criteria are used to support the selection of one or multiple candidates.
-- Report level of support: report the level of support for the targets selected.
-- Report weight of candidate: report the weight attached to each target selected.
+- **Elicitation round**: select the latest post-discussion round (`round == 2`), which reflects revised judgements and complete coverage across all five interpreters.
+- **Unit of aggregation**: aggregate by source unit (`VEGCODE`) to characterise the target relationship(s) of each TASVEG community.
+- **Interpreter treatment**: retain each interpreter's profile separately, or aggregate across all interpreters into a single consensus estimate.
+- **Aggregation metric**: when aggregating across interpreters, compute the **proportion of total membership votes (`prop_memb`)** assigned to each candidate target EFG $t$ for source unit $s$:
+  $$\text{prop\_memb}_{s, t} = \frac{\sum_{i} m_{s, t, i}}{\sum_{k} \sum_{i} m_{s, k, i}}$$
+- **Candidate retention**: keep **all** non-zero candidates (preserving partial/fuzzy relationships) or retain only the single **best candidate** ("winner-takes-all") for categorical maps.
+- **Support and weighting metadata**: report both the proportion of membership weight (`prop_memb`) and the number of interpreters assigning positive membership (`supporting` out of `total_interp`) so users can filter or weight downstream outputs by confidence.
 
+## Four synthesis table variants
 
-## Types of summaries for membership tables
+Combining the interpreter and candidate-retention choices yields four distinct summary structures explored below:
 
-The shape and form of the summary table for the synthesis step will depend on the combination of the previous decisions. In this document we consider four combinations:
-
-|Interpreters|Aggregation metric|Keep|Ranking rule|Weighting rule|
-|---|---|---|---|---|
-|All|None|All candidates|None|Membership values|
-|Aggregate|Proportion of total membership votes|Best candidate|Proportion of total membership votes|No weights ("winner takes it all")|
-|Aggregate|Proportion of total membership votes|All candidates|None|Proportion of total membership votes|
-|All|None|Best candidate|Highest membership|No weights ("winner takes it all")|
-
-
-###  Keep all records
+| Strategy | Interpreters | Aggregation metric | Candidates kept | Ranking rule | Weighting rule |
+|---|---|---|---|---|---|
+| 1. Full Round 2 records | All (separate) | None | All non-zero candidates | None (flags `best`) | Individual membership (`memb`) |
+| 2. Aggregated, all candidates | Aggregated | `prop_memb` | All non-zero candidates | None (flags `best`) | `prop_memb` |
+| 3. Best candidate per interpreter | All (separate) | None | Single best per interpreter | Highest `memb` | None ("winner takes all") |
+| 4. Best candidate from summary | Aggregated | `prop_memb` | Single best per `VEGCODE` | Highest `prop_memb` | None ("winner takes all") |
 
 :::{.aside}
 
-Our setup for this R session is: 
+Our setup for this R session loads `ecoSynthesis`, `dplyr`, `sf`, `units`, and `ggplot2`, and reads the validated membership table from `results/XREFs/memb-tables.rda`:
+
 ```{r}
-#| warnings: false
+#| warning: false
 #| message: false
 library(sf)
 library(ecoSynthesis)
@@ -46,132 +42,135 @@ load(here::here(output_dir, "memb-tables.rda"))
 
 :::
 
-The first option is simply a filtered membership table, where each sources unit will keep all valid records from the selected round:
+### 1. Keep all individual Round 2 records
+
+The first option preserves every validated positive record from Round 2 without aggregating across interpreters. Within each `(VEGCODE, expert)` pair, we compute the interpreter's total assigned membership (`total_memb`), flag their highest-scoring candidate (`best`), and set unit-level support counters (`supporting = 1`, `total_interp = 1`) for schema consistency with aggregated tables:
 
 ```{r}
 TASVEG_revised <- TASVEG_clean |>
-  filter(round == 2) |>
-  group_by(VEGCODE, expert) |>
-  mutate(
-    total_memb = sum(memb),
-    best = memb == max(memb),
-    supporting = 1,
-    total_interp = 1
-  ) |>
-  ungroup()
+    filter(round == 2) |>
+    group_by(VEGCODE, expert) |>
+    mutate(
+        total_memb = sum(memb),
+        best = memb == max(memb),
+        supporting = 1,
+        total_interp = 1
+    ) |>
+    ungroup()
 ```
 
-For example, for the source unit `AAP`:
+Inspecting `AAP` (*Alkaline pans*) shows all individual Round 2 assignments across the five interpreters:
 
 ```{r}
 TASVEG_revised |>
-  filter(VEGCODE == "AAP")
+    filter(VEGCODE == "AAP")
 ```
 
+### 2. Aggregate across interpreters, keeping all candidates
 
-### Aggregate by interpreter, keep all candidates
-
-For some applications we want to summmarise across interpreters, and consider all potential target units:
+When a single multi-interpreter consensus profile is needed while still preserving fuzzy secondary relationships (for example, to generate the per-EFG membership rasters in Output 2; @sec-outputs), we call `ecoSynthesis::summarise_membership()` with `keep_all = TRUE` and `which_round = 2`, then add a `best` flag identifying each community's top-ranked EFG:
 
 ```{r}
 TASVEG_summary <-
-  TASVEG_clean |>
-  summarise_membership(keep_all = TRUE, which_round = 2) |>
-  mutate(
-    best = prop_memb == max(prop_memb),
-    .by = (VEGCODE)
-  )
+    TASVEG_clean |>
+    summarise_membership(keep_all = TRUE, which_round = 2) |>
+    mutate(
+        best = prop_memb == max(prop_memb),
+        .by = VEGCODE
+    )
 ```
 
+::: {.callout-note}
+## `ecoSynthesis::summarise_membership()` default argument note
+In `ecoSynthesis` `v0.0.0.9005`, the function signature defaults to `keep_all = TRUE`, whereas its documentation text describes `keep_all = FALSE` as the default. Passing `keep_all = TRUE` or `keep_all = FALSE` explicitly avoids ambiguity.
+:::
 
-This method reduced the number of records for this source units to three candidate targets, with two of them having low values of the proportion of votes of membership values:
+For `AAP`, aggregation reduces the individual records to three candidate EFGs, with `TF1.7` receiving `prop_memb = 0.94` from all five interpreters (`supporting = 5`) and two minor candidates receiving small weights:
 
 ```{r}
 TASVEG_summary |>
-  filter(VEGCODE == "AAP")
+    filter(VEGCODE == "AAP")
 ```
 
-Notice, that this is not the same as the mean membership value, since the membership table ignores the zero-membership values:
+Notice that `prop_memb` differs from the simple mean of non-zero records in the long-format table, because the long table omits implicit zero memberships from interpreters who did not select a minor candidate:
 
 ```{r}
 TASVEG_revised |>
-  filter(VEGCODE == "AAP") |>
-  summarise(
-    mean_memb = mean(memb),
-    nr_interpreters = n_distinct(expert),
-    .by = all_of(c("EFG"))
-  )
+    filter(VEGCODE == "AAP") |>
+    summarise(
+        mean_nonzero_memb = mean(memb),
+        nr_interpreters = n_distinct(expert),
+        .by = all_of("EFG")
+    )
 ```
 
-:::{.callout-note}
+Instead, computing row means across interpreters from the 3D `ecoSynthesis::membership_matrix()`—where unused targets for assessed units are explicitly filled with `0`—matches `prop_memb` whenever every interpreter's profile sums to `1.0`:
 
-This could be calculated using a `membership_matrix`. 
+```{r}
+aap_mat <- unclass(membership_matrix(filter(TASVEG_clean, round == 2)))["AAP", , ]
+rowMeans(aap_mat, na.rm = TRUE) |>
+    (\(x) x[x > 0])()
+```
 
-:::
+### 3. Keep the best candidate per interpreter
 
-### Keep best candidate per interpreter 
-
-Alternatively, we can keep one record per interpreter and source unit, keeping the one with the largest membership value (or the first if there is more than one with same membership value):
+A third option retains one categorical "best" EFG per `(VEGCODE, expert)` combination via `slice_max(..., with_ties = FALSE, n = 1)`, preserving inter-interpreter variation in categorical assignments while discarding minority fuzzy weights:
 
 ```{r}
 TASVEG_best_revised <-
-  TASVEG_revised |>
-  slice_max(memb, by = c(VEGCODE, expert), with_ties = FALSE, n = 1) |>
-  mutate(keep = "best")
+    TASVEG_revised |>
+    slice_max(memb, by = c(VEGCODE, expert), with_ties = FALSE, n = 1) |>
+    mutate(keep = "best")
 ```
 
-In this case, all interpreters agree on the target unit, but propose different levels of membership:
+For `AAP`, all five interpreters agree on `TF1.7` as their top candidate, though their individual membership strengths range between `0.8` and `1.0`:
 
 ```{r}
 TASVEG_best_revised |>
-  filter(VEGCODE == "AAP")
+    filter(VEGCODE == "AAP")
 ```
 
+### 4. Keep the single best candidate from the aggregated summary
 
-### Keep best candidate from summary
+Finally, for single-layer categorical maps (such as the 90 m Best-Candidate Spatial Synthesis in Output 3; @sec-outputs), calling `summarise_membership(TASVEG_clean, keep_all = FALSE, which_round = 2)` selects the single EFG with the highest `prop_memb` for each of the 153 eligible TASVEG units:
 
-Finally, we can keep the best candidate from the previous method:
 ```{r}
 TASVEG_best_summary <-
-  summarise_membership(TASVEG_clean, keep_all = FALSE, which_round = 2)
+    summarise_membership(TASVEG_clean, keep_all = FALSE, which_round = 2)
 ```
 
-The result is similar to the mean values of the membership values of the best candidates, provided that the membership values are balanced among interpreters (all membership values of each interpreter sum to one).
+Inspecting `AAP` returns a single row (`TF1.7`, `prop_memb = 0.94`, `supporting = 5` of `5`):
 
 ```{r}
 TASVEG_best_summary |>
-  filter(VEGCODE == "AAP")
+    filter(VEGCODE == "AAP")
 ```
 
+Rounding `prop_memb` to one decimal place and tallying distinct `VEGCODE` counts per `EFG` summarises how strongly supported the best-candidate assignments are across all 21 winning IUCN GET functional groups:
 
 ```{r}
 TASVEG_best_summary |>
-  mutate(memb = round(prop_memb, 1)) |>
-  group_by(EFG, memb) |>
-  summarise(n = n_distinct(VEGCODE), .groups = "drop")
+    mutate(memb = round(prop_memb, 1)) |>
+    group_by(EFG, memb) |>
+    summarise(n = n_distinct(VEGCODE), .groups = "drop")
 ```
 
 :::{.aside}
 
-We save both these four summary tables in a file that we can load in later steps of the workflow:
+We save all four synthesis tables (`TASVEG_revised`, `TASVEG_summary`, `TASVEG_best_revised`, and `TASVEG_best_summary`) to `results/XREFs/memb-summaries.rda` for downstream area calculations (@sec-areas) and standalone output scripts (@sec-outputs):
 
 ```{r}
 save(
-  TASVEG_revised,
-  TASVEG_summary,
-  file = here::here(output_dir, "memb-summaries.rda")
+    TASVEG_revised,
+    TASVEG_summary,
+    TASVEG_best_revised,
+    TASVEG_best_summary,
+    file = here::here(output_dir, "memb-summaries.rda")
 )
 ```
 
 :::
-## Outputs
 
-The summary of the membership table produces an intermediate output that might still require further steps of transformation. 
+## Connecting tabular synthesis to spatial outputs
 
-This is the case for spatial analysis, where we need to merge the membership summary with tables of attributes of the spatial objects in order to get the desired output (a spatial summary or a spatial object for plotting target units or membership values).
-
-In this cases the type of output will constrain the amount of information that can be kept. 
-
-We will show two examples in the next two chapters: area summaries in @sec-areas; and different types of raster maps in @sec-maps.
-
-
+The tabular summaries above serve as intermediate inputs for spatial operations: joining them back to the attribute table of the TASVEG 5.0 polygons (`TASVEG_5_0.shp`) enables both **non-spatial area accounting** (@sec-areas) and **spatial raster/vector products** (@sec-maps). Depending on the output format—a single categorical GeoTIFF, a multi-layer stack of per-EFG membership rasters, or a vector GeoPackage bundle—different amounts of fuzzy and per-interpreter information can be preserved (see @sec-outputs).
