@@ -1,15 +1,21 @@
 # Overview of this document {.unnumbered}
 
-This document presents a reproducible computational workflow for the analysis and synthesis of cross-referencing information for Tasmanian terrestrial ecosystems. Cross-referencing aims to elucidate relationships between units of classifications that represent similar types of entities [@IUCN_2025;@sec-process]. 
+This document presents a reproducible computational workflow for the analysis and synthesis of cross-referencing information for Tasmanian terrestrial and transitional ecosystems. Cross-referencing aims to elucidate explicit, evidence-based relationships between units of ecosystem classifications that represent comparable entities [@IUCN_2025; see @sec-process].
 
-In this document the source classification is the TASVEG dataset [@TASVEG_5;@KitchenerHarris_2013] that includes 159 mapping units, most of them representing ecological vegetation communities (see chapter @sec-source). These vegetation communities are aligned with the ecosystem concept of the target classification, the IUCN Global Ecosystem Typology (IUCN GET; @Keith_2022; see chapter @sec-alignment). 
+The repository serves a **dual purpose**:
 
-The main body of the document is divided in three parts. The first part includes four chapters dedicated to Data preparation. First, we collect the spatial and ecological information from the source and target classifications [@sec-lookup], and membership tables from five interpreters [@sec-memb-table]. Then, we validate and clean the input data, @sec-valid. Finally, we explore the cleaned dataset with a full membership table including the assessments of the five interpreters in two rounds of interpretation [@sec-exploration]. 
+1. **Analytical workflow documentation** (this Quarto book, authored in `docs-src/`): documents every conceptual and computational step—from source alignment and lookup-table preparation through validation, multi-round expert-elicitation analysis, and synthesis—using the [`ecoSynthesis`](https://github.com/Ecosystem-Indicators-Workflows/ecoSynthesis) R package [@ecoSynthesis_pkg] alongside repository-specific helper scripts.
+2. **Standalone spatial and tabular output generation** (kept separate in `scripts/` and summarised in @sec-outputs): executes computationally heavier vector unions, rasterisation, and Zenodo dataset packaging without slowing down or repeating calculations inside the documentation workflow.
 
-The second part of the document is dedicated to Analysis of the cross-referencing data.
-We analysed agreement between interpreters and inherent cross-referencing uncertainty for each round of interpretaton [@sec-round-one;@sec-round-two], and compared differences between rounds [@sec-between-rounds]. 
+In this workflow, the source classification is the TASVEG 5.0 dataset [@TASVEG_5; @KitchenerHarris_2013], whose technical manual and fire-attributes lookup table define 159 mapping units (156 mapped as polygons across mainland Tasmania and surrounding islands), most of which represent ecological vegetation communities (see @sec-source). These vegetation communities are aligned with the ecosystem concept of the target classification, the IUCN Global Ecosystem Typology (IUCN GET; @Keith_2022; see @sec-alignment), specifically at Level 3 (Ecosystem Functional Groups, EFGs).
 
-The final part of the document presents a synthesis of the cross-referencing information and produces different types of outputs, including, symmary tables and maps.
+The main body of the document is organised into three parts:
+
+- **Part I — Preparation**: Builds formal lookup tables for both classifications (@sec-lookup), ingests heterogeneous membership tables from five expert interpreters across two elicitation rounds (@sec-input-memb), validates and cleans membership records (@sec-valid), and explores completeness, duplicates, and group-level patterns (@sec-exploration).
+- **Part II — Analysis**: Quantifies inter-interpreter agreement (pairwise similarity/dissimilarity), target usage, and within-interpreter uncertainty (normalised Shannon's entropy) in Round 1 (@sec-round-one) and Round 2 (@sec-round-two), and evaluates convergence and remaining conceptual disagreement between rounds (@sec-between-rounds).
+- **Part III — Synthesis**: Consolidates Round 2 memberships under four synthesis strategies (@sec-synthesis), computes unweighted and membership-weighted area summaries (@sec-areas), and explains how tabular syntheses connect to spatial raster and vector outputs (@sec-maps).
+
+Appendices provide a glossary of cross-referencing terminology, a reference on tabular membership formats (@sec-formats), R session and benchmarking notes (@sec-reproducibility), and an overview table summarising the status of all published, draft, and in-development workflow outputs (@sec-outputs).
 
 This online document is a joint output of the ARDC "Ecosystem Indicators Workflows" (EIW) project and the ARC Industry Laureate Fellowship Project "Foundations for leading the nature positive ecosystem conservation agenda".
 
@@ -17,18 +23,17 @@ You can use the links on the left to navigate through the different sections of 
 
 ::: {.callout-note}
 ## Target ecosystem types
-- All terrestrial ecosystems of Tasmania. 
+- All terrestrial ecosystems of Tasmania.
 - Selected palustrine wetland and other transitional ecosystems of Tasmania.
 :::
 
 ## Contributions
 
-MT led the expert elicitation process. MT, DAK, AL, AK, and JB contributed membership tables for cross-referencing. JRFP led the technical documentation of all sections of the on-line document. JRFP, EG and ARS contributed scripts for all sections.
+MGT led the expert elicitation process. MGT, DAK, AL, AK, and JB contributed membership tables for cross-referencing. JRFP led the technical documentation of all sections of the online document. JRFP, EG, and ARS contributed scripts and `ecoSynthesis` package functions across all sections.
 
 ## Revision history {.unnumbered}
 
-Version control for this document is maintained in the original [GitHub repository](https://github.com/Ecosystem-Indicators-Workflows/).
-
+Version control for this document is maintained in the [GitHub repository](https://github.com/Ecosystem-Indicators-Workflows/TASVEG-XREF).
 
 ::: {.callout-caution}
 
@@ -36,25 +41,29 @@ This document is still work in progress.
 
 :::
 
-|Version | Date | Editor | Summary of Changes |
-|------|------|-----------------|----------------------|
+| Version | Date | Editor | Summary of Changes |
+|---|---|---|---|
+| 0.0.6 | 27 Nov 2026 | JRFP (with AI assistance) | Expanded step context and per-block code explanations; added examples for all exported `ecoSynthesis` functions with overlap/conflict call-out notes; added target-use heatmaps and Shannon's entropy analyses across rounds; verified citations, completed outputs status table, and added AI transparency statement. |
 | 0.0.5 | 7 Nov 2026 | JRFP, ARS, EG, MGT, DAK | Full structure of the document, benchmarks on reproducibility, preparing outputs, implementation of FAIR kit. |
-| 0.0.4 | 1 Nov 2026 | JRFP, MGT | Updated cross-referencing tables, update structure, revised content.  |
+| 0.0.4 | 1 Nov 2026 | JRFP, MGT | Updated cross-referencing tables, update structure, revised content. |
 | 0.0.3 | 23 Oct 2026 | JRFP | Merged contributions and update structure. |
 | 0.0.2 | 15 Oct 2026 | EG, ARS | Explore visualisations and draft functions. Add Glossary. |
 | 0.0.1 | 13 Aug 2026 | JRFP, MGT | Initial draft and project structure. |
 
 ## Reproducibility statement
 
-This resource uses Bash and R for steps of data download, preparation and analysis. All steps are documented using Jupyter notebooks and quarto. This resource is designed to be reproducible, with instructions for data download and code execution provided in the relevant sections. The data used in this resource is publicly available, and the code is open source. Instructions for setting up the environment and running the code and notes on the implementation of FAIR principles are provided in the relevant sections at the end of this document.
+This resource uses Bash and R for data download, preparation, analysis, and synthesis, and is rendered as a Quarto book following FAIR data and research software principles [@Wilkinson_2016; @Barker_2022]. All analytical steps in the documentation are reproducible from the tracked expert elicitation tables (`xrefdata/`) and publicly available TASVEG 5.0 spatial data (`gisdata/`). Standalone spatial output scripts are separated in `scripts/` so computationally expensive rasterisation and vector-union steps are not repeated unnecessarily when updating the documentation. Instructions for environment setup, benchmarking logs, and FAIR assessment notes are provided in @sec-reproducibility and @sec-outputs.
+
+## Statement on AI use {.unnumbered}
+
+Generative AI assistance (Google Antigravity / Gemini) was used during version `0.0.6` to assist with refining narrative context, drafting code-block explanations, auditing overlaps between repository helper scripts and the `ecoSynthesis` package, adding exploratory analysis blocks (heatmaps and entropy metrics), formatting bibliographic entries, and compiling the outputs status table. All underlying expert elicitation data, ecological interpretations, workflow design decisions, code execution checks, and final editorial responsibility remain entirely with the human authors.
 
 ## Acknowledgements
 
 This work was partly supported by:
 
-- the ARC Industry Laureate Fellowship Project "Foundations for leading the nature positive ecosystem conservation agenda" ([IL240100030](https://www.arc.gov.au/2024-industry-laureate-profile-professor-david-keith)) led by Professor David Keith at UNSW Sydney, in partnership with Department of Climate Change, Energy, the Environment and Water, International Union for Conservation of Nature, Department of Energy, Environment and Water, Department of Biodiversity Conservation and Attractions, Department of Planning and Environment NSW, Department of Natural Resources and Environment Tasmania. 
+- the ARC Industry Laureate Fellowship Project "Foundations for leading the nature positive ecosystem conservation agenda" ([IL240100030](https://www.arc.gov.au/2024-industry-laureate-profile-professor-david-keith)) led by Professor David Keith at UNSW Sydney, in partnership with Department of Climate Change, Energy, the Environment and Water, International Union for Conservation of Nature, Department of Energy, Environment and Water, Department of Biodiversity Conservation and Attractions, Department of Planning and Environment NSW, Department of Natural Resources and Environment Tasmania.
 - The [Ecosystem Indicators Workflows](https://ardc.edu.au/project/) project received investment from the Australian Research Data Commons (ARDC). The ARDC is funded by the National Collaborative Research Infrastructure Strategy (NCRIS).
 
 ![](/assets/ARDC_logo_RGB.png){width="250px" style="padding: 25px;"}
 ![](/assets/NCRIS-PROVIDER.png){width="200px" style="padding: 25px;"}
-
