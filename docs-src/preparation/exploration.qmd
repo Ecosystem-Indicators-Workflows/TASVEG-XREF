@@ -1,20 +1,19 @@
 # Exploration of the data {#sec-exploration}
 
-Now that we have validated the input data from five interpreters in a common format, we can produce some informative summaries.
-
+With `TASVEG_clean` validated against both classification lookup tables (@sec-valid), we now run a set of diagnostic checks and exploratory summaries before moving to formal agreement and entropy analyses (@sec-round-one–@sec-between-rounds). Specifically, we verify whether per-unit membership sums equal 1, check for duplicate source–target rows, examine how many candidate EFGs each TASVEG community attracts, and compare cross-referencing profiles across broad TASVEG vegetation groups.
 
 :::{.aside}
 
-Our setup for this R session is: 
+Our setup for this R session loads `dplyr`, `ecoSynthesis`, `ggplot2`, and `cowplot`, sources repository plotting helpers, and loads the validated lookup and membership tables:
+
 ```{r}
-#| warnings: false
+#| warning: false
 #| message: false
 library(dplyr)
 library(ecoSynthesis)
 library(ggplot2)
 library(cowplot)
-here::i_am("preparation/validation.qmd")
-output_dir <- here::here("../results/XREFs")
+here::i_am("preparation/exploration.qmd")
 output_dir <- here::here("../results/XREFs")
 source(here::here("../scripts/setup.R"))
 source(here::here("../scripts/functions.R"))
@@ -24,12 +23,13 @@ load(here::here(output_dir, "memb-tables.rda"))
 
 :::
 
+## Additional integrity checks
 
-## Additional checks
+Because `check_membership()` in @sec-valid validates individual record values and IDs, we perform three group-level consistency checks across `(VEGCODE, expert, round)` combinations.
 
-### Are memberships complete ?
+### Are membership profiles complete (summing to 1)?
 
-Test if there are any assessments with total membership values below 1:
+For each source unit, interpreter, and round, assigned fuzzy memberships across candidate EFGs should sum to 1.0 [@IUCN_2025]. The code below sums `memb` within each `(VEGCODE, expert, round)` group and filters for totals below `0.999` (allowing minor floating-point tolerance):
 
 ```{r}
 TASVEG_clean |>
@@ -40,16 +40,18 @@ TASVEG_clean |>
     print.data.frame(digits = 3)
 ```
 
-Only one case:
+Only a single assessment falls below 1.0—inspecting `Jayne_Balmer`'s records for `HSE` (*Eastern alpine sedgeland*) shows a Round 2 total of `0.90` across three candidate EFGs:
 
 ```{r}
 TASVEG_clean |>
     filter(expert == "Jayne_Balmer", VEGCODE == "HSE")
 ```
 
-### Are memberships duplicated?
+We retain this record transparently rather than editing the original elicitation input; downstream functions handle it explicitly (for example, `summarise_membership()` normalises by total membership weight, and `calc_shannons_entropy()` emits a warning and internally re-normalises vectors whose sum is below 1).
 
-Test if there are any assessments with total membership values above 1:
+### Do any membership profiles exceed 1?
+
+Next, we verify whether any `(VEGCODE, expert, round)` total exceeds `1.001`, which could indicate duplicate entries or arithmetic errors during data entry:
 
 ```{r}
 TASVEG_clean |>
@@ -60,10 +62,11 @@ TASVEG_clean |>
     print.data.frame(digits = 3)
 ```
 
-No problems detected!
+No totals exceed 1.001.
 
-### Test if there are duplicated rows
+### Are there duplicated `(VEGCODE, EFG, expert, round)` rows?
 
+Even when a profile sums to 1.0, an interpreter might inadvertently enter the same target EFG twice in separate paired columns. The code below counts rows per `(VEGCODE, EFG, expert, round)` combination and flags any count greater than 1:
 
 ```{r}
 TASVEG_clean |>
@@ -74,25 +77,25 @@ TASVEG_clean |>
     print.data.frame(digits = 3)
 ```
 
-There is a potential typo in round 2:
+Two minor split-entry cases appear (whose memberships still sum to 1.0 overall). First, `Mark_Tozer` entered `T4.5` twice for `SWR` in Round 2:
 
 ```{r}
-
 TASVEG_clean |>
     filter(expert == "Mark_Tozer", VEGCODE == "SWR")
 ```
 
-There is a potential typo in round 1:
+Second, `David_Keith` entered `T2.6` twice for `SLL` in Round 1:
 
 ```{r}
-
 TASVEG_clean |>
     filter(expert == "David_Keith", VEGCODE == "SLL")
 ```
 
-## Variability in the assessments
+When converted via `ecoSynthesis::membership_matrix()` in @sec-round-one and @sec-round-two, repeated target entries for the same `(source, target, interpreter)` are automatically summed, ensuring consistent distance calculations.
 
-The number of candidates per source unit is an indicator of how much agreement and certainty there is about the membership of the unit. 
+## Variability in assessments across source units
+
+The number of distinct candidate EFGs assigned to a source unit across interpreters and rounds provides a simple initial indicator of conceptual ambiguity. Here we count distinct `EFG` values and maximum assigned membership per `VEGCODE`, and tabulate how many TASVEG communities fall into each candidate-count class:
 
 ```{r}
 candidates_per_vegcode <- TASVEG_clean |>
@@ -108,9 +111,9 @@ candidates_per_vegcode |>
     summarise(`Distinct VEGCODES` = n_distinct(VEGCODE))
 ```
 
-For 25 units from the source classification, all experts agree in one single candidate from the target classification. 
+For 25 TASVEG communities, every interpreter across both rounds assigned membership to a single unanimous EFG candidate. At the other extreme, four communities attracted six distinct EFG candidates.
 
-A dynamic and filterable table allows to browse the records according to the number of interpreter agreements, or according to specific source units:
+The filterable table below summarises Round 1 records grouped by `(VEGCODE, EFG, memb)` so readers can browse exact agreement counts and see which interpreters assigned identical membership values:
 
 ```{r}
 TASVEG_clean |>
@@ -125,70 +128,82 @@ TASVEG_clean |>
     DT::datatable()
 ```
 
-Particularly, we are interested in the four units with the larger number of candidates (6) across interpreters/rounds:
+Let us isolate the four TASVEG units that attracted the largest number of candidate EFGs (`6`):
 
 ```{r}
 candidates_per_vegcode |>
     filter(`Nr. of candidates` == 6)
 ```
 
-Looking at some of these in details reveals some cases where interpreters do not change their assessment after group discussion (divergent opinions).  
+To inspect how individual interpreter profiles evolved between Round 1 and Round 2, we use `ecoSynthesis::membership_tile_plot()` side by side via `cowplot::plot_grid()`.
+
+::: {.callout-warning}
+## Package caveat: `ecoSynthesis::membership_tile_plot()` in `v0.0.0.9005`
+Two minor bugs affect `membership_tile_plot()` in `ecoSynthesis` `v0.0.0.9005`:
+1. Passing `round = 2` inside `membership_tile_plot(data, round = 2)` triggers a column-masking bug (`dplyr::filter(round == round)`), which retains all rounds instead of filtering. **Always pre-filter `data` by `round` before calling `membership_tile_plot()`.**
+2. The plot title is currently hardcoded to `"Round 1 Cross-Referencing"`, so for Round 2 plots we explicitly override it with `+ ggplot2::labs(title = "Round 2 Cross-Referencing")`.
+:::
+
+Looking at `SWR` (*Western regrowth complex*) reveals a persistent case of **divergent opinions** where interpreters still favour different target EFGs after group discussion:
 
 ```{r}
 #| fig-width: 10
 r1plot <- TASVEG_clean |>
     filter(VEGCODE == "SWR", round == 1) |>
-    membership_tile_plot()
+    membership_tile_plot() +
+    labs(title = "Round 1 Cross-Referencing")
 
 r2plot <- TASVEG_clean |>
     filter(VEGCODE == "SWR", round == 2) |>
-    membership_tile_plot()
+    membership_tile_plot() +
+    labs(title = "Round 2 Cross-Referencing")
 
 plot_grid(
     r1plot,
     r2plot,
     ncol = 2,
-    labels = c("Round 1", "Round 2"),
+    labels = c("A", "B"),
     align = "hv"
 )
 ```
 
-But in other cases there are some signs of improved alignment after group discussions (convergent opinions).
+In contrast, `RKX` (*Highland rainforest scrub*) illustrates **convergent opinions**, where group discussion helped interpreters align more closely around shared primary candidates in Round 2:
 
 ```{r}
-
+#| fig-width: 10
 r1plot <- TASVEG_clean |>
     filter(VEGCODE == "RKX", round == 1) |>
-    membership_tile_plot()
+    membership_tile_plot() +
+    labs(title = "Round 1 Cross-Referencing")
 
 r2plot <- TASVEG_clean |>
     filter(VEGCODE == "RKX", round == 2) |>
-    membership_tile_plot()
+    membership_tile_plot() +
+    labs(title = "Round 2 Cross-Referencing")
 
 plot_grid(
     r1plot,
     r2plot,
     ncol = 2,
-    labels = c("Round 1", "Round 2"),
+    labels = c("A", "B"),
     align = "hv"
 )
 ```
 
+## Comparing broad TASVEG vegetation groups
 
-## Groups of source units
+Source classifications often group communities by physiognomy or floristics rather than the functional criteria of IUCN GET [@Keith_2022]. Comparing membership summaries within broad `VEG_GROUP` classes highlights where source and target hierarchies align versus where a single TASVEG group spans multiple IUCN GET functional groups.
 
-Often the source classification will have a hierarchical structure with units grouped by different criteria as the target classification. 
-
-This is a selection of vegetation communities belonging to "Native grasslands" vegetation group according to the TASVEG classification:
+First, we list the communities in the **Native grassland** group:
 
 ```{r}
 TASVEG |>
     filter(VEG_GROUP == "Native grassland") |>
-    select(VEG_GROUP, VEGCODE_D) |>
+    select(VEG_GROUP, VEGCODE, VEGCODE_D) |>
     DT::datatable()
 ```
 
-This group appears to include units that are assigned to different groups in the target classification, however, all experts agree with this dychotomy:
+Joining `TASVEG_clean` with `TASVEG` and summarising by `EFG` shows that *Native grassland* units split cleanly across multiple target EFGs (such as temperate grasslands vs subalpine/alpine or wetland types), a dichotomy recognised consistently across interpreters:
 
 ```{r}
 TASVEG_clean |>
@@ -203,12 +218,12 @@ TASVEG_clean |>
     arrange(desc(`Nr. experts`), desc(`Nr. VEGCODE`))
 ```
 
-In contrast, the "Wet eucalypt forest and woodland" is a larger group, but all experts agree that most units belong primarily to a single group in the target classification, with some experts assigned minority values to other groups.
+In contrast, **Wet eucalypt forest and woodland** is a much larger group whose communities map overwhelmingly to a single primary EFG (`T2.5`, *Temperate pyric humid forests*), with only small minority weights placed on secondary EFGs:
 
 ```{r}
 TASVEG |>
     filter(VEG_GROUP == "Wet eucalypt forest and woodland") |>
-    select(VEG_GROUP, VEGCODE_D) |>
+    select(VEG_GROUP, VEGCODE, VEGCODE_D) |>
     DT::datatable()
 ```
 
@@ -225,12 +240,12 @@ TASVEG_clean |>
     arrange(desc(`Nr. experts`), desc(`Nr. VEGCODE`))
 ```
 
-Similarly the "Dry eucalypt forest and woodland" includes many source units with consistently high relationship values to particular units in the target classification.
+Similarly, **Dry eucalypt forest and woodland** contains many source communities with consistently high membership to a narrow set of temperate woodland/forest EFGs (`T2.6`, `T4.4`, `T4.5`):
 
 ```{r}
 TASVEG |>
     filter(VEG_GROUP == "Dry eucalypt forest and woodland") |>
-    select(VEG_GROUP, VEGCODE_D) |>
+    select(VEG_GROUP, VEGCODE, VEGCODE_D) |>
     DT::datatable()
 ```
 
@@ -247,7 +262,7 @@ TASVEG_clean |>
     arrange(desc(`Nr. experts`), desc(`Nr. VEGCODE`))
 ```
 
-Within the Dry eucalypt forest and woodland group, the *Eucalyptus perriniana forest and woodland* community has a slightly different membership profile.
+Within *Dry eucalypt forest and woodland*, individual communities can still diverge from the group's dominant functional assignment—for example, *Eucalyptus perriniana forest and woodland* (`DPE`) exhibits a distinct subalpine/temperate membership profile across interpreters:
 
 ```{r}
 TASVEG_clean |>

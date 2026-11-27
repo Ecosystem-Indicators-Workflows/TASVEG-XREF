@@ -1,10 +1,17 @@
 # Data validation {#sec-valid}
 
+Before calculating agreement, entropy, or spatial synthesis metrics, we must verify that every record in the consolidated membership table satisfies the structural and semantic rules of cross-referencing [@IUCN_2025]:
+
+1. Membership values are numeric, non-missing, and bounded within $[0, 1]$.
+2. Every source unit ID (`VEGCODE`) belongs to the set of **eligible** source units in the `TASVEG` lookup table (@sec-lookup).
+3. Every target unit ID (`EFG`) matches a **valid** Level 3 Ecosystem Functional Group code in the `IUCN_GET` lookup table (catching typos or deprecated codes).
+
 :::{.aside}
 
-Our setup for this R session is: 
+Our setup for this R session loads `ecoSynthesis`, the repository helper script `scripts/functions.R`, and the saved lookup and raw membership tables from `results/XREFs/`:
+
 ```{r}
-#| warnings: false
+#| warning: false
 #| message: false
 library(readr)
 library(dplyr)
@@ -20,11 +27,12 @@ load(here::here(output_dir, "memb-tables.rda"))
 
 :::
 
-## Read membership table
-Read data directly from the data frame and coerce it to a `membership_tbl` object:
+## Constructing a `membership_tbl` object
+
+We coerce the in-memory `TASVEG_xref` data frame directly into an `ecoSynthesis::membership_tbl` object, explicitly mapping column names to the package's semantic roles (`source_id`, `target_id`, `membership`, `interpreter`, and `round`). Downstream `ecoSynthesis` functions read these attributes automatically:
 
 ```{r}
-TASVEG_memb <- read_membership_tbl(
+TASVEG_memb <- membership_tbl(
     TASVEG_xref,
     source_id = "VEGCODE",
     target_id = "EFG",
@@ -36,33 +44,58 @@ TASVEG_memb <- read_membership_tbl(
 TASVEG_memb
 ```
 
-### Check membership table
+::: {.callout-note}
+## Overlap: `ecoSynthesis::membership_tbl()` vs. `scripts/functions.R::read_membership_tbl()`
+`scripts/functions.R` defines a wrapper `read_membership_tbl()` that accepts either a file path (`.csv`/`.xlsx`) or an in-memory data frame and then delegates to `ecoSynthesis::membership_tbl()`. Because `TASVEG_xref` is already loaded from `memb-tables.rda` here, calling `ecoSynthesis::membership_tbl()` directly is simpler and preferred; `read_membership_tbl()` remains useful in standalone scripts or notebooks that ingest a spreadsheet path directly.
+:::
 
-Let's check this file for errors:
+## Checking the membership table
+
+We run `ecoSynthesis::check_membership()` against both lookup tables (`TASVEG` and `IUCN_GET`) to audit numeric bounds, missingness, source eligibility, and target validity without modifying the data:
 
 ```{r}
 check_membership(TASVEG_memb, source = TASVEG, target = IUCN_GET)
 ```
 
-### Clean membership table
+The check flags ineligible source IDs (e.g. records referencing `OAQ`, `OSM`, or `ORO`, which were excluded during conceptual alignment in @sec-alignment) and/or invalid target IDs (such as typos or placeholder labels).
 
-We can clean these errors with this function:
+## Cleaning flagged records
+
+Next, we apply `clean_membership()` from `scripts/functions.R`, which evaluates the same four flags (`NA` memberships, values outside $[0, 1]$, ineligible source IDs, and invalid target IDs), prints a count for each category, and filters out flagged rows to produce `TASVEG_clean`:
 
 ```{r}
 TASVEG_clean <- clean_membership(TASVEG_memb, TASVEG, IUCN_GET)
 TASVEG_clean
 ```
 
-Now we should have a valid dataset!
+::: {.callout-note}
+## Repository helper: `clean_membership()`
+In `ecoSynthesis` `v0.0.0.9005`, `check_membership()` diagnoses errors without mutating the data, and there is not yet a package-level cleaning function. We therefore rely on the repository helper `clean_membership()` in `scripts/functions.R` to log and drop flagged rows cleanly while preserving the `membership_tbl` class and attributes.
+:::
+
+Re-running `check_membership()` on `TASVEG_clean` confirms that all seven validation checks now pass:
 
 ```{r}
 check_membership(TASVEG_clean, TASVEG, IUCN_GET)
 ```
 
+::: {.callout-caution}
+## Package caveat: `validate_membership()` and `as_membership_tbl()` in `ecoSynthesis` v0.0.0.9005
+`ecoSynthesis` also exports `validate_membership(x)` (which throws an error if a table fails validation) and `as_membership_tbl(x, ...)` (which constructs a `membership_tbl` and immediately calls `validate_membership()`). However, in `v0.0.0.9005`, `validate_membership()` internally invokes `check_membership(x)` with `source = NULL` and `target = NULL`, which always flags missing lookup tables as errors and aborts even on a clean table:
+
+```r
+# Currently aborts in ecoSynthesis v0.0.0.9005 because source/target lookup
+# tables cannot yet be forwarded to validate_membership():
+validate_membership(TASVEG_clean)
+as_membership_tbl(TASVEG_xref, "VEGCODE", "EFG", "memb", "expert", "round")
+```
+
+Until `validate_membership()` accepts `source` and `target` lookup arguments in a future package release, we use `membership_tbl()` paired with explicit `check_membership(x, source = TASVEG, target = IUCN_GET)` calls as shown above.
+:::
 
 :::{.aside}
 
-We save both the raw and the cleaned membership tables in a file that we can load in later steps of the workflow:
+We overwrite `results/XREFs/memb-tables.rda` to store both the raw (`TASVEG_xref`) and validated (`TASVEG_clean`) tables for all downstream exploration, analysis, and synthesis chapters:
 
 ```{r}
 save(

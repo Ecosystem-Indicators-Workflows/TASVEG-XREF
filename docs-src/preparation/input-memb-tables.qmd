@@ -1,44 +1,34 @@
-# Reading input data
+# Reading input data {#sec-input-memb}
 
-The objective of this section is to read input data in different formats and create a summary of the relationships in a consistent output format.
+The objective of this step is to ingest expert cross-referencing tables supplied in heterogeneous spreadsheet layouts and consolidate them into a single, tidy, long-format membership table suitable for validation (@sec-valid) and quantitative analysis (@sec-round-one–@sec-between-rounds).
 
-Input formats are convenient for data entry, but not optimal for data analysis.
-
-Different experts will work with different types of input formats.
-
-A consistent output format is useful for designing streamlined operations and functions. This format allows better interoperability in data operations. 
-
-The output format can be back-transformed to the input formats if required.
-
+During structured expert elicitation [@Martin_2012; @Hemming_2018], different interpreters naturally prefer different data-entry layouts — some enter candidate targets in paired columns (`EFG_1`, `memb_1`, `EFG_2`, `memb_2`, …), whereas others prefer a sparse source-by-target matrix. While both layouts are convenient for manual entry, a single long-format representation ensures interoperability across downstream validation, agreement, entropy, and synthesis functions (see @sec-formats for a full overview of tabular formats).
 
 :::{.aside}
 
-We start a session in _R_ and load the libraries we need for this step:
+We start an R session, load the tidyverse, `foreach`, and `ecoSynthesis` packages, declare paths relative to `docs-src/` using `here`, and source repository-specific helper functions from `scripts/functions.R`:
 
 ```{r}
+#| warning: false
+#| message: false
 #| vscode: {languageId: r}
 library(readr)
-# library(readxl)
 library(dplyr)
 library(tidyr)
 library(stringr)
 library(foreach)
+library(ecoSynthesis)
 ```
-
-We also want to declare the relative path using the package `here`:
 
 ```{r}
 #| vscode: {languageId: r}
 here::i_am("preparation/input-memb-tables.qmd")
 csv_folder <- here::here("..", "xrefdata")
-output_dir <-
-    here::here("../results/XREFs")
+output_dir <- here::here("../results/XREFs")
 if (!dir.exists(output_dir)) {
     dir.create(output_dir, recursive = TRUE)
 }
 ```
-
-And import custom functions:
 
 ```{r}
 #| vscode: {languageId: r}
@@ -47,28 +37,30 @@ source(here::here("..", "scripts", "functions.R"))
 
 :::
 
-## Read membership tables
+## Inspecting the two input layouts
 
-We have cross-referencing tables from five interpreters. All files were prepared by MGT in `CSV` format with a common header but there are two different ways of representing the data. 
+We have nine CSV files in `xrefdata/` covering five interpreters across two rounds of elicitation (four interpreters in Round 1 and five in Round 2). All files were prepared by MGT with a standardised 11-row metadata header (interpreter name, date, round notes) followed by a blank row and the tabular data starting on line 13, but the data tables follow two distinct shapes:
 
-Most of the files will have a paired-column format with each pair indicating the target unit and membership value (`EFG_1`, `memb_1`, etc.).
+1. **Paired-column (wide) format** (seven files): each row is a `VEGCODE`, followed by 2 to 4 pairs of columns indicating each candidate target unit and its fuzzy membership (`EFG_1`, `memb_1`, `EFG_2`, `memb_2`, …). Below we inspect the first 15 lines of `AL_V1_100626_TASVEG_5_0.csv`:
 
 ```{r}
 #| vscode: {languageId: r}
-file_path <- here::here(csv_folder, "/AL_V1_100626_TASVEG_5_0.csv")
+file_path <- here::here(csv_folder, "AL_V1_100626_TASVEG_5_0.csv")
 lines <- readLines(file_path, n = 15)
 cat(lines, sep = "\n")
 ```
 
-In this case we need a function that can reshape the data from this paired-column format to a long format:
+Reshaping paired-column tables into long format pairs each `EFG_k` column with its matching `memb_k` column while repeating `VEGCODE` (@fig-wide-long):
 
 ```{dot}
+//| label: fig-wide-long
+//| fig-cap: "Reshaping a paired-column (wide) membership table into a long-format table."
 //| file: ../fig/wide-long-diagram.dot
 //| fig-height: 2.25
 //| fig-width: 7
 ```
 
-Two files have a matrix format with echo column indicating a different target unit, and cell values indicating the membership:
+2. **Matrix format** (two files: `AK_V1_050726_TASVEG_5_0.csv` and `AL_V2_050726_TASVEG_5_0.csv`): each column after `VEGCODE` represents a candidate target EFG, and cell entries store the membership value. Below we inspect the first 15 lines of `AK_V1_050726_TASVEG_5_0.csv`:
 
 ```{r}
 #| vscode: {languageId: r}
@@ -77,26 +69,30 @@ lines <- readLines(file_path, n = 15)
 cat(lines, sep = "\n")
 ```
 
-For these, we will use another function to reformat from matrix to long format.
+Reshaping a matrix-format table pivots all target columns into a single `EFG` column and a single `memb` column (@fig-matrix-long):
 
 ```{dot}
 //| label: fig-matrix-long
-//| fig-cap: "Figure caption here."
+//| fig-cap: "Reshaping a source-by-target membership matrix into a long-format table."
 //| file: ../fig/matrix-long-diagram.dot
 //| fig-height: 2.25
 //| fig-width: 7
 ```
 
-We use the following code to run through the list of files, read metadata and data, apply the relevant functions according to the shape of the input data, and combine all in a single table.
+## Batch ingestion across all files and rounds
+
+The loop below iterates over every CSV file in `xrefdata/`, reads the 11-row metadata block to extract the interpreter name (`metadata[[1, 2]]`) and elicitation round (`metadata[11, 2]`), reads the membership records starting after line 12, dispatches either `pivot_wide_membership_table()` (when `"EFG_1"` is present) or `pivot_membership_matrix()` (otherwise), and row-binds all files into `memb_data`:
 
 ```{r}
 #| vscode: {languageId: r}
-
 memb_data <- foreach(j = dir(csv_folder), .combine = bind_rows) %do% {
-    metadata <- read_csv(here::here(csv_folder, j),
-        col_names = c("name", "value"), n_max = 11, show_col_types = F
+    metadata <- read_csv(
+        here::here(csv_folder, j),
+        col_names = c("name", "value"),
+        n_max = 11,
+        show_col_types = FALSE
     )[, 1:2]
-    data <- read_csv(here::here(csv_folder, j), skip = 12, show_col_types = F)
+    data <- read_csv(here::here(csv_folder, j), skip = 12, show_col_types = FALSE)
 
     cat(sprintf("Read %s, interpreter %s\n%s\n", j, metadata[1, 2], metadata[11, 2]))
 
@@ -107,7 +103,7 @@ memb_data <- foreach(j = dir(csv_folder), .combine = bind_rows) %do% {
             target_names = sprintf("EFG_%s", 1:4),
             membership_values = sprintf("memb_%s", 1:4),
             expert_name = metadata[[1, 2]],
-            round = if_else(grepl("First", metadata[11, 2]), 1, 2)
+            round_nr = if_else(grepl("First", metadata[11, 2]), 1, 2)
         )
     } else {
         pivot_membership_matrix(
@@ -115,75 +111,140 @@ memb_data <- foreach(j = dir(csv_folder), .combine = bind_rows) %do% {
             original_names = "VEGCODE",
             target_names = colnames(data)[-1],
             expert_name = metadata[[1, 2]],
-            round = if_else(grepl("First", metadata[11, 2]), 1, 2)
+            round_nr = if_else(grepl("First", metadata[11, 2]), 1, 2)
         )
     }
 }
 ```
 
+Because Anne Kitchener joined for the second round only, her single file's header note was labelled like a first submission; the step below explicitly assigns her records to `round = 2`:
+
 ```{r}
-#| label: correct round nr.
+#| label: correct-round-nr
 memb_data <- memb_data |>
     mutate(round = if_else(expert == "Anne Kitchener", 2, round))
 ```
 
 :::{.aside}
-
-Note that we only have one file for Anne Kitchener, but metadata indicates this should be round 2 instead of round 1.
-
+Note that we only have one file for Anne Kitchener (`AK_V1_050726_TASVEG_5_0.csv`), contributed alongside the Round 2 revisions, so its round label is corrected from 1 to 2.
 :::
 
-The output has five columns:
+## `ecoSynthesis` import helpers and overlap with repository functions
 
-- `VEGCODE` is the original code of the units used in the TASVEG 5.0 dataset
-- `EFG` is the code/name for the target Ecosystem Functional Group
-- `memb` is the membership value between 0 and 1
-- `expert` is the name of the interpreter
-- `round` indicates whether the record comes from their first assessment (value of 1), or if the record comes from a revised assessment after group discussions (value of 2)
+The `ecoSynthesis` package [@ecoSynthesis_pkg] provides two dedicated helpers for importing paired-column spreadsheets:
 
-Lets look at a random sample from this table:
+- **`standardise_xref_pairs()`** standardises non-uniform paired column names (such as `GET1`/`GET1_p`, `GET2`/`GET2_p` in raw interpreter spreadsheets) to the canonical `efg_1`/`memb_1` convention before pivoting. Below we demonstrate this on the package's bundled `TASVEG_mini_expert_wide` dataset:
+
+```{r}
+#| label: example-standardise-xref-pairs
+standardise_xref_pairs(
+    TASVEG_mini_expert_wide,
+    prefix = "GET",
+    suffix = "p",
+    separator = "_"
+) |>
+    select(VEGCODE, starts_with("efg_"), starts_with("memb_")) |>
+    head(4)
+```
+
+- **`import_paired_membership()`** pivots a single paired-column data frame directly into a `membership_tbl` object when the exact target and membership column names are supplied. For example, on `AL_V1_100626_TASVEG_5_0.csv` (which contains two pairs, `EFG_1`–`EFG_2` and `memb_1`–`memb_2`):
+
+```{r}
+#| label: example-import-paired-membership
+al_v1_raw <- read_csv(
+    here::here(csv_folder, "AL_V1_100626_TASVEG_5_0.csv"),
+    skip = 12,
+    show_col_types = FALSE
+)
+
+import_paired_membership(
+    data = al_v1_raw,
+    original_names = "VEGCODE",
+    target_names = c("EFG_1", "EFG_2"),
+    membership_values = c("memb_1", "memb_2"),
+    interpreter = "Adelina_Latinovic"
+) |>
+    filter(!is.na(memb)) |>
+    head(6)
+```
+
+::: {.callout-warning}
+## Overlap & conflict: `ecoSynthesis::import_paired_membership()` vs. `scripts/functions.R`
+`ecoSynthesis::import_paired_membership()` overlaps directly with our repository helper `pivot_wide_membership_table()` in `scripts/functions.R`, but **we intentionally retain the repository helpers (`pivot_wide_membership_table()` and `pivot_membership_matrix()`) for the batch ingestion loop above** for four reasons in `ecoSynthesis` `v0.0.0.9005`:
+
+1. **Strict column selection**: `import_paired_membership()` uses `dplyr::all_of(c(target_names, membership_values))` and aborts if a file has fewer pairs than requested (e.g. `AL_V1` has only 2 pairs rather than 4), whereas `pivot_wide_membership_table()` uses `dplyr::any_of()` and handles 2-pair and 4-pair files uniformly.
+2. **Round metadata**: `import_paired_membership()` does not yet accept a `round` argument.
+3. **Output schema**: `import_paired_membership()` always names the interpreter column `"interpreter"` and adds a `pair` index column, whereas downstream repository code uses `"expert"`.
+4. **Matrix-format files**: `ecoSynthesis` does not yet provide a matrix-format importer analogous to `pivot_membership_matrix()` for `AK_V1` and `AL_V2`.
+:::
+
+## Inspecting and saving the combined table
+
+The combined table `memb_data` has five columns:
+
+- `VEGCODE`: source unit code in TASVEG 5.0
+- `EFG`: candidate target Ecosystem Functional Group code in IUCN GET
+- `memb`: fuzzy membership value between 0 and 1
+- `expert`: interpreter name
+- `round`: elicitation round (`1` = independent initial assessment; `2` = revised assessment after group discussion)
+
+Let us inspect five random rows from `memb_data`:
 
 ```{r}
 #| vscode: {languageId: r}
+set.seed(42)
 slice_sample(memb_data, n = 5)
 ```
 
-We can summarise the data, excluding all `NA` values:
+Next, we filter out `NA` and zero-membership entries and count the distinct source units (`VEGCODE`) and distinct target units (`EFG`) recorded by each interpreter in each round. Notice that in Round 1, Jayne Balmer assessed a subset of 98 units and Adelina Latinovic assessed 149 (148 eligible), whereas in Round 2 all five interpreters assessed the full set of units:
 
 ```{r}
-#| label: summary memb data
+#| label: summary-memb-data
 memb_data |>
     filter(!is.na(memb), memb > 0) |>
     group_by(expert, round) |>
-    summarise(`source ids` = n_distinct(VEGCODE), `target ids` = n_distinct(EFG), .groups = "drop")
+    summarise(
+        `source ids` = n_distinct(VEGCODE),
+        `target ids` = n_distinct(EFG),
+        .groups = "drop"
+    )
 ```
 
 :::{.aside}
-We save the membership table in a file that we can load in later steps of the workflow:
+We filter `memb_data` to retain only positive non-missing memberships (`TASVEG_xref`) and save it to `results/XREFs/memb-tables.rda` for validation in @sec-valid. A hidden chunk also writes an anonymised CSV copy (`TASVEG-xref-two-rounds-anon.csv`) using codenames for testing and teaching examples:
 
 ```{r}
-#| label: "save output"
-
+#| label: save-output
 TASVEG_xref <- memb_data |>
     filter(
         !is.na(memb),
         memb > 0
     )
 
-save(TASVEG_xref,
-    file = here::here(
-        output_dir,
-        "memb-tables.rda"
-    )
+save(
+    TASVEG_xref,
+    file = here::here(output_dir, "memb-tables.rda")
 )
 ```
 
 ```{r}
 #| echo: false
-#| label: export anonimised data
+#| label: export-anonymised-data
 #| vscode: {languageId: r}
-interpreters <- c("Worrysome Wren", "Blissful Badger", "Frightened Flamingo", "Pointless Panda", "Tantalising Tarantula")
-names(interpreters) <- sample(c("Adelina_Latinovic", "David_Keith", "Jayne_Balmer", "Mark_Tozer", "Anne Kitchener"))
+interpreters <- c(
+    "Worrysome Wren",
+    "Blissful Badger",
+    "Frightened Flamingo",
+    "Pointless Panda",
+    "Tantalising Tarantula"
+)
+names(interpreters) <- sample(c(
+    "Adelina_Latinovic",
+    "David_Keith",
+    "Jayne_Balmer",
+    "Mark_Tozer",
+    "Anne Kitchener"
+))
 
 TASVEG_xref |>
     transmute(
@@ -197,5 +258,3 @@ TASVEG_xref |>
 ```
 
 :::
-
-
