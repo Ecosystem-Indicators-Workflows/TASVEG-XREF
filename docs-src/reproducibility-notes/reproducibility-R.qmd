@@ -1,7 +1,8 @@
 # Reproducibility of R code {#sec-reproducibility}
 
+All analytical steps and standalone output scripts in this repository are written in R, and this documentation book is rendered with Quarto following FAIR data and research software practices [@Wilkinson_2016; @Barker_2022].
 
-All steps in this workflow were written in R and the project structure rendered using quarto. 
+The block below reports the active R and Quarto versions used to render this book:
 
 ```{r}
 library(quarto)
@@ -9,22 +10,29 @@ R.version
 quarto_version()
 ```
 
-## Installing from source
+## Installing development packages from GitHub
 
-Three R package were installed from GitHub repositories:
+In addition to CRAN packages (`dplyr`, `tidyr`, `readr`, `stringr`, `foreach`, `foreign`, `ggplot2`, `cowplot`, `DT`, `sf`, `terra`, `fasterize`, `units`, `here`, `XML`), this workflow depends on two R packages installed directly from GitHub:
+
+- `Ecosystem-Indicators-Workflows/ecoSynthesis` [@ecoSynthesis_pkg] — cross-referencing classes, agreement, entropy, plotting, and synthesis functions;
+- `Global-Ecosystems-Atlas/geco` — standard Global Ecosystems Atlas pixel values and colour tables for IUCN GET functional groups.
 
 ```{r}
 #| eval: false
-pak::pak("ecoSynthesis")
+pak::pak("Ecosystem-Indicators-Workflows/ecoSynthesis")
 pak::pak("Global-Ecosystems-Atlas/geco")
 ```
 
-## Benchmarking
+## FAIR software assessment
 
-The following files contain benchmarking information for reproducibility of R scripts. These include R session information and execution time.
+This repository tracks progress against the ARDC FAIR Software Checklist v0.2 via automated checks in `.fair/fair_check.R` and `.fair/fair-checklist.yml`, with the latest score summary and gap breakdown published in the repository `README.md` (`fair/fair-score.json` and `fair/fair-scores.png`).
+
+## Execution logs and benchmarking
+
+The folded logs below capture full R session metadata (`sessionInfo()`) and wall-clock execution times from running the standalone data-download, rasterisation benchmark, and output-generation scripts in `scripts/`. Keeping these outputs separate from `docs-src/` ensures the Quarto book renders rapidly without repeating multi-minute spatial computations.
 
 ```{r}
-#| filename: "inc/TASVEG-data-download.R"
+#| filename: "scripts/TASVEG-data-download.R"
 #| eval: false
 #| code-fold: true
 #| code-summary: "Download source data / TASVEG 5.0"
@@ -32,25 +40,49 @@ The following files contain benchmarking information for reproducibility of R sc
 ```
 
 ```{r}
-#| filename: "inc/benchmark-fasterize.R"
+#| filename: "scripts/benchmark-fasterize.R"
 #| eval: false
 #| code-fold: true
-#| code-summary: "Benchmarking fasterize vs rasterize"
+#| code-summary: "Benchmarking fasterize vs terra::rasterize"
 #| file: benchmark-fasterize-out.txt
 ```
 
 ```{r}
-#| filename: "inc/TASVEG-xref-IUCNGET-output-best-90m.R"
+#| filename: "scripts/TASVEG-xref-IUCNGET-output-best-90m.R"
 #| eval: false
 #| code-fold: true
-#| code-summary: "Workflow for raster outputs (best candidate)"
+#| code-summary: "Output 3: 90 m best-candidate raster synthesis (~2.0 min)"
 #| file: TASVEG-xref-IUCNGET-output-best-90m-out.txt
 ```
 
 ```{r}
-#| filename: "inc/EFG-membership-raster.R"
+#| filename: "scripts/EFG-membership-raster.R"
 #| eval: false
 #| code-fold: true
-#| code-summary: "Workflow for calculation of membership raster layers"
+#| code-summary: "Output 2: 31 per-EFG 90 m membership raster layers (~1.9 min)"
 #| file: EFG-membership-raster-out.txt
+```
+
+```{r}
+#| filename: "scripts/TASVEG-membership-matrices.R"
+#| eval: false
+#| code-fold: true
+#| code-summary: "Output 1: Statewide vector GeoPackage and membership matrices"
+#| file: TASVEG-membership-matrices-out.txt
+```
+
+```{r}
+#| filename: "scripts/EFG-membership-vector.R --args TF1.7"
+#| eval: false
+#| code-fold: true
+#| code-summary: "Derived output: TF1.7 Boreal and temperate fens vector (~13 s)"
+#| file: TF1.7-membership-vector-out.txt
+```
+
+```{r}
+#| filename: "scripts/EFG-membership-vector.R --args TF1.6"
+#| eval: false
+#| code-fold: true
+#| code-summary: "Derived output: TF1.6 Boreal, temperate and montane peat bogs vector (~15 s)"
+#| file: TF1.6-membership-vector-out.txt
 ```

@@ -1,6 +1,6 @@
-## Membership tables {#sec-formats}
+# Membership data formats {#sec-formats}
 
-The following diagram illustrates a minimal example consisting of two classifications with two concepts each, and lines joining the source and target concepts with membership values.
+The diagram below illustrates a minimal cross-referencing example consisting of two classifications with two concepts each, linked by fuzzy membership values [@Zadeh_1965; @IUCN_2025].
 
 ```{mermaid}
 flowchart LR
@@ -14,64 +14,57 @@ flowchart LR
         ECO3(["Concept Z"]):::Ecos
         ECO4(["Concept W"]):::Ecos
     end
-    
-    
+
     ECO1 ==>|100%| ECO3
     ECO1 -.->|0%| ECO4
-    ECO2 -->|60%| ECO3 
+    ECO2 -->|60%| ECO3
     ECO2 -->|40%| ECO4
-    
+
     classDef Ecos fill:#dfd,stroke:#040,color:#040, stroke-width:2px
     classDef Clas fill:#fff,stroke:#040,color:#040, stroke-width:2px
 ```
 
-These relationships can be represented in different tabular formats:
+These relationships can be represented in three main tabular formats, each suited to a different stage of data entry or computation.
 
 ## Membership matrix
 
-A membership matrix will have rows for the source classificaton and columns for the target classification:
+A membership matrix places source concepts in rows and target concepts in columns:
 
 | | Concept Z | Concept W |
 |---|---|---|
 | Concept A | 100% | 0% |
-| Concept B |  40% | 60% |
+| Concept B | 40% | 60% |
 
-The size of the matrix will increase with the number of concepts in each classification (*n* rows for the source and *m* columns for the target).
-
-These matrices will expose the information transparently, and can be useful for data entry purposes, but they can become very clunky when the number of concepts is both classifications is large, and are not optimal to store multiple interpretations (see next section).
+The dimensions grow with the product of both classifications ($n$ rows for the source and $m$ columns for the target). Matrices expose zero and non-zero memberships transparently and are convenient for spreadsheet entry (used by `AK_V1` and `AL_V2` in @sec-input-memb) and numerical distance calculations—in `ecoSynthesis`, `membership_matrix()` builds a 3D `[source, target, interpreter]` array directly from a long-format `membership_tbl` for `calc_agreement()`. However, 2D matrices become unwieldy for storing multi-round metadata and sparse large classifications.
 
 ## Long-format table
 
-An alternative representation of this information is a membership table in "long" format: 
+A long-format membership table stores one `(source, target, membership)` link per row:
 
- Source Classification | Target Classification | Membership
+| Source Classification | Target Classification | Membership |
 |---|---|---|
 | Concept A | Concept Z | 100% |
 | Concept B | Concept W | 60% |
 | Concept B | Concept Z | 40% |
 
-The size of the table will increase with the number of links between classifications ($n \times m$ rows, but only three columns). If we ignore or filter out the zero membership values, then the size can be reduced considerably.
+The table has only three core columns (plus interpreter/round metadata) and shrinks substantially when zero-membership rows are omitted. This is the canonical analytical format used by `ecoSynthesis::membership_tbl()` and all downstream validation, entropy, plotting, and synthesis functions in this workflow.
 
-## Wide-format table
+## Paired-column (wide) format
 
-A membership table can also be represented in wide format if we can assume that  each source concept matches maximum of *q* target concepts:
+A paired-column table stores up to $q$ target–membership pairs per source row:
 
- Source Concept | Target Concept 1 | Membership | Target Concept 2 | Membership |
+| Source Concept | Target Concept 1 | Membership | Target Concept 2 | Membership |
 |---|---|---|---|---|
-| Concept A | Concept Z | 100% |
+| Concept A | Concept Z | 100% | | |
 | Concept B | Concept W | 60% | Concept Z | 40% |
 
-This table will have $n$ rows for all source concept, but a fixed numner of columns ($1 + (q \times 2)$)
+This format has $n$ rows and a fixed number of columns ($1 + 2q$). It is compact for manual expert elicitation (used by seven of the nine CSV files in `xrefdata/`) and can be standardised with `ecoSynthesis::standardise_xref_pairs()` and reshaped to long format via `ecoSynthesis::import_paired_membership()` or `scripts/functions.R::pivot_wide_membership_table()` (see @sec-input-memb).
 
-## Multiple interpreters
+## Incorporating multiple interpreters and rounds
 
-Tables in long and wide formats can incorportate multiple interpreters by adding columns to identify the interpreter. 
+Long-format tables scale naturally to multiple interpreters, elicitation rounds, dates, and methods by adding metadata columns:
 
-For maximum transparency, these tables could also include columns for date of interpretation and for documentation of methods. This would allow better filtering and comparison of multiple interpretations.
-
-An example with a long format table:
-
- Source | Target | Membership | Interpreter | Date | Methods |
+| Source | Target | Membership | Interpreter | Date | Methods |
 |---|---|---|---|---|---|
 | Concept A | Concept Z | 100% | Interpreter A | 25 May 2011 | Match descriptions |
 | Concept B | Concept W | 60% | Interpreter A | 25 May 2011 | Match descriptions |
@@ -83,4 +76,3 @@ An example with a long format table:
 | Concept A | Concept Z | 100% | Interpreter A | 25 May 2026 | Revised opinion |
 | Concept B | Concept W | 60% | Interpreter A | 25 May 2026 | Revised opinion |
 | Concept B | Concept Z | 40% | Interpreter A | 25 May 2026 | Revised opinion |
-
