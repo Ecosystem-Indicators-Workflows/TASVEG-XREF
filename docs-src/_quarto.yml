@@ -65,8 +65,6 @@ book:
         text: "Exploration"
     - part: "Analysis"
       chapters:
-#      - elicitation/index.qmd
-#      - elicitation/data-prep.qmd
       - analysis/round-1.qmd
       - analysis/round-2.qmd
       - analysis/between-rounds.qmd
@@ -85,12 +83,6 @@ book:
       - file: appendices/outputs.qmd
         text: "Overview of outputs"
 
-#      - file: "elicitation/visualise-agreement.ipynb"
-#        text: "Viz agreement"
-#      - file: "elicitation/visualise-agreement.out.ipynb"
-#      - file: "elicitation/viz_explore_ars.ipynb"
-#      - file: "elicitation/viz-agreement-EG.qmd"
-
   margin-header: |
     <center>
     ![](/assets/logo_CES.png){height=66px}
@@ -107,4 +99,4 @@ format:
     css: styles.css
     highlight-style: solarized
     toc: true
-    sidebar-width: 300px # Default is 250px
+    sidebar-width: 300px 

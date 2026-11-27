@@ -1,16 +1,20 @@
 # Round two {#sec-round-two}
 
+Following structured group discussions of Round 1 discrepancies (@sec-round-one), all interpreters revised their assignments in **Round 2** [@Hemming_2018; @IUCN_2025]. Round 2 includes five interpreters (`Adelina_Latinovic`, `Anne Kitchener`, `David_Keith`, `Jayne_Balmer`, and `Mark_Tozer`), and every interpreter assessed the complete set of **153 eligible TASVEG 5.0 communities**. Because Round 2 incorporates both shared conceptual clarification and full coverage across all five interpreters, it forms the basis for the synthesis and spatial outputs in Part III (@sec-synthesis–@sec-maps).
+
 :::{.aside}
 
-Our setup for this R session is: 
+Our setup for this R session loads `ecoSynthesis`, tidyverse/plotting packages, custom plot styling, and the validated lookup and membership tables:
+
 ```{r}
-#| warnings: false
+#| warning: false
 #| message: false
 library(readr)
 library(dplyr)
+library(tidyr)
 library(ecoSynthesis)
 library(ggplot2)
-here::i_am("analysis/round-1.qmd")
+here::i_am("analysis/round-2.qmd")
 output_dir <- here::here("../results/XREFs")
 source(here::here("../scripts/setup.R"))
 source(here::here("../scripts/functions.R"))
@@ -20,100 +24,188 @@ load(here::here(output_dir, "memb-tables.rda"))
 
 :::
 
-## Pairwise dissimilarity
+## Filtering Round 2 and building the 3D membership matrix
 
-Calculate pairwise dissimilarities
+We filter `TASVEG_clean` to Round 2 and construct the 3D `membership_matrix` (`[source, target, interpreter]`) via `ecoSynthesis::membership_matrix()`. Notice that all 5 interpreters now have 153 assessed source units across 31 candidate EFGs (compared with 29 EFGs in Round 1), and `Mark_Tozer`'s split `T4.5` entry for `SWR` (@sec-exploration) is summed automatically inside the matrix:
 
 ```{r}
 TASVEG_revised <- filter(TASVEG_clean, round == 2)
-(pd <- pairwise_dissimilarity(TASVEG_revised))
+TASVEG_mtx_r2 <- membership_matrix(TASVEG_revised)
+TASVEG_mtx_r2
+```
 
-plot_pairwise_diss(pd) +
+We can inspect an individual slice of the 3D array using `unclass()`—for example, the first four TASVEG units across the first six target EFGs for `Adelina_Latinovic`:
+
+```{r}
+unclass(TASVEG_mtx_r2)[1:4, 1:6, "Adelina_Latinovic"]
+```
+
+## Inter-interpreter agreement (`calc_agreement`)
+
+### Global agreement between interpreter pairs
+
+Calling `calc_agreement(TASVEG_mtx_r2)` computes global pairwise agreement across all 10 unique interpreter pairs (mirrored symmetrically with diagonal = 1). Compared to Round 1 (@sec-round-one), every pair of interpreters now compares all 153 units and achieves substantially higher mean similarity ($\ge 0.84$ across every pair):
+
+```{r}
+ag2_global <- calc_agreement(TASVEG_mtx_r2)
+ag2_global
+```
+
+The heatmap below visualises the global Round 2 pairwise similarity matrix:
+
+```{r}
+#| fig-width: 7.5
+#| fig-height: 5.5
+ggplot(ag2_global, aes(x = interpreter_x, y = interpreter_y, fill = mean_similarity)) +
+    geom_tile(colour = "white", linewidth = 1) +
+    geom_text(
+        aes(
+            label = sprintf("%.2f\n(%.0f%% id.)", mean_similarity, 100 * share_identical),
+            colour = mean_similarity > 0.88
+        ),
+        size = 3.2
+    ) +
+    scale_fill_gradient(low = teal_low, high = teal_high, limits = c(0.75, 1)) +
+    label_colour_scale +
+    labs(
+        title = "Round 2: Mean pairwise similarity and share of identical profiles",
+        x = NULL,
+        y = NULL,
+        fill = "Mean similarity"
+    ) +
+    coord_fixed() +
+    theme_wp3() +
+    theme(axis.text.x = element_text(angle = 25, hjust = 1))
+```
+
+### Per-unit pairwise dissimilarity
+
+Next, `calc_agreement(TASVEG_mtx_r2, by_source = TRUE)` computes pairwise similarity and dissimilarity for all 1,530 unit-pair combinations (153 units × 10 interpreter pairs). The faceted histograms illustrate the strong concentration near $S = 1$ across all ten pairs:
+
+```{r}
+#| fig-width: 10
+#| fig-height: 8
+ag2_by_source <- calc_agreement(TASVEG_mtx_r2, by_source = TRUE)
+
+ggplot(ag2_by_source, aes(x = similarity)) +
+    geom_histogram(binwidth = 0.1, fill = teal_high, colour = "white") +
+    facet_grid(rows = vars(interpreter_x), cols = vars(interpreter_y)) +
+    labs(
+        title = "Round 2: Distribution of pairwise similarity by interpreter pair",
+        x = "Pairwise similarity (1 - dissimilarity)",
+        y = "Number of TASVEG units"
+    ) +
     theme_wp3()
 ```
 
+Summarising `ag2_by_source` by `source` identifies how many TASVEG communities achieved complete consensus across all five interpreters in Round 2, lists the 10 remaining most-contested units, and plots the unit-level dissimilarity distribution:
+
 ```{r}
-#| eval: false
-efg_order <- sort(unique(TASVEG_revised$EFG))
-membership_matrix <- profiles |>
-    tidyr::pivot_wider(names_from = efg, values_from = memb) |>
-    dplyr::select(VEGCODE, expert, dplyr::any_of(efg_order)) |>
-    dplyr::arrange(VEGCODE, expert)
-
-message(
-    nrow(membership_matrix),
-    " rows (unit × expert) × ",
-    length(efg_order),
-    " target columns. ",
-    "NA = target not used by any expert for that unit; 0 = used by another expert but not this one."
-)
-head(membership_matrix, 12)
-```
-
-## Pairwise expert distances for each unit.
-```{r}
-#| eval: true
-
-sid <- rlang::sym(attr(pd, "source_id"))
-
-unit_disagreement <- pd |>
-    dplyr::group_by(!!sid) |>
-    dplyr::summarise(
+unit_disagreement_r2 <- ag2_by_source |>
+    group_by(VEGCODE = source) |>
+    summarise(
         mean_dissimilarity = mean(dissimilarity),
         min_dissimilarity = min(dissimilarity),
         max_dissimilarity = max(dissimilarity),
-        n_pairs = dplyr::n(),
+        n_pairs = n(),
         .groups = "drop"
     ) |>
-    dplyr::arrange(dplyr::desc(mean_dissimilarity), VEGCODE)
+    arrange(desc(mean_dissimilarity), VEGCODE)
 
-msg <- "%s of %s units have identical profiles from every interpreter."
+message(sprintf(
+    "%s of %s units have identical profiles from every interpreter in Round 2.",
+    sum(unit_disagreement_r2$max_dissimilarity < 0.001),
+    nrow(unit_disagreement_r2)
+))
 
-message(
-    sprintf(
-        msg,
-        sum(unit_disagreement$max_dissimilarity < 0.001),
-        nrow(unit_disagreement)
-    )
-)
-head(unit_disagreement, 10)
+head(unit_disagreement_r2, 10)
 
-ggplot(unit_disagreement, aes(x = mean_dissimilarity)) +
-    geom_histogram(binwidth = 0.1) +
+ggplot(unit_disagreement_r2, aes(x = mean_dissimilarity)) +
+    geom_histogram(binwidth = 0.1, fill = rust_high, colour = "white") +
+    labs(
+        title = "Round 2: Mean pairwise dissimilarity across TASVEG units",
+        x = "Mean pairwise dissimilarity per unit",
+        y = "Number of TASVEG units"
+    ) +
     theme_wp3()
 ```
 
+## Target usage patterns across interpreters
 
-## Visualising
+Using `ecoSynthesis::membership_target_heatmap()` and `ecoSynthesis::membership_target_pair_heatmap()` on `TASVEG_revised` shows how evenly the 31 candidate EFGs are used across all five interpreters and ten interpreter pairs after group discussion:
 
-This source unit had the highest dissimilarity:
+```{r}
+#| fig-width: 8.5
+#| fig-height: 8.5
+membership_target_heatmap(TASVEG_revised) +
+    labs(title = "Round 2 Target Use")
+```
 
+```{r}
+#| fig-width: 11
+#| fig-height: 8.5
+membership_target_pair_heatmap(TASVEG_revised) +
+    labs(title = "Round 2 Shared Target Use")
+```
+
+::: {.callout-note}
+## Package caveat: hardcoded plot titles in `ecoSynthesis` v0.0.0.9005
+Both `membership_target_heatmap()` (default `"Round X Target Use"`) and `membership_target_pair_heatmap()` (default `"Round 1 Shared Target Use"`) hardcode their plot titles and do not yet accept a `round` filter in `v0.0.0.9005`. Pre-filtering to `round == 2` and appending `+ ggplot2::labs(title = ...)` ensures accurate Round 2 labels without modifying package code.
+:::
+
+## Within-interpreter uncertainty: Shannon's entropy
+
+We next compute normalised Shannon's entropy for Round 2 using `ecoSynthesis::calc_entropy_tbl()` across the entire dataset (`overall`), per interpreter (`by_interpreter`), per TASVEG community (`by_source`), and per target EFG (`by_target`).
+
+::: {.callout-note}
+## Incomplete-sum warning on `HSE`
+Recall from @sec-exploration that `Jayne_Balmer`'s Round 2 profile for `HSE` sums to `0.90`. When `calc_entropy_tbl()` calls `calc_shannons_entropy()` on that vector, `ecoSynthesis` emits an informative warning (`sum of the probabilities is less than 1 (0.9)`) and automatically re-normalises the non-zero probabilities internally ($p_k / \sum p$) so entropy remains strictly comparable on $[0, 1]$.
+:::
+
+```{r}
+calc_entropy_tbl(TASVEG_revised, overall = "overall")
+calc_entropy_tbl(TASVEG_revised, overall = "by_interpreter")
+```
+
+Inspecting the highest-entropy source units and target EFGs highlights communities that interpreters consistently view as ecologically transitional or multi-functional (for example, woodland/forest ecotones or palustrine wetlands):
+
+```{r}
+ent2_by_source <- calc_entropy_tbl(TASVEG_revised, overall = "by_source")
+head(ent2_by_source, 10)
+
+calc_entropy_tbl(TASVEG_revised, overall = "by_target") |>
+    head(10)
+
+ggplot(ent2_by_source, aes(x = mean_by_source_entropy_source_normalised)) +
+    geom_histogram(binwidth = 0.1, fill = "#355C7D", colour = "white") +
+    labs(
+        title = "Round 2: Mean source-normalised Shannon's entropy across units",
+        x = "Mean source-normalised entropy",
+        y = "Number of TASVEG units"
+    ) +
+    theme_wp3()
+```
+
+## Inspecting the most contested Round 2 units
+
+Finally, we inspect the two units with the largest remaining pairwise disagreement in Round 2 (`FMG` and `SWR`) using `membership_tile_plot()`, overriding the default title to reflect Round 2:
 
 ```{r}
 TASVEG |>
     dplyr::filter(VEGCODE == "FMG") |>
     dplyr::glimpse()
-dplyr::filter(TASVEG_revised, VEGCODE == "FMG") |>
-    membership_tile_plot()
-```
 
+dplyr::filter(TASVEG_revised, VEGCODE == "FMG") |>
+    membership_tile_plot() +
+    labs(title = "Round 2 Cross-Referencing")
+```
 
 ```{r}
 TASVEG |>
     dplyr::filter(VEGCODE == "SWR") |>
     dplyr::glimpse()
+
 dplyr::filter(TASVEG_revised, VEGCODE == "SWR") |>
-    membership_tile_plot()
-```
-
-
-## Generate a membership matrix
-
-
-
-```{r}
-TASVEG_mtx <- membership_matrix(TASVEG_revised)
-TASVEG_mtx
-
-TASVEG_mtx[1:4, , "Adelina_Latinovic"]
+    membership_tile_plot() +
+    labs(title = "Round 2 Cross-Referencing")
 ```

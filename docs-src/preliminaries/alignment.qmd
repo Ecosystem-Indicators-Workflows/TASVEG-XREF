@@ -1,16 +1,18 @@
 # Assess alignment between classifications {#sec-alignment}
 
-Conceptual alignment is the first principle for cross-referencing classifications. Units in both the source and target classification should be based on similar concepts. 
+**Conceptual alignment** is the first principle of cross-referencing ecosystem classifications [@IUCN_2025]. Before estimating memberships, we must verify that units in the source classification (TASVEG 5.0) and the target classification (IUCN GET) represent comparable kinds of ecological entities [@DeCaceres_2012].
 
-Cross-referencing aims to elucidate relationships between units of classifications that represent similar types of entities. To be cross-referenced to the IUCN Global Ecosystem Typology (IUCN GET), it follows that the units of the source classification must be aligned with the ecosystem concept. 
+Cross-referencing elucidates relationships between units representing similar types of entities. To be eligible for cross-referencing to the IUCN Global Ecosystem Typology (IUCN GET; @Keith_2022), source units must align with the ecosystem concept defined by the Convention on Biological Diversity [@UNCBD_1992], following @Tansley_1935:
 
-Based on the definition agreed upon by @UNCBD_1992, following @Tansley_1935 original concept, an ecosystem is:
+> “a dynamic complex of plant, animal and micro-organism communities and their non-living environment interacting as a functional unit”.
 
-> “a dynamic complex of plant, animal and micro-organism communities and their non-living environment interacting as a functional unit”. 
+Qualitatively different kinds of entities—such as purely abiotic land-cover masks, administrative boundaries, or coarse land-use mosaics lacking ecological specificity—should not be forced into IUCN GET functional groups. Where partial conceptual overlaps exist, units require explicit eligibility screening so that non-aligned mapping classes are flagged rather than assigned spurious memberships.
 
-Qualitatively different kinds of entities should not be compared to the IUCN GET. In some cases partial relationships or conceptual overlaps may arise, and these warrant rigorous evaluation in cross-referencing to determine eligibility. For example land use and land cover classes or types are sometimes used as proxies of structural features of ecosystems, but they lack information on compositional and functional features.
+The conceptual diagram below (@fig-alignment) illustrates how diagnostic ecological descriptions from the TASVEG Technical Manual and the IUCN GET framework inform eligibility screening and fuzzy membership assignment during cross-referencing.
 
 ```{mermaid}
+%%| label: fig-alignment
+%%| fig-cap: "Conceptual alignment between TASVEG vegetation communities (eligible source units), non-eligible mapping units, and IUCN GET Ecosystem Functional Groups (EFGs)."
 flowchart LR
     subgraph Inputs
         direction LR
@@ -27,7 +29,7 @@ flowchart LR
         RE2 --> XR2{X-ref}:::xref
         RE3 --> XR3((...)):::not
         XR1 -->|0.7| EFG1[EFG 1]:::get
-        XR1 -->|0.3| EFG2[EFG 2]
+        XR1 -->|0.3| EFG2[EFG 2]:::get
         XR2 -->|1.0| EFG2:::get
         XR3 --> EFG3[not eligible]:::not
     end
@@ -41,18 +43,20 @@ flowchart LR
     style Crossreference fill:none,color:black,stroke:#333,stroke-width:1px,stroke-dasharray: 1 1;
 ```
 
-## Eligibility of units
+## Eligibility of TASVEG mapping units
 
-Most units in the TASVEG dataset represent vegetation communities and can be considered eligible for crossreferencing to the IUCN GET. 
+Most units in TASVEG 5.0 (153 of the 156 mapped statewide units, plus 3 additional codes in the Fire Attributes lookup table) represent ecological vegetation communities or recognised anthropogenic ecosystems (e.g. agricultural land, plantations, urban areas) that align well with the ecosystem concept and are therefore **eligible** for cross-referencing to IUCN GET Level 3 Ecosystem Functional Groups.
 
-However, there are three mapping units in the group 'Other natural environments' that require more scrutiny: Lichen lithosere (ORO), Sand, mud (OSM), and Water, sea (OAQ).
+However, three mapping units in the broad group *Other natural environments* require closer scrutiny: **Lichen lithosere (`ORO`)**, **Sand, mud (`OSM`)**, and **Water, sea (`OAQ`)**. According to the TASVEG Technical Manual [@KitchenerHarris_2013]:
 
-According to the technical manual [@KitchenerHarris_2013]:
+> **Lichen lithosere (`ORO`)** is important for undisturbed cryptogamic communities, such as on blockstreams, cliffs, talus and scree slopes and exposed bedrock on mountain tops and ridges.
 
-> Lichen lithosere (ORO) is important for undisturbed cryptogamic communities, such as on blockstreams, cliffs, talus and scree slopes and exposed bedrock on mountain tops and ridges. 
+> **Sand, mud (`OSM`)** is bare of vegetation, and has been used for mapping beaches, sand dune systems, and mobile sand sheets such as those at Waterhouse in north-east Tasmania or at Sandy Cape on the west coast.
 
-> Sand, mud (OSM) is bare of vegetation, has been used for mapping beaches, sand dune systems, and mobile sand sheets such as those at Waterhouse in north-east Tasmania or at Sandy Cape on the west coast. 
+> **Water, sea (`OAQ`)** has been used to designate areas of sea, artificial impoundments such as Lake Gordon, Lake Saint Clair and Lake Pedder, as well as deep water in natural lakes.
 
-> Water, sea (OAQ) has been used to designate areas of sea, artificial impoundments such as Lake Gordon, Lake Saint Clair and Lake Pedder, as well as deep water in natural lakes.
+### Eligibility decision
 
-The units OAQ and OSM are mapping units combining multiple types of ecosystems 
+The units `OAQ` and `OSM` are broad, non-vegetated mapping complexes that combine multiple functionally distinct ecosystems across different IUCN GET realms and biomes—for example, `OAQ` merges marine waters, natural freshwater lakes, and artificial reservoirs, while `OSM` merges marine-terrestrial sandy beaches, intertidal mudflats, and terrestrial mobile dunes. Similarly, `ORO` captures exposed rock and cryptogamic lithoseres spanning disparate alpine, montane, and coastal environments that cannot be resolved into a single Ecosystem Functional Group from the TASVEG classification alone.
+
+Without auxiliary spatial layers (such as hydrography, bathymetry, shoreline delineations, or elevation masks) to disaggregate these mapping complexes, assigning them a single statewide membership profile would introduce systematic thematic error. Consequently, **`OAQ`, `OSM`, and `ORO` are flagged as not eligible (`eligible = FALSE`)** in the TASVEG lookup table (@sec-lookup), excluded during validation and cleaning (@sec-valid), and represented as `NoData` (`NA`) in the statewide spatial outputs (@sec-maps and @sec-outputs).

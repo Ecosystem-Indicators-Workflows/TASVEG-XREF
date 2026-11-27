@@ -1,14 +1,14 @@
-## Lookup tables for both classifications {#sec-lookup}
+# Lookup tables for both classifications {#sec-lookup}
 
-For the next steps of this workflow we will need lookup tables with the valid units of both classifications. 
+Before ingesting and validating expert cross-referencing records, we construct formal **lookup tables** (`lookup_tbl` objects from the `ecoSynthesis` package; @ecoSynthesis_pkg) for both the source classification (TASVEG 5.0) and the target classification (IUCN GET Level 3). These controlled vocabularies define the complete set of valid unit codes, their human-readable names, and—for the source classification—which units passed the conceptual alignment screening in @sec-alignment (`eligible = TRUE` vs `FALSE`).
 
-### TASVEG
+## Source classification: TASVEG 5.0
 
-For the TASVEG classification we can explore the look up table to display the basic information for each unit.
+For TASVEG 5.0 [@TASVEG_5], we build the lookup table from the official Fire Attributes `.dbf` table distributed with the statewide release. Using the lightweight `.dbf` file avoids loading the full polygon geometries during the data preparation stage.
 
 :::{.aside}
 
-Our setup for this R session is: 
+Our setup for this R session loads the DBF reader (`foreign`), data manipulation tools (`dplyr`, `readr`), and `ecoSynthesis`, and points `output_dir` to `results/XREFs`:
 
 ```{r}
 #| warning: false
@@ -21,9 +21,10 @@ library(ecoSynthesis)
 output_dir <- here::here("..", "results", "XREFs")
 ```
 
-Make sure to download the data first, see this script for instructions:
+Make sure the TASVEG 5.0 archive has been downloaded into `gisdata/` first (see @sec-source):
+
 ```{r}
-#| filename: "inc/TASVEG-data-download.R"
+#| filename: "scripts/TASVEG-data-download.R"
 #| eval: false
 #| code-fold: true
 #| code-summary: "Download source data / TASVEG 5.0"
@@ -31,6 +32,8 @@ Make sure to download the data first, see this script for instructions:
 ```
 
 :::
+
+First, we read `TASVEG_5_0_Fire_Attributes_LUT.dbf` with `as.is = TRUE` so character codes and descriptions are kept as strings rather than factors:
 
 ```{r}
 TASVEG_DBF <-
@@ -40,13 +43,15 @@ TASVEG_DBF <-
     )
 ```
 
-We focus on three attributes:
+From this attribute table we retain the three fields that identify each vegetation community and its higher-level TASVEG group:
 
-|Attribute Name | Full Name | Description |
+| Attribute Name | Full Name | Description |
 |---|---|---|
-| VEG_GROUP | Vegetation Group  | The broad vegetation group to which the polygon belongs. This field can be used for  rapid categorisation of polygons for display. |
-| VEGCODE | Vegcode | Three letter code that defines the dominant TASVEG vegetation community present within the polygon.| 
-|VEGCODE_D | Vegcode Description |The full name of the community described by the VEGCODE attribute. |
+| `VEG_GROUP` | Vegetation Group | Broad vegetation group to which the community belongs; useful for hierarchical summaries and display. |
+| `VEGCODE` | Vegcode | Three-letter code that uniquely defines the TASVEG mapping unit (`source_id`). |
+| `VEGCODE_D` | Vegcode Description | Full name of the vegetation community described by `VEGCODE`. |
+
+Next, we select these three columns, sort them alphabetically by vegetation group and code, remove duplicate rows, and convert the result to a tibble (`TASVEG_LUT`):
 
 ```{r}
 TASVEG_LUT <-
@@ -57,37 +62,42 @@ TASVEG_LUT <-
     as_tibble()
 ```
 
+The interactive table below allows browsing and searching all `r nrow(TASVEG_LUT)` `VEGCODE` entries defined in the TASVEG 5.0 Fire Attributes table:
 
 ```{r}
 DT::datatable(TASVEG_LUT)
 ```
 
-Here we flag the units that are deemed not eligible and convert this table into a `lookup_tbl` object:
+Following the conceptual alignment assessment in @sec-alignment, we flag the three non-eligible mapping units (`OAQ`, `OSM`, and `ORO`) using the negative-matching operator `%nin%` from `ecoSynthesis`, and wrap the table into an `ecoSynthesis::lookup_tbl` object that stores column metadata (`id`, `name`, and `eligible`):
 
 ```{r}
 not_eligible <- c("OAQ", "OSM", "ORO")
 TASVEG <- TASVEG_LUT |>
-    mutate(eligible = !(VEGCODE %in% not_eligible)) |>
-    lookup_tbl("VEGCODE", "VEGCODE_D", "eligible")
+    mutate(eligible = VEGCODE %nin% not_eligible) |>
+    lookup_tbl(id = "VEGCODE", name = "VEGCODE_D", eligible = "eligible")
 
 TASVEG
 ```
 
+::: {.callout-note}
+## Local DBF lookup table vs. bundled `ecoSynthesis::TASVEG_LUT`
+The `ecoSynthesis` package also bundles a convenience dataset `ecoSynthesis::TASVEG_LUT` containing the **156 mapped units** extracted from `TASVEG_5_0.shp`. In this workflow we build `TASVEG` directly from `TASVEG_5_0_Fire_Attributes_LUT.dbf` (**159 entries**, including three codes—`FPL`, `HUE`, and `SLW`—that are defined in the manual but absent from the statewide polygon shapefile) so the lookup table reflects the complete authoritative classification vocabulary.
+:::
 
-### IUCN GET
+## Target classification: IUCN GET
 
-The [IUCN GET controlled vocabulary](https://w3id.org/iucn-get/IUCNEcosystemTypology) defines all units in the upper levels of the typology. 
+The [IUCN GET controlled vocabulary](https://w3id.org/iucn-get/IUCNEcosystemTypology) [@Keith_2022] defines all units in the upper three levels of the typology (Realms, Functional Biomes, and Ecosystem Functional Groups).
 
-We use the version included in the `IUCN_GET_LUT` data from the `ecoSynthesis` package and assume all units are eligible and valid:
+Here we wrap the `IUCN_GET_LUT` dataset bundled in `ecoSynthesis` into a `lookup_tbl` object. Because `eligible` is omitted (`NULL`), `lookup_tbl()` automatically marks every IUCN GET Level 3 Ecosystem Functional Group as eligible (`eligible = TRUE`):
 
 ```{r}
-IUCN_GET <- lookup_tbl(IUCN_GET_LUT, "efg_id", "efg_name")
+IUCN_GET <- lookup_tbl(IUCN_GET_LUT, id = "efg_id", name = "efg_name")
+IUCN_GET
 ```
-
 
 :::{.aside}
 
-We save both lookup tables in a file that we can load in later steps of the workflow:
+We save both `lookup_tbl` objects (`TASVEG` and `IUCN_GET`) to `results/XREFs/lookup-tables.rda` so subsequent preparation, validation, and synthesis chapters can reload them without re-reading the source DBF:
 
 ```{r}
 save(TASVEG, IUCN_GET, file = here::here(output_dir, "lookup-tables.rda"))

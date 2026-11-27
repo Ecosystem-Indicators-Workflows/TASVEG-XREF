@@ -1,16 +1,23 @@
 # Between rounds {#sec-between-rounds}
 
+Comparing Round 1 (@sec-round-one) and Round 2 (@sec-round-two) evaluates how effectively facilitated group discussion reduced inter-interpreter disagreement and reveals how interpreters adjusted their expression of fuzzy uncertainty [@Martin_2012; @Hemming_2018; @IUCN_2025]. Two structural differences between rounds should be kept in mind when interpreting changes:
+
+- **Panel composition**: Round 1 included four interpreters (`Adelina_Latinovic`, `David_Keith`, `Jayne_Balmer`, and `Mark_Tozer`), whereas Round 2 added a fifth interpreter (`Anne Kitchener`).
+- **Unit coverage**: In Round 1, `Jayne_Balmer` assessed 98 units and `Adelina_Latinovic` assessed 148 units; in Round 2, all five interpreters assessed all 153 eligible TASVEG 5.0 units.
+
 :::{.aside}
 
-Our setup for this R session is: 
+Our setup for this R session loads `ecoSynthesis`, tidyverse/plotting packages, custom plot styling, and the validated lookup and multi-round membership tables:
+
 ```{r}
-#| warnings: false
+#| warning: false
 #| message: false
 library(readr)
 library(dplyr)
+library(tidyr)
 library(ecoSynthesis)
 library(ggplot2)
-here::i_am("analysis/round-1.qmd")
+here::i_am("analysis/between-rounds.qmd")
 output_dir <- here::here("../results/XREFs")
 source(here::here("../scripts/setup.R"))
 source(here::here("../scripts/functions.R"))
@@ -20,90 +27,250 @@ load(here::here(output_dir, "memb-tables.rda"))
 
 :::
 
-## Pairwise dissimilarity
+## Comparing inter-interpreter agreement between rounds
 
-Calculate pairwise dissimilarities
+We construct separate `membership_matrix` objects for Round 1 and Round 2 and compute both global (`by_source = FALSE`) and per-source (`by_source = TRUE`) agreement via `ecoSynthesis::calc_agreement()` (see the overlap call-out in @sec-round-one explaining why `calc_agreement()` is preferred over the prototype `pairwise_dissimilarity()` helper in `scripts/functions.R`):
 
 ```{r}
 TASVEG_first <- filter(TASVEG_clean, round == 1)
 TASVEG_revised <- filter(TASVEG_clean, round == 2)
-pd1 <- pairwise_dissimilarity(TASVEG_first)
-pd2 <- pairwise_dissimilarity(TASVEG_revised)
+
+mtx1 <- membership_matrix(TASVEG_first)
+mtx2 <- membership_matrix(TASVEG_revised)
+
+ag1_global <- calc_agreement(mtx1)
+ag2_global <- calc_agreement(mtx2)
+
+ag1_unit <- calc_agreement(mtx1, by_source = TRUE)
+ag2_unit <- calc_agreement(mtx2, by_source = TRUE)
 ```
 
-## Pairwise expert distances for each unit.
-```{r}
-#| eval: true
+### Change in global agreement for returning interpreter pairs
 
-dis1 <- summary_disagreement(pd1)
-dis2 <- summary_disagreement(pd2)
+Joining the global agreement tables across the six unique interpreter pairs present in both rounds quantifies the gain in mean similarity (`delta_similarity`) and share of identical unit profiles (`delta_identical`) following group discussion:
+
+```{r}
+ag1_global |>
+    filter(interpreter_x < interpreter_y) |>
+    select(
+        interpreter_x,
+        interpreter_y,
+        n_r1 = n_units,
+        sim_r1 = mean_similarity,
+        id_r1 = share_identical
+    ) |>
+    inner_join(
+        ag2_global |>
+            filter(interpreter_x < interpreter_y) |>
+            select(
+                interpreter_x,
+                interpreter_y,
+                n_r2 = n_units,
+                sim_r2 = mean_similarity,
+                id_r2 = share_identical
+            ),
+        by = c("interpreter_x", "interpreter_y")
+    ) |>
+    mutate(
+        delta_similarity = round(sim_r2 - sim_r1, 3),
+        delta_identical = round(id_r2 - id_r1, 3)
+    ) |>
+    arrange(desc(delta_similarity))
 ```
 
+Every returning interpreter pair increased in mean similarity in Round 2 (typically by $+0.10$ to $+0.24$), reflecting substantial convergence after discussing conceptual boundaries and ambiguous vegetation descriptions.
 
-## Visualising
+### Unit-level shift in pairwise dissimilarity
 
-This source unit had the highest dissimilarity:
-
+Next, we summarise per-source disagreement for each round and join the two summaries by `VEGCODE`. Units falling below the 1:1 diagonal in the scatter plot experienced reduced disagreement in Round 2, while units near or above the diagonal represent persistent conceptual disagreements:
 
 ```{r}
-#| eval: true
+summarise_unit_disagreement <- function(ag_unit) {
+    ag_unit |>
+        group_by(VEGCODE = source) |>
+        summarise(
+            mean_dissimilarity = mean(dissimilarity),
+            min_dissimilarity = min(dissimilarity),
+            max_dissimilarity = max(dissimilarity),
+            n_pairs = n(),
+            .groups = "drop"
+        )
+}
+
+dis1 <- summarise_unit_disagreement(ag1_unit)
+dis2 <- summarise_unit_disagreement(ag2_unit)
+
 dis_both <- dis1 |>
-  left_join(dis2, by = "VEGCODE") |>
-  mutate(oo = rank(mean_dissimilarity.x + mean_dissimilarity.y))
-ggplot(dis_both) +
-  geom_point(aes(
-    x = mean_dissimilarity.x,
-    y = mean_dissimilarity.y,
-    size = (n_pairs.x + n_pairs.y) / 2
-  )) +
-  theme_wp3()
+    left_join(dis2, by = "VEGCODE", suffix = c("_r1", "_r2")) |>
+    mutate(
+        delta_diss = mean_dissimilarity_r2 - mean_dissimilarity_r1,
+        combined_rank = rank(mean_dissimilarity_r1 + mean_dissimilarity_r2)
+    )
+
+ggplot(dis_both, aes(x = mean_dissimilarity_r1, y = mean_dissimilarity_r2)) +
+    geom_abline(intercept = 0, slope = 1, linetype = "dashed", colour = "grey50") +
+    geom_point(
+        aes(size = (n_pairs_r1 + n_pairs_r2) / 2),
+        alpha = 0.7,
+        colour = teal_high
+    ) +
+    labs(
+        title = "Change in per-unit mean dissimilarity between Round 1 and Round 2",
+        subtitle = "Points below the dashed 1:1 line indicate improved agreement in Round 2",
+        x = "Round 1 mean pairwise dissimilarity",
+        y = "Round 2 mean pairwise dissimilarity",
+        size = "Mean nr. of pairs"
+    ) +
+    coord_equal(xlim = c(0, 1), ylim = c(0, 1)) +
+    theme_wp3()
 ```
 
+Ordering all 153 TASVEG communities by their combined dissimilarity rank and fitting LOESS smoothers for each round highlights the systematic downward shift in disagreement across almost the entire spectrum of units:
 
 ```{r}
-#| eval: true
-
 ggplot(dis_both) +
-  geom_point(
+    geom_point(
+        aes(x = combined_rank, y = mean_dissimilarity_r1, colour = "Round 1"),
+        alpha = 0.7
+    ) +
+    geom_smooth(
+        aes(x = combined_rank, y = mean_dissimilarity_r1, colour = "Round 1"),
+        formula = y ~ x,
+        method = "loess",
+        span = 0.75,
+        se = TRUE
+    ) +
+    geom_point(
+        aes(x = combined_rank, y = mean_dissimilarity_r2, colour = "Round 2"),
+        alpha = 0.7
+    ) +
+    geom_smooth(
+        aes(x = combined_rank, y = mean_dissimilarity_r2, colour = "Round 2"),
+        formula = y ~ x,
+        method = "loess",
+        span = 0.75,
+        se = TRUE
+    ) +
+    labs(
+        title = "Ranked unit disagreement across elicitation rounds",
+        x = "Combined dissimilarity rank (1 = lowest, 153 = highest)",
+        y = "Mean pairwise dissimilarity per round"
+    ) +
+    scale_colour_manual(
+        name = "Round",
+        values = c("Round 1" = "slateblue4", "Round 2" = "maroon")
+    ) +
+    theme_wp3()
+```
+
+## Comparing Shannon's entropy between rounds
+
+In addition to tracking inter-interpreter agreement, we compare **normalised Shannon's entropy** across rounds directly using `ecoSynthesis::calc_entropy_tbl()` on the multi-round `TASVEG_clean` table.
+
+::: {.callout-note}
+## Multi-round grouping in `ecoSynthesis::calc_entropy_tbl()`
+In `ecoSynthesis` `v0.0.0.9005`, `calc_entropy_tbl()` automatically groups calculations by the `round` column internally (so passing the full multi-round `TASVEG_clean` produces side-by-side Round 1 and Round 2 statistics in a single call). By contrast, passing an explicit `round = ...` argument is not yet implemented and emits a warning.
+:::
+
+First, we compare overall mean entropy and per-interpreter mean entropy between Round 1 and Round 2:
+
+```{r}
+ent_overall <- calc_entropy_tbl(TASVEG_clean, overall = "overall")
+ent_overall
+
+ent_by_interp <- calc_entropy_tbl(TASVEG_clean, overall = "by_interpreter")
+ent_by_interp
+```
+
+Plotting interpreter-level mean source-normalised entropy across rounds shows an instructive pattern: while inter-interpreter *disagreement* dropped sharply in Round 2, within-interpreter *entropy* increased for `Jayne_Balmer` (who moved from exclusively 100% single-EFG assignments in Round 1 to fuzzy multi-EFG profiles in Round 2) and `Adelina_Latinovic`, whereas `Mark_Tozer`'s entropy decreased slightly as assignments sharpened:
+
+```{r}
+ggplot(
+    ent_by_interp,
     aes(
-      x = oo,
-      y = mean_dissimilarity.x,
-      colour = "First"
+        x = expert,
+        y = mean_by_interpreter_entropy_source_normalised,
+        fill = factor(round)
     )
-  ) +
-  geom_smooth(
-    aes(
-      x = oo,
-      y = mean_dissimilarity.x
-    ),
-    formula = 'y ~ x',
-    method = "loess",
-    span = 0.75,
-    se = TRUE,
-    col = "cyan"
-  ) +
-  geom_point(
-    aes(
-      x = oo,
-      y = mean_dissimilarity.y,
-      colour = "Revised"
+) +
+    geom_col(position = position_dodge(width = 0.75), width = 0.65) +
+    scale_fill_manual(
+        name = "Round",
+        values = c("1" = "slateblue4", "2" = "maroon")
+    ) +
+    labs(
+        title = "Mean source-normalised Shannon's entropy by interpreter and round",
+        x = "Interpreter",
+        y = "Mean source-normalised entropy"
+    ) +
+    theme_wp3() +
+    theme(axis.text.x = element_text(angle = 20, hjust = 1))
+```
+
+Next, we reshape unit-level source-normalised entropy (`overall = "by_source"`) wide by round to compare how individual TASVEG units shifted in within-interpreter fuzziness between rounds:
+
+```{r}
+ent_by_source <- calc_entropy_tbl(TASVEG_clean, overall = "by_source")
+
+ent_wide <- ent_by_source |>
+    select(VEGCODE, round, entropy = mean_by_source_entropy_source_normalised) |>
+    pivot_wider(
+        names_from = round,
+        values_from = entropy,
+        names_prefix = "entropy_r"
     )
-  ) +
-  geom_smooth(
-    aes(
-      x = oo,
-      y = mean_dissimilarity.y
-    ),
-    formula = 'y ~ x',
-    method = "loess",
-    span = 0.75,
-    se = TRUE,
-    col = "pink"
-  ) +
-  labs(x = "Combined dissimilarity rank", y = "Mean dissimilarity per round") +
-  scale_colour_manual(
-    name = "Round",
-    values = c(First = "slateblue4", Revised = "maroon")
-  ) +
-  theme_wp3()
+
+ggplot(ent_wide, aes(x = entropy_r1, y = entropy_r2)) +
+    geom_abline(intercept = 0, slope = 1, linetype = "dashed", colour = "grey50") +
+    geom_point(alpha = 0.7, colour = "#355C7D") +
+    labs(
+        title = "Change in per-unit source-normalised entropy between rounds",
+        x = "Round 1 mean source-normalised entropy",
+        y = "Round 2 mean source-normalised entropy"
+    ) +
+    coord_equal(xlim = c(0, 1), ylim = c(0, 1)) +
+    theme_wp3()
+```
+
+## Disagreement vs. fuzziness: decomposing Round 2 uncertainty
+
+Combining Round 2 **mean pairwise dissimilarity** (inter-interpreter disagreement) with Round 2 **mean source-normalised entropy** (within-interpreter fuzziness) separates three distinct ecological regimes across the 153 TASVEG communities:
+
+- **Bottom-left (low dissimilarity, low entropy)**: crisp, high-consensus 1:1 mappings to a single IUCN GET EFG.
+- **Top-left (low dissimilarity, high entropy)**: *consensual fuzziness* — interpreters agree with one another that the TASVEG community is inherently transitional or composite across multiple EFGs.
+- **Right (high dissimilarity)**: *contested units* where interpreters still hold diverging conceptual assignments after Round 2 discussions.
+
+```{r}
+#| fig-width: 9
+#| fig-height: 6
+uncertainty_r2 <- dis2 |>
+    left_join(
+        ent_by_source |>
+            filter(round == 2) |>
+            select(
+                VEGCODE,
+                mean_entropy = mean_by_source_entropy_source_normalised
+            ),
+        by = "VEGCODE"
+    )
+
+ggplot(uncertainty_r2, aes(x = mean_dissimilarity, y = mean_entropy)) +
+    geom_point(alpha = 0.75, colour = "#84659A", size = 2.5) +
+    geom_text(
+        data = filter(
+            uncertainty_r2,
+            mean_dissimilarity > 0.35 | mean_entropy > 0.75
+        ),
+        aes(label = VEGCODE),
+        nudge_y = 0.03,
+        size = 3,
+        check_overlap = TRUE
+    ) +
+    labs(
+        title = "Round 2: Disagreement vs. within-interpreter entropy",
+        subtitle = "Crisp consensus (bottom-left), consensual fuzziness (top-left), and contested units (right)",
+        x = "Round 2 mean pairwise dissimilarity",
+        y = "Round 2 mean source-normalised entropy"
+    ) +
+    theme_wp3()
 ```
